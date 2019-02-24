@@ -1,11 +1,11 @@
 # 安装
 
-* [项目安装](#项目安装)
-  * [服务器要求](#服务器要求)
-  * [安装 Laravel](#安装-Laravel)
-  * [配置](#配置)
-* [Web 服务器配置](#Web-服务器配置)
-  * 优雅的链接
+* [项目安装](#xiang-mu-an-zhuang)
+  * [服务器要求](#fu-wu-qi-yao-qiu)
+  * [安装 Laravel](#an-zhuang-laravel)
+  * [配置](#pei-zhi)
+* [Web 服务器配置](#web-fu-wu-qi-pei-zhi)
+  * [优雅链接](#you-ya-lian-jie)
 
 ## 项目安装
 
@@ -70,4 +70,38 @@ php artisan serve
 
 ### 配置
 
+#### 公共目录
+
+#### 配置文件
+
+#### 目录权限
+
+#### 应用密钥
+
+#### 附加配置
+
 ## Web 服务器配置
+
+### 优雅链接
+
+#### Apache
+
+```bash
+Options +FollowSymLinks -Indexes
+RewriteEngine On
+
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]
+```
+
+#### Nginx
+
+```bash
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
+```
