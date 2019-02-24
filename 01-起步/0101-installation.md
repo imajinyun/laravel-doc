@@ -66,25 +66,47 @@ composer create-project --prefer-dist laravel/laravel blog
 php artisan serve
 ```
 
-通过 [Homestead](https://laravel.com/docs/5.7/homestead) 和 [Valet](https://laravel.com/docs/5.7/valet) 可以获得更强大的本地开发选择。
+通过 [Homestead](https://laravel.com/docs/5.7/homestead) 和 [Valet](https://laravel.com/docs/5.7/valet) 可以获得更为强大的本地开发选择。
 
 ### 配置
 
 #### 公共目录
 
+安装 Laravel 后，你应当将 Web 服务器的文档 / web 根目录目录配置为 `public` 目录。此目录中的 `index.php` 作为进入应用程序的所有 HTTP 请求的前端控制器。
+
 #### 配置文件
+
+Laravel 框架的所有配置文件都存储在 `config` 目录中。每一个选项进行了说明，所以你可以随意浏览文件并熟悉对你而言可用的选项。
 
 #### 目录权限
 
+安装 Laravel 后，你可能需要配置一些权限。`storage` 和 `bootstrap/cache` 目录下的目录应当由你的 web 服务器写入，否则 Laravel 将无法运行。如果你使用 [Homestead](https://laravel.com/docs/5.7/homestead) 虚拟机，则这些权限已被设置。
+
 #### 应用密钥
 
+安装 Laravel 后，你应该做的下一步是设置你的应用程序的密钥为一个随机字符串。如果你通过 Composer 或者 Laravel 安装器安装 Laravel 的，这个密钥已经通过 `php artisan key:generate` 命令为你设置了。
+
+通常，这个字符串应当为 32 个字符长。密钥可以在 `.env` 环境文件中设置。如果你还没有将 `.env.example` 重命名为 `.env`，你应该立即处理。**如果应用密钥没有设置，则用户会话和其它加密数据将不安全！**
+
 #### 附加配置
+
+Laravel 几乎不需要其它配置就开箱即用。你可以自由开始开发！然而，你可能希望查看 `config/app.php` 文件及它的文档。它包含几个选项，例如，你可能根据应用程序更改 `timezone` 和 `locale` 设置。
+
+你可能还想配置 Laravel 的一些额外组件，例如：
+
+* [Cache](https://laravel.com/docs/5.7/cache#configuration)
+* [Database](https://laravel.com/docs/5.7/database#configuration)
+* [Session](https://laravel.com/docs/5.7/session#configuration)
 
 ## Web 服务器配置
 
 ### 优雅链接
 
 #### Apache
+
+Laravel 包含一个 `public/.htaccess` 文件，它被用来在路径中提供没有 `index.php` 前端控制器的 URL（也就是在浏览器的地址栏中隐藏 `index.php`）。在使用 Apache 服务 Laravel 之前，确保开启了 `mod_rewrite` 模块以便于 `.htaccess` 文件被服务器解析。
+
+如果 Laravel 附带的 `.htaccess` 文件与你的 Apache 安装不能正常工作，尝试用以下的方案替代：
 
 ```bash
 Options +FollowSymLinks -Indexes
@@ -100,8 +122,12 @@ RewriteRule ^ index.php [L]
 
 #### Nginx
 
+如果你使用 Nginx，在你的站点配置中的以下指令会将所有请求定向到 `index.php` 前端控制器：
+
 ```bash
 location / {
     try_files $uri $uri/ /index.php?$query_string;
 }
 ```
+
+当使用 [Homestead](https://laravel.com/docs/5.7/homestead) 和 [Valet](https://laravel.com/docs/5.7/valet) 时，优雅的链接将被自动配置。
