@@ -1,3 +1,4 @@
 # 起步
 
-* [项目安装](0101-installation.md)
+* [安装](0101-installation.md)
+* [配置](0102-configuration.md)
