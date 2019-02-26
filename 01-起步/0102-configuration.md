@@ -2,6 +2,9 @@
 
 * [概述](#gai-shu)
 * [环境配置](#huan-jing-pei-zhi)
+  * [环境变量类型](#huan-jing-bian-liang-lei-xing)
+  * [环境变量类型](#jian-suo-huan-jing-pei-zhi)
+  * [确定当前环境](#que-ding-dang-qian-huan-jing)
 * [访问配置值](#fang-wen-pei-zhi-zhi)
 * [配置缓存](#pei-zhi-huan-cun)
 * [维护模式](#wei-hu-mo-shi)
@@ -81,10 +84,101 @@ if (App::environment(['local', 'staging'])) {
 
 当前应用程序环境检测可以被一个服务器级别的 `APP_ENV` 环境变量覆盖。当你需要为不同的环境配置共享相同的应用程序时，这将非常有用，因此你可以在你服务器的配置里设置一个给定的主机以匹配给定的环境。
 
-{% endhint %
+{% endhint %}
+
+### 从调试页面隐藏环境变量
+
+当一个异常未被捕获并且 `APP_DEBUG` 环境变量是 `true`，调试页面将显示所有环境变量及其内容。在某些情况下你可能想要隐藏某些变量。你可以在你的 `config/app.php` 配置文件中通过更新 `debug_blacklist` 选项来完成此操作。
+
+在环境变量和服务器 / 请求数据中有一些变量是可用的。因此，你可能需要将它们列入到 `$_ENV` 和 `$_SERVER` 的黑名单中：
+
+```php
+return [
+
+    // ...
+
+    'debug_blacklist' => [
+        '_ENV' => [
+            'APP_KEY',
+            'DB_PASSWORD',
+        ],
+
+        '_SERVER' => [
+            'APP_KEY',
+            'DB_PASSWORD',
+        ],
+
+        '_POST' => [
+            'password',
+        ],
+    ],
+];
+```
 
 ## 访问配置值
 
+你可以从应用程序的任何位置使用全局 `config` 助手函数轻松访问你的配置值。此配置值可以使用 『.』语法访问，该语法包含你要访问的文件名称和选项。还可以指定一个默认的值，如果配置选项不存在，将返回默认值：
+
+```php
+$value = config('app.timezone');
+```
+
+在运行时设置配置值，将一个数组传递到 `config` 助手函数：
+
+```php
+config(['app.timezone' => 'America/Chicago']);
+```
+
 ## 配置缓存
 
+为了提高应用程序的速度，你应该使用 `config:cache` Artisan 命令将所有配置文件缓存到单个文件中。这将应用程序的所有配置选项组合到一个文件中，该文件将通过框架快速加载。
+
+通常你应该运行 `php artisan config:cache` 命令作为你生产部署例程的一部分。这个命令不应该运行在本地开发中，因为在应用程序开发期间中配置选项将频繁的需要去更改。
+
+{% hint style="danger" %}
+
+如果你在部署过程中执行 `config:cache` 命令，你应该确保只从配置文件中调用 `env` 函数。一旦缓存被缓存，`.env` 文件将不被加载，并且所有对 `env` 函数的调用将返回 `null`。
+
+{% endhint %}
+
 ## 维护模式
+
+当你的应用程序处于维护模式时，进入应用程序的所有请求将显示一个自定义视图。这使得更新或者当执行维护时轻松『禁用』应用程序。维护模式检查程序包含在应用程序的默认中间件堆栈中。如果应用程序处于维护模式，则一个状态码为 503 的 `MaintenanceModeException` 将被抛出。
+
+要启用维护模式，执行 `down` Artisan 命令：
+
+```bash
+php artisan down
+```
+
+你还可以向 `down` 命令提供 `message` 和 `retry` 选项。`message` 值可用于显示或记录自定义消息，而 `retry` 值将作为 `Retry-After` 的 HTTP 头值被设置：
+
+```bash
+php artisan down --message="Upgrading Database" --retry=60
+```
+
+即使在维护模式下，也可以使用此命令的 `allow` 选项让特定的 IP 地址或网络允许访问应用程序：
+
+```bash
+php artisan down --allow=127.0.0.1 --allow=192.168.0.0/16
+```
+
+要禁用维护模式，请使用 `up` 命令：
+
+```bash
+php artisan up
+```
+
+{% hint style="info" %}
+
+你可以通过在 `resources/views/errors/503.blade.php` 文件中定义你自己模板来自定义默认的维护模式模板。
+
+{% endhint %}
+
+### 维护模式 & 队列
+
+当你的应用程序处于维护模式时，[queued jobs](https://laravel.com/docs/5.7/queues) 将不会处理。一旦应用程序退出维护模式时，作业将继续正常处理。
+
+### 维护模式的替代方案
+
+由于维护模式要求你的应用程序有几秒钟的停机，因此请考虑像 [Envoyer](https://envoyer.io/) 这样的替代方案来完成 Laravel 的零停机部署。
