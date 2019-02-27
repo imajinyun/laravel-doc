@@ -1,5 +1,32 @@
 # 目录结构
 
+* [简介](#jian-jie)
+  * [模型目录在哪里](#mo-xing-mu-lu-zai-na-li)
+* [根目录](#gen-mu-lu)
+  * [App 目录](#app-mu-lu)
+  * [Config 目录](#config-mu-lu)
+  * [Bootstrap 目录](#bootstrap-mu-lu)
+  * [Database 目录](#database-mu-lu)
+  * [Public 目录](#public-mu-lu)
+  * [Resources 目录](#resources-mu-lu)
+  * [Routes 目录](#routes-mu-lu)
+  * [Storage 目录](#storage-mu-lu)
+  * [Tests 目录](#tests-mu-lu)
+  * [Vendor 目录](#vendor-mu-lu)
+* [应用目录](#ying-yong-mu-lu)
+  * [Broadcasting 目录](#broadcasting-mu-lu)
+  * [Console 目录](#console-mu-lu)
+  * [Events 目录](#events-mu-lu)
+  * [Exceptions 目录](#exceptions-mu-lu)
+  * [Http 目录](#http-mu-lu)
+  * [Jobs 目录](#jobs-mu-lu)
+  * [Listeners 目录](#listeners-mu-lu)
+  * [Mail 目录](#mail-mu-lu)
+  * [Notifications 目录](#notifications-mu-lu)
+  * [Policies 目录](#policies-mu-lu)
+  * [Providers 目录](#providers-mu-lu)
+  * [Rules 目录](#rules-mu-lu)
+
 ## 简介
 
 默认的 Laravel 应用程序结构旨在为大型和小型应用程序提供一个很好的起点。当然，不管怎么你可以按自己的喜好随意组织你的应用程序。Laravel 对任何给定类的位置几乎没有任限制——只要 Composer 能自动加载该类。
