@@ -39,19 +39,19 @@
 
 ## 根目录
 
-### App 目录
+### app 目录
 
 `app` 目录包含你的应用程序的核心代码。不久我们将更加详细地探索这个目录；然而，你的应用程序中的几乎所有的类将会位于此目录中。
 
-### Bootstrap 目录
+### bootstrap 目录
 
 `bootstrap` 目录包含引导框架的 `app.php` 文件。这个目录还安置一个 `cache` 目录，此目录包含为了性能优化的框架生成文件，比如：路由和服务缓存文件。
 
-### Config 目录
+### config 目录
 
 顾名思义，`config` 目录包含应用程序的所有配置文件。阅读所有这些文件并熟悉所有对你而言可用的选项是一个好的主意。
 
-### Database 目录
+### database 目录
 
 `database` 目录包含数据库迁移、模型工厂和填充。如果你愿意，你还可以使用此目录保存 SQLite 数据库。
 
@@ -101,9 +101,15 @@
 
 ### Broadcasting 目录
 
+`Broadcasting` 目录包含应用程序的所有广播通道类。这些类使用 `make:channel` 命令生成。此目录默认时不存在的，但是当你创建第一个通道时它将被创建。要了解更多的关于频道的信息，查看有关文档 [event broadcasting](https://laravel.com/docs/5.8/broadcasting)。
+
 ### Console 目录
 
+`Console` 目录包含应用程序的所有自定义 Artisan 命令。这些命令可以使用 `make:command` 命令生成。此目录也安置了控制台内核，在其中你可以注册自定义的 Artisan 命令，并定义 [scheduled tasks](https://laravel.com/docs/5.8/scheduling)。
+
 ### Events 目录
+
+默认情况下这个目录是不存在的，但你可以通过 `event:generate` 和 `make:event` Artisan 命令去创建。`Events` 目录安置 [event classes](https://laravel.com/docs/5.8/events)。事件可用于警告应用程序的其它部分发生了一个给定的操作，提供了极大的灵活性和解耦。
 
 ### Exceptions 目录
 
