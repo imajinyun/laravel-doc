@@ -46,11 +46,31 @@
 
 ### storage 目录
 
+`storage` 目录包含你编译的 Blade 模板，基于会话的文件，缓存文件和通过框架生成的其它文件。此目录分为 `app`，`framework` 和 `logs` 目录。`app` 目录可用来存储应用程序生成的任何文件。`framework` 目录用来存储框架生成的文件和缓存。最后，`logs` 目录包含应用程序的日志文件。
+
+`storage/app/public` 目录可用来存储像用户头像这种应该公开访问的用户生成文件。你应当在 `public/storage` 处创建一个指向此目录的符号链接。你可以使用 `php artisan storage:link` 命令创建此链接。
+
 ### tests 目录
+
+`tests` 目录包含你的自动化测试。一个开箱即用的示例 [PHPUnit](https://phpunit.de/) 测试被提供。每个测试类应当以单词 `Test` 为后缀。你可以使用 `phpunit` 或者 `php vendor/bin/phpunit` 命令运行测试。
 
 ### vendor 目录
 
+`vendor` 目录包含 [Composer](https://getcomposer.org/) 依赖项。
+
 ## 应用目录
+
+你的大部分的应用程序都位于 `app` 目录中。默认情况下，此目录的命名空间为 `App`，并通过 Composer 使用 [PSR-4 autoloading standard](https://www.php-fig.org/psr/psr-4/) 自动加载。
+
+`app` 目录包含额外的各种目录，比如：`Console`，`Http` 和 `Providers`。将 `Console` 和 `Http` 目录视为向应用程序的核心提供 API。HTTP 协议和 CLI 都是与应用程序交互的机制，但实际上并不包含应用程序逻辑。换句话说，它们是向你的应用程序发出命令的两种方式。`Console` 目录包含所有的 Artisan 命令，而 `Http` 目录包含你的控制器，中间件和请求。
+
+当你使用 `make` Artisan 命令生成类时，将在 `app` 目录下生成各种其它目录。因此，例如，`app/Jobs` 目录直到你执行 `make:job` Artisan 命令去生成一个作业类之前将不存在。
+
+{% hint style="info" %}
+
+许多类通过 Artisan 命令生成在 `app` 目录中。为了查看可用的命令，在你的终端运行 `php artisan list make` 命令。
+
+{% endhint %}
 
 ### Broadcasting 目录
 
