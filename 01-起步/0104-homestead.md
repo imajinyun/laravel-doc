@@ -2,11 +2,22 @@
 
 * [简介](#jian-jie)
 * [安装与设置](#an-zhuang-yu-she-zhi)
+  * [起步](#qi-bu)
+  * [配置 Homestead](#pei-zhi-homestead)
+  * [运行 Vagrant 盒子](#yun-xing-vagrant-he-zi)
+  * [每个项目中安装](#mei-ge-xiang-mu-zhong-an-zhuang)
+  * [安装 MariaDB](#安装-MariaDB)
+  * [安装 MongoDB](#an-zhuang-mongodb)
+  * [安装 Elasticsearch](#an-zhuang-elasticsearch)
+  * [安装 Neo4j](#an-zhuang-neo4j)
+  * [别名](#bei-ming)
 * [日常使用](#ri-chang-shi-yong)
+  * [全局访问 Homestead](#quan-ju-fang-wen-homestead)
 * [网络接口](#wang-luo-jie-kou)
 * [扩展 Homestead](#kuo-zhan-homestead)
 * [更新 Homestead](#gen-xing-homestead)
 * [提供特殊设置](#ti-gong-te-shu-she-zhi)
+  * [VirtualBox](#virtualbox)
 
 ## 简介
 
@@ -183,13 +194,13 @@ sites:
 http://homestead.test
 ```
 
-#### 运行 Vagrant 盒子
+### 运行 Vagrant 盒子
 
 一旦你根据你的喜好编辑 `Homestead.yaml` 后，从你的 Homestead 目录运行 `vagrant up` 命令。Vagrant 将启动虚拟机并自动配置你的共享文件夹和 Nginx 站点。
 
 在销毁虚拟机，你可以使用 `vagrant destroy --force` 命令。
 
-#### 每个项目中安装
+### 每个项目中安装
 
 你可以为你所管理的每个项目配置配置一个 Homestead 实例，而不是在全局安装 Homestead 并在所有的项目中共享相同的 Homestead 盒子。如果你希望随项目一起发送一个 `Vagrantfile`，那么为每个项目安装 Homestead 可能是大有裨益的，允许其它人在项目中 `vagrant up` 进行工作。
 
@@ -215,7 +226,7 @@ vendor\\bin\\homestead make
 
 接下来，在终端中运行 `vagrant up` 命令并在浏览器中输入 `http://homestead.test` 去访问你的项目。记住，你将仍然需要添加一个 `homestead.test` 或者你自定义的域名到 `/etc/hosts` 文件中。
 
-#### 安装 MariaDB
+### 安装 MariaDB
 
 如果你偏好使用 MariaDB 而不是 MySQL，你可以在 `Homestead.yaml` 文件中添加 `mariadb` 选项。这个选项将移除 MySQL 并安装 MariaDB。MariaDB 服务作为 MySQL 的一个替代品，因此你仍然在你的应用程序数据库配置中使用 `mysql` 数据库驱动：
 
@@ -228,7 +239,7 @@ provider: virtualbox
 mariadb: true
 ```
 
-#### 安装 MongoDB
+### 安装 MongoDB
 
 要安装 MongoDB 社区版，更新你的 `Homestead.yaml` 文件用如下的配置选项：
 
@@ -238,7 +249,7 @@ mongodb: true
 
 默认的 MongoDB 安装将设置数据库用户名为 `homestead`，相应地密码为 `secret`。
 
-#### 安装 Elasticsearch
+### 安装 Elasticsearch
 
 要安装 Elasticsearch，添加 `elasticsearch` 选项到你的 `Homestead.yaml` 文件并指定一个支持的版本，该版本可能是一个主版本或者一个精确的版本号（主版本号.次版本号.修复版本号）。默认安装将创建一个名为 `homestead` 的集群。你应当从不给 Elasticsearch 超过操作系统一半的内存，所以要确保你的 Homestead 机器至少有两倍的 Elasticsearch 分配的内存：
 
@@ -257,7 +268,7 @@ elasticsearch: 6
 
 {% endhint %}
 
-#### 安装 Neo4j
+### 安装 Neo4j
 
 [Neo4j](https://neo4j.com/) 是一个图形数据库管理系统。要安装 Neo4j 社区版，更新你的 `Homestead.yaml` 文件用如下的配置选项：
 
@@ -267,7 +278,7 @@ neo4j: true
 
 默认的 Neo4j 安装将设置数据库的用户名为 `homestead`，相应的密码为 `secret`。要访问 Neo4j，用浏览器访问 `http://homestead.test:7474` 地址。你的端口 `7687`（Bolt），`7474`（HTTP），`7473`（HTTPS）是准备好服务来自 Neo4j 客户端的请求的。
 
-#### 别名
+### 别名
 
 你可以通过在你的 Homestead 目录下修改 `aliases` 文件添加 Bash 别名到你的 Homestead 机器：
 
@@ -343,18 +354,311 @@ backup: true
 
 ### 添加额外的站点
 
+一旦你的 Homestead 环境已配置并运行，你可以为你的 Laravel 应用添加额外的 Nginx 站点。你可能希望在单个 Homestead 环境运行多个 Laravel 安装。要添加额外的站点，到 `Homestead.yaml` 文件中添加站点：
+
+```bash
+sites:
+    - map: homestead.test
+      to: /home/vagrant/code/my-project/public
+    - map: another.test
+      to: /home/vagrant/code/another/public
+```
+
+如果 Vagrant 不能自动管理你的『hosts』文件，你可能还需要添加新的站点到该文件中：
+
+```bash
+192.168.10.10  homestead.test
+192.168.10.10  another.test
+```
+
+一旦这个站点被添加，从你的 Homestead 目录运行 `vagrant reload --provision` 命令。
+
+#### 站点类型
+
+Homestead 支持多种类型的站点，允许你轻松运行不是基于 Laravel 的项目。例如，我们可以使用 `symfony2` 站点类型轻松地添加一个 Symfony 应用到 Homestead：
+
+```bash
+sites:
+    - map: symfony2.test
+      to: /home/vagrant/code/my-symfony-project/web
+      type: "symfony2"
+```
+
+可用的站点类型是：`apache`，`apigility`，`expressive`，`laravel`（默认），`proxy`，`silverstripe`，`statamic`，`symfony2`，`symfony4`，和 `zf`。
+
+#### 站点参数
+
+你可以通过 `params` 站点指令添加额外的 Nginx `fastcgi_param` 值到你的站点。例如，我们添加一个值为 `BAR` 的 `Foo` 参数：
+
+```bash
+sites:
+    - map: homestead.test
+      to: /home/vagrant/code/my-project/public
+      params:
+          - key: FOO
+            value: BAR
+```
+
 ### 环境变量
+
+你能通过添加如下的值到 `Homestead.yaml` 文件来设置全局环境变量：
+
+```bash
+variables:
+    - key: APP_ENV
+      value: local
+    - key: FOO
+      value: bar
+```
+
+更新 `Homestead.yaml` 文件之后，确保通过运行 `vagrant reload --provision` 命令重新配置机器。这个将更新所有安装 的 PHP 版本的 PHP-FPM 配置并为 `vagrant` 用户更新环境。
 
 ### 配置定时计划
 
+Laravel 提供了一种 [计划定时作业](https://laravel.com/docs/5.8/scheduling) 的方式，通过安排单个 `schedule:run` Artisan 命令去每分钟运行。`schedule:run` 命令将检查在你在 `App\Console\Kernel` 类中定义的计划来决定运行哪个作业。
+
+如果你想为一个 Homestead 站点的 `schedule:run` 命令运行起来，在定义站点时，你可以设置 `schedule` 选项为 `true`：
+
+```bash
+sites:
+    - map: homestead.test
+      to: /home/vagrant/code/my-project/public
+      schedule: true
+```
+
+站点的 Cron 作业将被定义在虚机的 `/etc/cron.d` 目录中。
+
 ### 配置 Mailhog
+
+Mailhog 允许你轻松地捕获外发的电子邮件并进行检查它，而实际上没有将发送邮件给收件人。开始使用时，使用以下的邮件设置更新你的 `.env` 文件：
+
+```bash
+MAIL_DRIVER=smtp
+MAIL_HOST=localhost
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+```
+
+一旦 Mailhog 被配置，你可以在 `http://localhost:8025` 上访问 Mailhog 控制面板。
 
 ### 配置 Minio
 
+Minio 是一个开源的对象存储服务器，具有与 Amazon S3 兼容的 API。要安装 Minio，用以下的配置选项更新你的 `Homestead.yaml` 文件：
+
+```bash
+minio: true
+```
+
+默认情况下，Minio 在端口 `9600` 上是可用的。你可以访问 Minio 控制面板通过访问 `http://homestead:9600`。默认访问的键名是 `homestead`，同时默认的密钥是 `secretkey`。当访问 Minio 时，你应当总是使用 `us-east-1`。
+
+为了使用 Minio，你将需要在你的 `config/filesystems.php` 配置文件中调整 S3 磁盘配置。你将需要添加 `use_path_style_endpoint` 选项到磁盘配置，并将 `url` 键更改为 `endpoint`：
+
+```php
+'s3' => [
+    'driver' => 's3',
+    'key' => env('AWS_ACCESS_KEY_ID'),
+    'secret' => env('AWS_SECRET_ACCESS_KEY'),
+    'region' => env('AWS_DEFAULT_REGION'),
+    'bucket' => env('AWS_BUCKET'),
+    'endpoint' => env('AWS_URL'),
+    'use_path_style_endpoint' => true
+]
+```
+
+最后，确保你的 `.env` 文件有如下的选项：
+
+```bash
+AWS_ACCESS_KEY_ID=homestead
+AWS_SECRET_ACCESS_KEY=secretkey
+AWS_DEFAULT_REGION=us-east-1
+AWS_URL=http://homestead:9600
+```
+
+为了配置存储桶，在 Homestead 配置文件中添加一个 `buckets` 指令：
+
+```bash
+buckets:
+    - name: your-bucket
+      policy: public
+    - name: your-private-bucket
+      policy: none
+```
+
+支持的 `policy` 值包括：`none`，`download`，`upload` 和 `public`。
+
+### 端口
+
+默认情况下，如下的端口将转发到你的 Homestead 环境：
+
+* **SSH**：2222 -> 转发到 22
+* **ngrok UI**：4040 -> 转发到 4040
+* **HTTP**：8000 -> 转发到 80
+* **HTTPS**：44300 -> 转发到 443
+* **MySQL**：33060 -> 转发到 3306
+* **PostgreSQL**：54320 -> 转发到 5432
+* **MongoDB**：27017 -> 转发到 27017
+* **Mailhog**：8025 -> 转发到 8025
+* **Minio**：9600 -> 转发到 9600
+
+#### 转发额外的端口
+
+如果你愿意，你可以转发额外的端口到 Vagrant 盒子，同时也指定他们的协议：
+
+```bash
+ports:
+    - send: 50000
+      to: 5000
+    - send: 7777
+      to: 777
+      protocol: udp
+```
+
+### 共享你的环境
+
+有时你希望共享你当前工作的内容跟同事或客户。Vagrant 有内置的方法通过 `vagrant share` 去支持这个；然而，如果在 `Homestead.yaml` 文件中有多个站点配置，这个将不会工作。
+
+为了解决这个问题，Homestead 包含它自己的 `share` 命令。开始时，SSH 通过 `vagrant ssh` 进入你的 Homestead 机器并运行 `share homestead.test`。这个将从你的 `Homestead.yaml` 配置文件中分享 `homestead.test` 站点。当然，你可以将任何其它配置的站点替换为 `homestead.test`：
+
+```bash
+share homestead.test
+```
+
+运行此命令之后，你将看到一个 Ngrok 屏幕出现，其中包含了活动日志和共享站点的可访问的 URLs。如果你想指定一个自定义的区域，子域，或者其它 Ngrok 运行时选项，你可以添加他们到你的 `share` 命令：
+
+```bash
+share homestead.test -region=eu -subdomain=laravel
+```
+
+{% hint style="danger" %}
+
+记住，Vagrant 本质上是不安全的，并且在运行 `share` 命令时将虚拟机显露到互联网。
+
+{% endhint %}
+
+### 多版本 PHP
+
+Homestead 6 在同一个虚拟机上引入了对多个 PHP 版本的支持。你可以在你的 `Homestead.yaml` 文件中指定要用于给定站点的 PHP 版本。可用的 PHP 版本是：『7.1』，『7.2』和『7.3』（默认）：
+
+```bash
+sites:
+    - map: homestead.test
+      to: /home/vagrant/code/my-project/public
+      php: "7.1"
+```
+
+另外，你可以通过 CLI 使用任何支持的 PHP 版本：
+
+```bash
+php7.1 artisan list
+php7.2 artisan list
+php7.3 artisan list
+```
+
+### Web 服务器
+
+默认情况下，Homestead 使用 Nginx web 服务器。然而，如果 `apache` 是指定的一个站点类型，它能安装 Apache。同时两个 web 服务器在同时被安装，他们不能同时运行。`flip` 脚本命令可用来轻松处理 web 服务器之间的切换。`flip` 命令自动确定正在运行的 web 服务器，将其关闭。然后启动其它服务器。要使用这个命令，SSH 进入到你的 Homestead 机器并在终端运行命令：
+
+```bash
+flip
+```
+
+### Mail
+
+Homestead 包括 Postfix 邮件传输代理，默认监听 `1025` 端口。因此，你可以指示你的应用程序在 `localhost` 端口 `1025` 上使用 `smtp` 邮件驱动。所有发送的邮件将由 Postfix 处理并由 Mailhog 捕获。要查看已发送的邮件，在 web 浏览器中打开 `http://localhost:8025`。
+
 ## 网络接口
+
+`Homestead.yaml` 中的 `networks` 属性为 Homestead 环境配置网络接口。你可以根据需要配置多个接口：
+
+```bash
+networks:
+    - type: "private_network"
+      ip: "192.168.10.20"
+```
+
+要开启一个 [桥接](https://www.vagrantup.com/docs/networking/public_network.html) 接口，配置 `bridge` 设置并改变 `public_network` 网络类型：
+
+```bash
+networks:
+    - type: "public_network"
+      ip: "192.168.10.20"
+      bridge: "en1: Wi-Fi (AirPort)"
+```
+
+要开启 [DHCP](https://www.vagrantup.com/docs/networking/public_network.html)，仅从你的配置中移除 `ip` 选项：
+
+```bash
+networks:
+    - type: "public_network"
+      bridge: "en1: Wi-Fi (AirPort)"
+```
 
 ## 扩展 Homestead
 
+你能在 Homestead 根目录下使用 `after.sh` 脚本扩展 Homestead。在这个文件中，你可以添加正确配置和自定义虚拟机所需的任何 shell 命令。
+
+当自定义 Homestead 时，Ubuntu 可能会询问你是否要保留程序包的原始配置或者用一个新的配置文件覆盖它。为了避免这种情况，你应该在安装软件包时使用以下的命令，以避免覆盖之前由 Homestead 编写的任何配置：
+
+```bash
+sudo apt-get -y \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
+    install your-package
+```
+
 ## 更新 Homestead
 
+你能通过一些简单的步骤更新 Homestead。首先，你应当使用 `vagrant box update` 命令更新 Vagrant 盒子：
+
+```bash
+vagrant box update
+```
+
+接下来，你需要去更新 Homestead 源代码。如果你克隆过仓库，你能在最初克隆仓库的位置运行如下的命令：
+
+```bash
+git fetch
+
+git checkout v8.0.1
+```
+
+这些命令从 GitHub 仓库拉取最新的 Homestead 代码，获取最新的标记，然后检出最新的标记版本。你能在 [GitHub 版本页面](https://github.com/laravel/homestead/releases) 找到最新稳定的版本。
+
+如果你通过你的项目的 `composer.json` 安装 Homestead，你应当确保你的 `composer.json` 包含 `"laravel/homestead": "^8"` 并更新你的依赖项：
+
+```bash
+composer update
+```
+
+最后，你将需要销毁和重新生成你的 Homestead 盒子去利用最新的 Vagrant 安装。为了实现这个，在你的 Homestead 目录运行如下的命令：
+
+```bash
+vagrant destroy
+
+vagrant up
+```
+
 ## 提供特殊设置
+
+### VirtualBox
+
+#### natdnshostresolver
+
+默认情况下，Homestead 将 `natdnshostresolver` 配置设置为 `on`。这允许 Homestead 去使用你的主机操作系统的 DNS 设置。如果你不想覆盖这个行为，添加如下的行到你的 `Homestead.yaml` 文件：
+
+```bash
+provider: virtualbox
+natdnshostresolver: off
+```
+
+#### Windows 上的符号链接
+
+如果符号链接在你的 Windows 机器上无法正常工作，你可能需要添加以下的块到 `Vagrantfile` 文件：
+
+```bash
+config.vm.provider "virtualbox" do |v|
+    v.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
+end
+```
