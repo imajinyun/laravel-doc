@@ -5,6 +5,7 @@
   * [配置](01-起步/0102-configuration.md)
   * [目录结构](01-起步/0103-structure.md)
   * [Homestead](01-起步/0104-homestead.md)
+  * [Valet](01-起步/0105-valet.md)
 * [架构概念](02-架构概念/README.md)
 * [基础](03-基础/README.md)
 * [前端](04-前端/README.md)
