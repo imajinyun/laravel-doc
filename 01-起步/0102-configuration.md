@@ -177,7 +177,7 @@ php artisan up
 
 ### 维护模式 & 队列
 
-当你的应用程序处于维护模式时，[queued jobs](https://laravel.com/docs/5.7/queues) 将不会处理。一旦应用程序退出维护模式时，作业将继续正常处理。
+当你的应用程序处于维护模式时，[队列作业](https://laravel.com/docs/5.7/queues) 将不会处理。一旦应用程序退出维护模式时，作业将继续正常处理。
 
 ### 维护模式的替代方案
 

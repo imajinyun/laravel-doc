@@ -87,7 +87,7 @@
 
 ## 应用目录
 
-你的大部分的应用程序都位于 `app` 目录中。默认情况下，此目录的命名空间为 `App`，并通过 Composer 使用 [PSR-4 autoloading standard](https://www.php-fig.org/psr/psr-4/) 自动加载。
+你的大部分的应用程序都位于 `app` 目录中。默认情况下，此目录的命名空间为 `App`，并通过 Composer 使用 [PSR-4 自动加载标准](https://www.php-fig.org/psr/psr-4/) 自动加载。
 
 `app` 目录包含额外的各种目录，比如：`Console`，`Http` 和 `Providers`。将 `Console` 和 `Http` 目录视为向应用程序的核心提供 API。HTTP 协议和 CLI 都是与应用程序交互的机制，但实际上并不包含应用程序逻辑。换句话说，它们是向你的应用程序发出命令的两种方式。`Console` 目录包含所有的 Artisan 命令，而 `Http` 目录包含你的控制器，中间件和请求。
 
@@ -101,30 +101,50 @@
 
 ### Broadcasting 目录
 
-`Broadcasting` 目录包含应用程序的所有广播通道类。这些类使用 `make:channel` 命令生成。此目录默认时不存在的，但是当你创建第一个通道时它将被创建。要了解更多的关于频道的信息，查看有关文档 [event broadcasting](https://laravel.com/docs/5.8/broadcasting)。
+`Broadcasting` 目录包含应用程序的所有广播通道类。这些类使用 `make:channel` 命令生成。此目录默认时不存在的，但是当你创建第一个通道时它将被创建。要了解更多的关于频道的信息，查看有关文档 [事件广播](https://laravel.com/docs/5.8/broadcasting)。
 
 ### Console 目录
 
-`Console` 目录包含应用程序的所有自定义 Artisan 命令。这些命令可以使用 `make:command` 命令生成。此目录也安置了控制台内核，在其中你可以注册自定义的 Artisan 命令，并定义 [scheduled tasks](https://laravel.com/docs/5.8/scheduling)。
+`Console` 目录包含应用程序的所有自定义 Artisan 命令。这些命令可以使用 `make:command` 命令生成。此目录也安置了控制台内核，在其中你可以注册自定义的 Artisan 命令，并定义 [计划任务](https://laravel.com/docs/5.8/scheduling)。
 
 ### Events 目录
 
-默认情况下这个目录是不存在的，但你可以通过 `event:generate` 和 `make:event` Artisan 命令去创建。`Events` 目录安置 [event classes](https://laravel.com/docs/5.8/events)。事件可用于警告应用程序的其它部分发生了一个给定的操作，提供了极大的灵活性和解耦。
+默认情况下这个目录是不存在的，但你可以通过 `event:generate` 和 `make:event` Artisan 命令去创建。`Events` 目录安置 [事件类](https://laravel.com/docs/5.8/events)。事件可用于警告应用程序的其它部分发生了一个给定的操作，提供了极大的灵活性和解耦。
 
 ### Exceptions 目录
 
+`Exceptions` 目录包含应用程序的异常处理，并且也是一个放置应用程序抛出任何异常的好地方。如果你想自定义异常的记录和渲染方式，你应该修改此目录中的 `Handler` 类。
+
 ### Http 目录
+
+`Http` 目录包含你的控制器，中间件和表单请求。处理进入应用程序请求的所有逻辑几乎都放置在此目录。
 
 ### Jobs 目录
 
+默认情况下这个目录是不存在的，但如果你执行 `make:job` Artisan 命令时，它将被创建出来。`Jobs` 目录安置应用程序的 [可排队作业](https://laravel.com/docs/5.8/queues)。Jobs 可由应用程序排对作业，也可以在当前请求的生命周期内同步运行。在当前请求期间同步运行的 Jobs 有时会称为『命令』，因为它们是 [命令模式](https://en.wikipedia.org/wiki/Command_pattern) 的一个实现。
+
 ### Listeners 目录
+
+默认情况下这个目录是不存在的，但如果你执行了 `event:generate` 或者 `make:listener` Artisan 命令时，它将会被创建出来。`Listeners` 目录包含 [事件](https://laravel.com/docs/5.8/events) 的处理类。事件侦听器接收一个事件实例并执行逻辑以响应被触发的事件。例如，一个 `UserRegistered` 事件可能被 `SendWelcomeEmail` 侦听器处理。
 
 ### Mail 目录
 
+默认情况下这个目录是不存在的，但如果你执行 `make:mail` Artisan 命令，它将被创建出来。`Mail` 目录包含应用程序发送邮件的所有类。邮件对象允许你去构建一个封装所有逻辑的邮件类，这个简单类中可以使用 `Mail::send` 方法发送邮件。
+
 ### Notifications 目录
+
+默认情况下这个目录是不存在的，但如果你执行 `make:notification` Artisan 命令，它将被创建出来。`Notifications` 目录包含应用程序的发送的所有『事务』通知，比如关于应用程序中发生的事件的简单通知。Laravel 的通知功能抽象了通过各种驱动（如：电子邮件，Slack，SMS 或者存储在数据库中）去发送通知。
 
 ### Policies 目录
 
+默认情况下这个目录是不存在的，但如果你执行 `make:policy` Artisan 命令，它将被创建出来。`Policies` 目录包含应用程序的授权策略类。策略用于确定一个用户是否对一个资源能否执行一个给定的操作。有关更多信息，查看 [授权文档](https://laravel.com/docs/5.8/authorization)。
+
 ### Providers 目录
 
+`Providers` 目录包含应用程序的所有 [服务提供者](https://laravel.com/docs/5.8/providers)。服务提供者通过在服务容器中绑定服务引导应用程序，注册事件或者准备为应用程序即将到来的请求执行其它任何任务。
+
+在一个新的 Laravel 应用中，此目录已经包含一些提供者。你可以根据需要随意将你自己的提供者添加到此目录中。
+
 ### Rules 目录
+
+默认情况下这个目录是不存在的，但如果你执行 `make:rule` Artisan 命令，它将被创建出来。`Rules` 目录包含应用程序的自定义验证规则对象。规则用于将复杂的验证逻辑封装在一个简单对象中。关于更多信息，查看 [验证文档](https://laravel.com/docs/5.8/validation)。
