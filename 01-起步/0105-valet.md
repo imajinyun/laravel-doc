@@ -1,10 +1,17 @@
 # Valet
 
 * [简介](#jian-jie)
+  * [Valet 还是 Homestead](#valet-hai-shi-homestead)
 * [安装](#an-zhuang)
+  * [其它](#qi-ta)
+  * [升级](#sheng-ji)
 * [服务站点](#fu-wu-zhan-dian)
+  * [park 命令](#park-ming-ling)
+  * [link 命令](#link-ming-ling)
+  * [使用 TLS 保护站点](#shi-yong-tls-bao-hu-zhan-dian)
 * [共享站点](#gong-xiang-zhan-dian)
 * [自定义 Valet 驱动](#zi-ding-yi-valet-qu-dong)
+  * [本地驱动](#ben-di-qu-dong)
 * [其它 Valet 命令](#qi-ta-valet-ming-ling)
 
 ## 简介
@@ -62,6 +69,8 @@ Valet 和 Homestead 都是配置你的 Laravel 开发环境的绝佳选择。选
 一旦 Valet 被安装，使用比如 `ping foobar.test` 这样的命令在你的终端尝试 ping 任何 `*.test` 域名。如果 Valet 安装正确，你应当看到此域名在 `127.0.0.1` 上响应。
 
 每次你的机器启动，Valet 将自动启动其守护进程。初始化 Valet 安装一旦完成就无需再次运行 `valet start` 或 `valet install` 命令。
+
+### 其它
 
 #### 使用其它域名
 
