@@ -5,3 +5,4 @@
 * [目录结构](0103-structure.md)
 * [Homestead](0104-homestead.md)
 * [Valet](0105-valet.md)
+* [部署](0106-deployment.md)
