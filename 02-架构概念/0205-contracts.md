@@ -223,7 +223,7 @@ class CacheOrderInformation
 | [Illuminate\Contracts\Redis\Factory](https://github.com/illuminate/contracts/blob/5.8/Redis/Factory.php)                                       | `Redis`                   |
 | [Illuminate\Contracts\Routing\BindingRegistrar](https://github.com/illuminate/contracts/blob/5.8/Routing/BindingRegistrar.php)                 | `Route`                   |
 | [Illuminate\Contracts\Routing\Registrar](https://github.com/illuminate/contracts/blob/5.8/Routing/Registrar.php)                               | `Route`                   |
-| [Illuminate\Contracts\Routing\ResponseFactory](https://github.com/illuminate/contracts/blob/5.8/Routing/ResponseFactory.php)                   | `Route`                   |
+| [Illuminate\Contracts\Routing\ResponseFactory](https://github.com/illuminate/contracts/blob/5.8/Routing/ResponseFactory.php)                   | `Response`                |
 | [Illuminate\Contracts\Routing\UrlGenerator](https://github.com/illuminate/contracts/blob/5.8/Routing/UrlGenerator.php)                         | `URL`                     |
 | [Illuminate\Contracts\Routing\UrlRoutable](https://github.com/illuminate/contracts/blob/5.8/Routing/UrlRoutable.php)                           |
 | [Illuminate\Contracts\Session\Session](https://github.com/illuminate/contracts/blob/5.8/Session/Session.php)                                   | `Session::driver()`       |
