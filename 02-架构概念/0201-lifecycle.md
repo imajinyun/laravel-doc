@@ -1,4 +1,4 @@
-# 请求生命周期
+# 请求周期
 
 * [简介](#jian-jie)
 * [生命周期概述](#sheng-ming-zhou-qi-gai-shu)
