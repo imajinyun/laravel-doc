@@ -11,6 +11,7 @@
   * [请求周期](02-架构概念/0201-lifecycle.md)
   * [服务容器](02-架构概念/0202-container.md)
   * [服务提供者](02-架构概念/0203-providers.md)
+  * [Facades](02-架构概念/0204-facades.md)
 * [基础](03-基础/README.md)
 * [前端](04-前端/README.md)
 * [安全](05-安全/README.md)
