@@ -200,11 +200,119 @@ Route::get('user/profile', function () {
 Route::get('user/profile', 'UserProfileController@show')->name('profile');
 ```
 
-### 生成指定路由的 URL
+### 对命名路由生成 URL
+
+一旦你对一个给定的路由分配一个名称，当通过全局的 `route` 方法生成 URL 或重定向时，你可以使用路由的名称：
+
+```php
+// 生成 URL...
+$url = route('profile');
+
+// 生成重定向...
+return redirect()->route('profile');
+```
+
+如果命名的路由定义了参数，你可以将参数作为第二个参数佬到 `route` 函数。给定的参数将自动插入到 URL 中的正确位置：
+
+```php
+Route::get('user/{id}/profile', function ($id) {
+    //
+})->name('profile');
+
+$url = route('profile', ['id' => 1]);
+```
 
 ### 检索当前路由
 
+如果你想确定当前请求是否已路由到一个给定的命名路由，你可以在一个路由实例上使用 `named` 方法。例如，你可以从一个路由中间件中检查当前路由名称：
+
+```php
+/**
+ * 处理即将到来的请求。
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @param  \Closure  $next
+ * @return mixed
+ */
+public function handle($request, Closure $next)
+{
+    if ($request->route()->named('profile')) {
+        //
+    }
+
+    return $next($request);
+}
+```
+
 ## 路由组
+
+路由组允许你去共享路由属性，比如：中间件或命名空间，穿过大量的路由而无需在每个路由上去定义这些属性。共享属性被指定在一个数组格式中作为 `Route::group` 方法的第一个参数。
+
+嵌套组尝试智能地将属性与它们的父组『合并』。中间件和 `where` 条件合并的同时附加了名称、命名空间和前缀。在 URI 前缀适当的位置自动添加命名空间分隔符和斜杠。
+
+### 中间件
+
+要分配中间件到组内的所有路由，你可以在定义组之前使用 `middleware` 方法。中间件按它们在数组中列出的顺序执行：
+
+```php
+Route::middleware(['first', 'second'])->group(function () {
+    Route::get('/', function () {
+        // 使用第一 & 第二个中间件
+    });
+
+    Route::get('user/profile', function () {
+        // 使用第一 & 第二个中间件
+    });
+});
+```
+
+### 命名空间
+
+路由组的另一个常见使用情形时使用 `namespace` 方法将相同的 PHP 命名空间分配给一组控制器：
+
+```php
+Route::namespace('Admin')->group(function () {
+    // 以 "App\Http\Controllers\Admin" 为命名空间的控制器
+});
+```
+
+记住，默认情况下，`RouteServiceProvider` 包含你的命名空间组中的路由文件，允许你去注册控制器路由而无需指定完整 `App\Http\Controllers` 命名空间前缀。因此，你仅需要去指定基本的 `App\Http\Controllers` 命名空间之后的命名空间部分即可。
+
+### 子域名路由
+
+路由组还可以用来处理子域名路由。可以像路由 URL 一样为子域名分配路由参数，允许你去捕获子域名的一部分为了在你的路由或控制器中使用。子域名大定义组之前可以通过调用 `domain` 方法去指定：
+
+```php
+Route::domain('{account}.myapp.com')->group(function () {
+    Route::get('user/{id}', function ($account, $id) {
+        //
+    });
+});
+```
+
+### 路由前缀
+
+`prefix` 方法可以用于为组中的每个路由添加一个给定的 URI。例如，你可以给组内的所有路由 URI 添加 `admin` 前缀：
+
+```php
+Route::prefix('admin')->group(function () {
+    Route::get('users', function () {
+        // 匹配 "/admin/users" URL
+    });
+});
+```
+
+### 路由名称前缀
+
+`name` 方法可以用来为组内的每个路由名称添加一个给定的字符串前缀。例如，你可能想使用 `admin` 为所有分组路由的名称添加前缀。给定字符串前缀与指定的路由名称完全相同，因此我们将确保在前缀中提供尾随 `.` 字符：
+
+```php
+Route::name('admin.')->group(function () {
+    Route::get('users', function () {
+        // 路由分配的名称为 "admin.users"...
+    })->name('users');
+});
+```
 
 ## 路由模型绑定
 
