@@ -80,9 +80,129 @@ Route::permanentRedirect('/here', 'there');
 
 ### 视图路由
 
+如果你的路由只需要返回一个视图，你可以使用 `Route::view` 方法。像 `redirect` 方法，此方法提供一个简单的快捷方式以便于你无需定义一个完整的路由或控制器。`view` 方法接受一个 URI 作为它的第一个参数并将视图名称作为它的第二个参数。另外，你可以提供一个数组数据作为可选的第三个参数传递到视图：
+
+```php
+Route::view('/welcome', 'welcome');
+
+Route::view('/welcome', 'welcome', ['name' => 'Taylor']);
+```
+
 ## 路由参数
 
+### 必要参数
+
+有时你将需要去捕获你的路由中的 URI 段。例如，你可能需要从一个 URL 中捕获一个用户的 ID。你可以通过定义路由参数来这样做：
+
+```php
+Route::get('user/{id}', function ($id) {
+    return 'User '.$id;
+});
+```
+
+你可以定义与许多路由参数一样多的必要的路由：
+
+```php
+Route::get('posts/{post}/comments/{comment}', function ($postId, $commentId) {
+    //
+});
+```
+
+路由参数始终封闭在 `{}` 括号内，并且应该由字母字符组成且不能包含一个 `-` 字段。使用一个下划线（`_`）而不是 `-` 字符。路由参数被注入到路由回调 / 控制器是基于它们的顺序——与回调 / 控制器参数的名称无关紧要。
+
+### 可选参数
+
+偶尔你可能需要指定一个路由参数，但是要让该路由参数存在是可选的。你可以通过在参数名称后放置一个 `?` 标记来这样做。确保对给定的路由的相应变量赋予一个默认值：
+
+```php
+Route::get('user/{name?}', function ($name = null) {
+    return $name;
+});
+
+Route::get('user/{name?}', function ($name = 'John') {
+    return $name;
+});
+```
+
+### 正则表达式约束
+
+你可以在路由实例上使用 `where` 方法约束路由参数的格式。`where` 方法接受参数的名称和参数应该如何约束的一个正则表达式定义：
+
+```php
+Route::get('user/{name}', function ($name) {
+    //
+})->where('name', '[A-Za-z]+');
+
+Route::get('user/{id}', function ($id) {
+    //
+})->where('id', '[0-9]+');
+
+Route::get('user/{id}/{name}', function ($id, $name) {
+    //
+})->where(['id' => '[0-9]+', 'name' => '[a-z]+']);
+```
+
+#### 全局约束
+
+如果你希望一个路由参数始终通过一个给定的正则表达式约束，则可以使用 `pattern` 方法。你应该在你的 `RouteServiceProvider` 类的 `boot` 方法中定义这些模式：
+
+```php
+/**
+ * 定义你的路由模型绑定，模式过滤等等...
+ *
+ * @return void
+ */
+public function boot()
+{
+    Route::pattern('id', '[0-9]+');
+
+    parent::boot();
+}
+```
+
+一旦模式被定义，它将自动应用到所有使用该参数名称的路由上：
+
+```php
+Route::get('user/{id}', function ($id) {
+    // 仅在 {id} 是数字时执行...
+});
+```
+
+#### 编码正斜杠
+
+Laravel 路由组件允许除 `/` 之外的所有字符。你必须使用 `where` 条件正则表达式明确地允许 `/` 成为占位符的一部分：
+
+```php
+Route::get('search/{search}', function ($search) {
+    return $search;
+})->where('search', '.*');
+```
+
+{% hint sytle="danger" %}
+
+仅在最后的路由段中支持编码的正斜杠。
+
+{% endhint %}
+
 ## 命名路由
+
+命名路允许为特定的路由方便地生成 URL 或重定向。你可以通过链式 `name` 方法在路由的定义上指定一个路由的名称：
+
+```php
+Route::get('user/profile', function () {
+    //
+})->name('profile');
+```
+
+你还可以为控制器动作指定路由名称：
+
+```php
+Route::get('user/profile', 'UserProfileController@show')->name('profile');
+```
+
+### 生成指定路由的 URL
+
+### 检索当前路由
 
 ## 路由组
 
