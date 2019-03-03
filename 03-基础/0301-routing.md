@@ -316,4 +316,38 @@ Route::name('admin.')->group(function () {
 
 ## 路由模型绑定
 
+当注入一个模型 ID 到一个路由或者控制器动作时，你将经常查询以检索该 ID 对应的模型。Laravel 路由模型绑定提供了一种方便的方式去自动将模型实例直接注入到你的路由。例如，你可以注入与给定 ID 匹配的整个 `User` 模型实例而不是注入一个用户的 ID。
+
+### 隐式绑定
+
+Laravel 自动解析在路由或控制器中定义的 Eloquent 模型，其类型提示的变量名称与路由段名称匹配。例如：
+
+```php
+Route::get('api/users/{user}', function (App\User $user) {
+    return $user->email;
+});
+```
+
+由于 `$user` 变量作为 `App\User` Eloquent 模型的类型提示并且变量名称与 `{user}` URI 段相匹配，Laravel 将自动注入模型实例，该模型有一个从请求 URI 的相应值匹配的 ID。如果在数据库中找不到匹配的模型实例，则将自动生成一个 404 HTTP 响应。
+
+#### 自定义键名
+
+当检索一个给定的模型类时，如果你希望模型绑定去使用一个除了 `id` 之外的数据库列，你可以在 Eloquent 模型上覆盖 `getRouteKeyName` 方法：
+
+```php
+/**
+ * 获取模型的路由键名。
+ *
+ * @return string
+ */
+public function getRouteKeyName()
+{
+    return 'slug';
+}
+```
+
+### 显式绑定
+
+#### 自定义解析逻辑
+
 ## 速率限制
