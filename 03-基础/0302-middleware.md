@@ -1,5 +1,15 @@
 # 中间件
 
+* [简介](#jian-jie)
+* [定义中间件](#ding-yi-zhong-jian-jian)
+* [注册中间件](#zhu-ce-zhong-jian-jian)
+  * [全局中间件](#quan-ju-zhong-jian-jian)
+  * [分配中间件到路由](#fen-pei-zhong-jian-jian-dao-lu-you)
+  * [中间件组](#zhong-jian-jian-zu)
+  * [排序中间件组](#pai-xu-zhong-jian-jian)
+* [中间件参数](#zhong-jian-jian-can-shu)
+* [可终止中间件](#ke-zhong-zhi-zhong-jian-jian)
+
 ## 简介
 
 中间件提供了一种方便的机制来过滤进入应用程序的 HTTP 请求。例如，Laravel 包含一个验证应用程序用户身份认证的中间件。如果用户没有认证，中间件将重定向用户到登录界面。但是，如果用户认证过，中间件将允许请求进一步进入应用程序。
