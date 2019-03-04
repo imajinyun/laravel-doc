@@ -348,6 +348,134 @@ public function getRouteKeyName()
 
 ### 显式绑定
 
+要注册显示绑定，使用路由的 `model` 方法去指定一个给定参数的类。你应该在 `RouteServiceProvider` 类的 `boot` 方法中定义显示模型绑定：
+
+```php
+public function boot()
+{
+    parent::boot();
+
+    Route::model('user', App\User::class);
+}
+```
+
+接下来，定义一个包含 `{user}` 参数的路由：
+
+```php
+Route::get('profile/{user}', function (App\User $user) {
+    //
+});
+```
+
+由于我们将所有 `{user}` 参数绑定到 `App\User` 模型，一个 `User` 实例将注入到路由。因此，例如，对 `profile/1` 的请求将从 ID 为 `1` 的数据库中注入 `User` 实例。
+
+如果在数据库中找不到匹配的模型实例，一个 404 HTTP 响应将自动生成。
+
 #### 自定义解析逻辑
 
+如果你希望使用你自己的解析逻辑，你可以使用 `Route::bind` 方法。传递给 `bind` 方法的 `Closure` 将接收 URI 段的值，并应当返回应该注入到路由的类的实例：
+
+```php
+/**
+ * 引导任何应用服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    parent::boot();
+
+    Route::bind('user', function ($value) {
+        return App\User::where('name', $value)->first() ?? abort(404);
+    });
+}
+```
+
+或者，你可以覆盖在 Eloquent 模型上 `resolveRouteBinding` 方法。此方法将接收 URI 段的值，并应当返回应该注入到路由的类的实例：
+
+```php
+/**
+ * 检索绑定值的模型。
+ *
+ * @param  mixed  $value
+ * @return \Illuminate\Database\Eloquent\Model|null
+ */
+public function resolveRouteBinding($value)
+{
+    return $this->where('name', $value)->first() ?? abort(404);
+}
+```
+
+## 回退路由
+
+使用 `Route::fallback` 方法，你可以定义一个对即将到来的请求没有其它路由匹配时将执行的路由。通常，未处理的请求将通过你的应用程序的异常处理器自动渲染一个 『404』页面。然而，由于你可以在你的 `routes/web.php` 文件中定义 `fallback` 路由，在 `web` 中间件组中的所有中间件将应用到该路由。你根据需要自由地添加额外的中间件到此路由中：
+
+```php
+Route::fallback(function () {
+    //
+});
+```
+
+{% hint style="danger" %}
+
+回退路由应该始终是应用程序注册的最后一条路由。
+
+{% endhint %}
+
 ## 速率限制
+
+Laravel 在你的应用程序中包含了一个 [中间件](https://laravel.com/docs/5.8/middleware) 对路由进行速率限制访问。首先，将 `throttle` 中间件分配给一个路由或者一组路由。`throttle` 中间件接受两个参数，这两个参数确定在给定的分钟数内能被进行的最大请求数。例如，让我们指定一个认证的用户可以访问如下的路由组每分钟 60 次：
+
+```php
+Route::middleware('auth:api', 'throttle:60,1')->group(function () {
+    Route::get('/user', function () {
+        //
+    });
+});
+```
+
+### 动态速率限制
+
+你可以基于一个认证的 `User` 模型属性指定一个动态请求最大值。例如，如果你的 `User` 模型包含一个 `rate_limit` 属性，你可以传递该属性的名称到 `throttle` 中间件以便于它用于去计算最大的请求数：
+
+```php
+Route::middleware('auth:api', 'throttle:rate_limit,1')->group(function () {
+    Route::get('/user', function () {
+        //
+    });
+});
+```
+
+## 表单方法欺骗
+
+HTML 表单不支持 `PUT`，`PATCH` 或 `DELETE` 动作。因此，当定义从一个 HTML 表单调用的 `PUT`，`PATCH` 或 `DELETE` 路由时，你将需要添加一个隐藏的 `_method` 字段到表单中。用 `_method` 字段发送的值将用于 HTTP 的请求方法：
+
+```php
+<form action="/foo/bar" method="POST">
+    <input type="hidden" name="_method" value="PUT">
+    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+</form>
+```
+
+你可以使用 `@method` Blade 指令去生成 `_method` 输入：
+
+```php
+<form action="/foo/bar" method="POST">
+    @method('PUT')
+    @csrf
+</form>
+```
+
+## 访问当前路由
+
+你可以在 `Route` facade 上使用 `current`，`currentRouteName` 和 `currentRouteAction` 方法去访问关于路由处理即将到来的请求的相关信息：
+
+```php
+$route = Route::current();
+
+$name = Route::currentRouteName();
+
+$action = Route::currentRouteAction();
+```
+
+参考 [路由 facade 基础类](https://laravel.com/api/5.8/Illuminate/Routing/Router.html) 和 [路由实例](https://laravel.com/api/5.8/Illuminate/Routing/Route.html) 的 API 文档，以查看所有可访问的方法。
