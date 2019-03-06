@@ -263,8 +263,161 @@ Route::resource('users', 'AdminUserController')->parameters([
 
 ### 本地化资源 URIs
 
+默认情况下，`Route::resource` 将使用英文动词创建资源 URI。如果你需要本地化 `create` 和 `edit` 动作动词，你可以使用 `Route::resourceVerbs` 方法。在你的 `AppServiceProvider` 类的 `boot` 方法可以这样做：
+
+```php
+use Illuminate\Support\Facades\Route;
+
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    Route::resourceVerbs([
+        'create' => 'crear',
+        'edit' => 'editar',
+    ]);
+}
+```
+
+一旦动词被自定义，一个资源路由注册如 `Route::resource('fotos', 'PhotoController')` 将产生如下的 URI：
+
+```bash
+/fotos/crear
+
+/fotos/{foto}/editar
+```
+
 ### 补充资源控制器
+
+如果你需要在超出默认资源路由集的一个资源控制器中添加额外的路由，你应该调用 `Route::resource` 之前定义这些路由；否则，通过 `resource` 方法定义的路由可能会无意中优先于你的补充路由：
+
+```php
+Route::get('photos/popular', 'PhotoController@method');
+
+Route::resource('photos', 'PhotoController');
+```
+
+{% hint style="info" %}
+
+记住要保持你的控制器聚集，如果你发现自己经常需要需要典型的资源动作集之外的方法，考虑将控制器分隔成两个更小的控制器。
+
+{% endhint %}
 
 ## 依赖注入 & 控制器
 
+### 构造方法注入
+
+Laravel [服务容器](https://laravel.com/docs/5.8/container) 被用来解析所有的 Laravel 控制器。正应如此，你可以在构造方法中键入类型提示你的控制器需要的任何依赖项。声明依赖项将自动解析和注入到控制器实例上：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Repositories\UserRepository;
+
+class UserController extends Controller
+{
+    /**
+     * 用户存储库实例。
+     */
+    protected $users;
+
+    /**
+     * 创建一个新的控制器实例。
+     *
+     * @param  UserRepository  $users
+     * @return void
+     */
+    public function __construct(UserRepository $users)
+    {
+        $this->users = $users;
+    }
+}
+```
+
+你还可以键入任何 [Laravel 合约](https://laravel.com/docs/5.8/contracts) 类型提示。如果容器能解析它，你可以键入类型提示。根据于你的应用程序，注入依赖项到你的控制器可能提供更好的可测试性。
+
+### 方法注入
+
+除了构造方法注入之外，你还可以在你的控制器的方法上键入类型提示依赖项。方法注入的一个常用情形是将 `Illuminate\Http\Request` 实例注入到你的控制器方法中：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class UserController extends Controller
+{
+    /**
+     * 存储一个新用户。
+     *
+     * @param  Request  $request
+     * @return Response
+     */
+    public function store(Request $request)
+    {
+        $name = $request->name;
+
+        //
+    }
+}
+```
+
+如果你的控制器方法也期望从路由参数中输入，在其它依赖之后列出你的路由参数。例如，如果你的路由像这样定义：
+
+```php
+Route::put('user/{id}', 'UserController@update');
+```
+
+你仍然可以通过定义你的控制器方法键入类型提示 `Illuminate\Http\Request` 并访问你的 `id` 参数，如下所示：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class UserController extends Controller
+{
+    /**
+     * 更新给定的用户。
+     *
+     * @param  Request  $request
+     * @param  string  $id
+     * @return Response
+     */
+    public function update(Request $request, $id)
+    {
+        //
+    }
+}
+```
+
 ## 路由缓存
+
+{% hint style="danger" %}
+
+基于 Closure 的路由不能被缓存。要使用路由缓存，你必须将任何 Closure 路由转换为控制器路由。
+
+{% endhint %}
+
+如果你的应用程序专门使用基于控制器的路由，你应该利用 Laravel 的路由缓存。使用路由缓存将大幅减少注册应用程序所有路由所需的时间。在某些情况下，你的路由注册速度基于可能会提高 100 倍。要生成一个路由缓存，仅需要执行 `route:cache` Artisan 命令：
+
+```php
+php artisan route:cache
+```
+
+运行此命令之后，将在你的每个请求上加载缓存的路由文件。记住，如果你添加任何新的路由，你需要去生成一个新的路由缓存。正因如此，你应该仅在你的项目部署期间运行 `route:cache` 命令。
+
+你可以使用 `route:clear` 命令去清理路由缓存：
+
+```php
+php artisan route:clear
+```
