@@ -373,7 +373,7 @@ Route::get('profile/{user}', function (App\User $user) {
 
 #### 自定义解析逻辑
 
-如果你希望使用你自己的解析逻辑，你可以使用 `Route::bind` 方法。传递给 `bind` 方法的 `Closure` 将接收 URI 段的值，并应当返回应该注入到路由的类的实例：
+如果你希望使用你自己的解析逻辑，你可以使用 `Route::bind` 方法。传递给 `bind` 方法的 `Closure` 将接受 URI 段的值，并应当返回应该注入到路由的类的实例：
 
 ```php
 /**
@@ -391,7 +391,7 @@ public function boot()
 }
 ```
 
-或者，你可以覆盖在 Eloquent 模型上 `resolveRouteBinding` 方法。此方法将接收 URI 段的值，并应当返回应该注入到路由的类的实例：
+或者，你可以覆盖在 Eloquent 模型上 `resolveRouteBinding` 方法。此方法将接受 URI 段的值，并应当返回应该注入到路由的类的实例：
 
 ```php
 /**

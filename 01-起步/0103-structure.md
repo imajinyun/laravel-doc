@@ -125,7 +125,7 @@
 
 ### Listeners 目录
 
-默认情况下这个目录是不存在的，但如果你执行了 `event:generate` 或者 `make:listener` Artisan 命令时，它将会被创建出来。`Listeners` 目录包含 [事件](https://laravel.com/docs/5.8/events) 的处理类。事件侦听器接收一个事件实例并执行逻辑以响应被触发的事件。例如，一个 `UserRegistered` 事件可能被 `SendWelcomeEmail` 侦听器处理。
+默认情况下这个目录是不存在的，但如果你执行了 `event:generate` 或者 `make:listener` Artisan 命令时，它将会被创建出来。`Listeners` 目录包含 [事件](https://laravel.com/docs/5.8/events) 的处理类。事件侦听器接受一个事件实例并执行逻辑以响应被触发的事件。例如，一个 `UserRegistered` 事件可能被 `SendWelcomeEmail` 侦听器处理。
 
 ### Mail 目录
 
