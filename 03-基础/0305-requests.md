@@ -436,6 +436,10 @@ $path = $request->photo->storeAs('images', 'filename.jpg', 's3');
 
 ## 配置信任代理
 
+当你的应用程序运行在终止 TLS / SSL 证书的负载均衡器后面时，你可能会注意到你的应用程序有时不会生成 HTTPS 链接。这通常是因为你的应用程序正在从 80 端口上的负载均衡程序器转发流量并且不知道它应该生成安全链接。
+
+为了解决这个问题，你可以使用 `App\Http\Middleware\TrustProxies` 中间件，此中间件包含在你的 Laravel 应用程序中，它允许你快速自定义应用程序应该信任的负载均衡或代理。你信任的代理应该在此中间件的 `$proxies` 属性上作为一个数组列出来。除了配置信任代理之外，你可以配置应该被信任的代理 `$headers`：
+
 ```php
 <?php
 
@@ -447,7 +451,7 @@ use Fideloper\Proxy\TrustProxies as Middleware;
 class TrustProxies extends Middleware
 {
     /**
-     * The trusted proxies for this application.
+     * 此应用程序的受信任代理。
      *
      * @var array
      */
@@ -457,7 +461,7 @@ class TrustProxies extends Middleware
     ];
 
     /**
-     * The headers that should be used to detect proxies.
+     * 用于检测代理的头文件。
      *
      * @var string
      */
