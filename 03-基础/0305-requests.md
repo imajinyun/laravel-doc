@@ -469,7 +469,15 @@ class TrustProxies extends Middleware
 }
 ```
 
+{% hint style="info" %}
+
+如果你使用 AWS 的弹性负载均衡（Elastic Load Balancing），你的 `$headers` 值应该为 `Request::HEADER_X_FORWARDED_AWS_ELB`。有关可能在 `$headers` 属性中使用的常量的信息，查看 Symfony 的 [信任代理](https://symfony.com/doc/current/deployment/proxies.html) 文档。
+
+{% endhint %}
+
 ### 信任所有代理
+
+如果你使用 Amazon AWS 或者另一个『云』负载均衡提供者，你可能不知道实际均衡器的 IP 地址。在这种情况下，你可以使用 `*` 去信任所有代理：
 
 ```php
 /**
