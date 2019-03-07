@@ -122,12 +122,126 @@ Route::post('user/profile', function () {
 
 ### 重定向到命名路由
 
+当你调用没有参数的 `redirect` 助手函数时，一个 `Illuminate\Routing\Redirector` 实例被返回，允许你在 `Redirector` 实例上调用任何方法。例如，要对一个命名的路由生成一个 `RedirectResponse`，你可以使用 `route` 方法：
+
+```php
+return redirect()->route('login');
+```
+
+如果你的路由有参数，你可以将它们作为第二个参数传递到 `route` 方法上：
+
+```php
+// 对于具有以下 URI 的路由：profile/{id}
+
+return redirect()->route('profile', ['id' => 1]);
+```
+
+#### 通过 Eloquent 模型填充参数
+
+如果你要重定向到一个具有从 Eloquent 模型填充的『ID』参数的路由，你可以传递模型本身。ID 将被自动提取：
+
+```php
+// 对于具有以下 URI 的路由：profile/{id}
+
+return redirect()->route('profile', [$user]);
+```
+
+如果你想自定义位于路由参数中的值，你应该覆盖在你的 Eloquent 模型上的 `getRouteKey` 方法：
+
+```php
+/**
+ * 获取模型的路由键值。
+ *
+ * @return mixed
+ */
+public function getRouteKey()
+{
+    return $this->slug;
+}
+```
+
 ### 重定向到控制器动作
 
-### 重定向到扩展域名
+你还可以生成重定向到 [控制器动作](https://laravel.com/docs/5.8/controllers)。要这样做，传递控制器和动作的名称到 `action` 方法。记住，你无需去控制器指定完整的命名空间，因为 Laravel 的 `RouteServiceProvider` 将自动设置基控制器的命名空间：
+
+```php
+return redirect()->action('HomeController@index');
+```
+
+如果控制器路由需要参数，你可以将它们作为第二个参数传递到 `action` 方法：
+
+```php
+return redirect()->action(
+    'UserController@profile', ['id' => 1]
+);
+```
+
+### 重定向到外部域名
+
+有时你可能需要重定向到一个应用程序之外的域名。你可以通过 `away` 方法这样做，该方法创建一个 `RedirectResponse` 而无需任何其它的 URL 编码，验证或者认证：
+
+```php
+return redirect()->away('https://www.google.com');
+```
 
 ### 重定向使用闪存会话数据
 
+重定向到一个新的 URL 并 [闪存数据到会话](https://laravel.com/docs/5.8/session#flash-data) 通常是同时完成的。通常，当你闪存一个成功消息到会话，成功执行一个动作之后这个才能完成。为了方便起见，你可以在单个流式方式链上创建一个 `RedirectResponse` 实例并闪存数据到会话：
+
+```php
+Route::post('user/profile', function () {
+    // 更新用户的个人资料...
+
+    return redirect('dashboard')->with('status', 'Profile updated!');
+});
+```
+
+用户重定向之后，你可以从 [会话](https://laravel.com/docs/5.8/session) 中显示闪存消息。例如，使用 [Blade 语法](https://laravel.com/docs/5.8/blade)：
+
+```php
+@if (session('status'))
+    <div class="alert alert-success">
+        {{ session('status') }}
+    </div>
+@endif
+```
+
 ## 其它响应类型
 
+`response` 助手函数可以用于生成其它类型的响应实例。当 `response` 助手函数在没有参数的情况下调用时，将返回一个 `Illuminate\Contracts\Routing\ResponseFactory` [合约](https://laravel.com/docs/5.8/contracts) 的实现。此合约为生成响应提供几个有用的方法。
+
+### 视图响应
+
+### JSON 响应
+
+### 文件下载
+
+#### 流媒体下载
+
+### 文件响应
+
 ## 响应宏
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Response;
+
+class ResponseMacroServiceProvider extends ServiceProvider
+{
+    /**
+     * 注册应用程序的响应宏。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Response::macro('caps', function ($value) {
+            return Response::make(strtoupper($value));
+        });
+    }
+}
+```
