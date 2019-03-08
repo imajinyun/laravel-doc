@@ -212,15 +212,78 @@ Route::post('user/profile', function () {
 
 ### 视图响应
 
+如果你不但需要控制响应的状态和标头，而且还需要去返回一个 [视图](https://laravel.com/docs/5.8/views) 作为响应的内容。你应该使用 `view` 方法：
+
+```php
+return response()
+            ->view('hello', $data, 200)
+            ->header('Content-Type', $type);
+```
+
+当然，如果你不需要去传递一个自定义 HTTP 状态码或自定义标头，你应该使用全局的 `view` 助手函数。
+
 ### JSON 响应
+
+`json` 方法将自动设置 `Content-Type` 标头为 `application/json`，同时使用 `json_encode` PHP 函数转换给定的数组为 JSON：
+
+```php
+return response()->json([
+    'name' => 'Abigail',
+    'state' => 'CA'
+]);
+```
+
+如果你想创建一个 JSONP 响应，你可以将 `json` 方法与 `withCallback` 方法结合使用：
+
+```php
+return response()
+            ->json(['name' => 'Abigail', 'state' => 'CA'])
+            ->withCallback($request->input('callback'));
+```
 
 ### 文件下载
 
+`download` 方法可以用于生成一个强制用户浏览器在给定路径下载文件的响应。`download` 方法接受一个文件名作为方法的第二个参数，该参数将确定下载文件的用户看到文件名。最后，你可以将 HTTP 标头数组作为方法的第三个参数传递：
+
+```php
+return response()->download($pathToFile);
+
+return response()->download($pathToFile, $name, $headers);
+
+return response()->download($pathToFile)->deleteFileAfterSend();
+```
+
+{% hint style="info" %}
+
+Symfony HttpFoundation，它管理文件下载，要求下载文件具有 ASCII 文件名。
+
+{% endhint %}
+
 #### 流媒体下载
+
+有时你可能希望将给定的操作的字符串转换为可下载的响应而无需将操作的内容写入磁盘。在这个场景中你可以使用 `streamDownload` 方法。此方法接受一个回调，文件名称和一个选项的标头数组作为它的参数：
+
+```php
+return response()->streamDownload(function () {
+    echo GitHub::api('repo')
+                ->contents()
+                ->readme('laravel', 'laravel')['contents'];
+}, 'laravel-readme.md');
+```
 
 ### 文件响应
 
+`file` 方法可以用于直接在用户的浏览器显示一个文件，例如，一个图片或 PDF，而不是启动下载。此方法接受文件的路径作为第一个参数并将标头数组作为第二个参数：
+
+```php
+return response()->file($pathToFile);
+
+return response()->file($pathToFile, $headers);
+```
+
 ## 响应宏
+
+如果你想在你的各种路由和控制器中定义一个你能重复使用的自定义响应，你可以在 `Response` facade 上使用 `macro` 方法。例如，从 [服务提供者的](https://laravel.com/docs/5.8/providers) `boot` 方法：
 
 ```php
 <?php
@@ -244,4 +307,10 @@ class ResponseMacroServiceProvider extends ServiceProvider
         });
     }
 }
+```
+
+宏函数接受一个名称作为其第一个参数，并接受 Closure 作为其第二个参数。当从一个 `ResponseFactory` 实现或 `response` 助手函数调用宏名称时，将执行宏的 Closure：
+
+```php
+return response()->caps('foo');
 ```
