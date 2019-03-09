@@ -228,7 +228,7 @@ $url = route('profile', ['id' => 1]);
 
 ```php
 /**
- * 处理即将到来的请求。
+ * 处理传入的请求。
  *
  * @param  \Illuminate\Http\Request  $request
  * @param  \Closure  $next
@@ -408,7 +408,7 @@ public function resolveRouteBinding($value)
 
 ## 回退路由
 
-使用 `Route::fallback` 方法，你可以定义一个对即将到来的请求没有其它路由匹配时将执行的路由。通常，未处理的请求将通过你的应用程序的异常处理器自动渲染一个 『404』页面。然而，由于你可以在你的 `routes/web.php` 文件中定义 `fallback` 路由，在 `web` 中间件组中的所有中间件将应用到该路由。你根据需要自由地添加额外的中间件到此路由中：
+使用 `Route::fallback` 方法，你可以定义一个对传入的请求没有其它路由匹配时将执行的路由。通常，未处理的请求将通过你的应用程序的异常处理器自动渲染一个 『404』页面。然而，由于你可以在你的 `routes/web.php` 文件中定义 `fallback` 路由，在 `web` 中间件组中的所有中间件将应用到该路由。你根据需要自由地添加额外的中间件到此路由中：
 
 ```php
 Route::fallback(function () {
@@ -468,7 +468,7 @@ HTML 表单不支持 `PUT`，`PATCH` 或 `DELETE` 动作。因此，当定义从
 
 ## 访问当前路由
 
-你可以在 `Route` facade 上使用 `current`，`currentRouteName` 和 `currentRouteAction` 方法去访问关于路由处理即将到来的请求的相关信息：
+你可以在 `Route` facade 上使用 `current`，`currentRouteName` 和 `currentRouteAction` 方法去访问关于路由处理传入的请求的相关信息：
 
 ```php
 $route = Route::current();

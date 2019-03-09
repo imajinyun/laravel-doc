@@ -20,7 +20,7 @@
 
 ### Http / Console 内核
 
-接下来，即将到来的请求发送到 HTTP 内核或控制台内核，具体取决于进入应用程序的请求类型。这两个内核充当所有请求流经的中心位置。现在，让我们聚集 HTTP 内核，它位置 `app/Http/Kernel.php` 中。
+接下来，传入的请求发送到 HTTP 内核或控制台内核，具体取决于进入应用程序的请求类型。这两个内核充当所有请求流经的中心位置。现在，让我们聚集 HTTP 内核，它位置 `app/Http/Kernel.php` 中。
 
 HTTP 内核继承 `Illuminate\Foundation\Http\Kernel` 类，它定义了一个请求执行之前运行的 `bootstrappers` 数组。这些引导配置错误处理，配置日志，[检测应用环境](https://laravel.com/docs/5.8/configuration#environment-configuration)，并执行在实际处理请求之前需要完成的其它任务。
 

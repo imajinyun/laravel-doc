@@ -173,7 +173,7 @@ Valet 甚至包括与世界共享你的本地站点的命令。一旦安装 Vale
 
 你可以编写你自己的 Valet『驱动』来为 Valet 原本不支持的其它框架或 CMS 上运行的 PHP 应用程序提供服务。当你安装 Valet 时，会创建一个包含 `SampleValetDriver.php` 文件的 `~/.config/valet/Drivers` 目录。该文件包含一个示例驱动程序实现，演示了如何编写一个自定义的驱动程序。编写驱动程序仅需要你去实现三个方法：`serves`，`isStaticFile` 和 `frontControllerPath`。
 
-这三个方法都接受 `$sitePath`，`$siteName` 和 `$uri` 值作为参数。`$sitePath` 是你的机器上提供站点的完全限定路径。比如 `/Users/Lisa/Sites/my-project`。`$siteName` 是域（`my-project`）的『主机』/『站点名称』部分。`$uri` 是即将到来的请求 URL（/foo/bar）。
+这三个方法都接受 `$sitePath`，`$siteName` 和 `$uri` 值作为参数。`$sitePath` 是你的机器上提供站点的完全限定路径。比如 `/Users/Lisa/Sites/my-project`。`$siteName` 是域（`my-project`）的『主机』/『站点名称』部分。`$uri` 是传入的请求 URL（/foo/bar）。
 
 一旦你完成你的自定义 Valet 驱动，使用 `FrameworkValetDriver.php` 命名约定将它放置在 `~/.config/valet/Drivers` 目录中。例如，如果你为 WordPress 编写了一个自定义的 valet 驱动，你的文件名称应该是 `WordPressValetDriver.php`。
 
@@ -181,7 +181,7 @@ Valet 甚至包括与世界共享你的本地站点的命令。一旦安装 Vale
 
 ### serves 方法
 
-如果你的驱动程序应当处理即将到来的请求时， `serves` 方法应该返回 `true`。否则，此方法应当返回 `false`。因此，在此方法中，你应该你企图确定给定的 `$sitePath` 是否包含你尝试提供的类型的项目。
+如果你的驱动程序应当处理传入的请求时， `serves` 方法应该返回 `true`。否则，此方法应当返回 `false`。因此，在此方法中，你应该你企图确定给定的 `$sitePath` 是否包含你尝试提供的类型的项目。
 
 例如，让我们假装正在编写一个 `WordPressValetDriver`。我们的 `serves` 方法可能看起来如下所示：
 
@@ -202,11 +202,11 @@ public function serves($sitePath, $siteName, $uri)
 
 ### isStaticFile 方法
 
-`isStaticFile` 应当确定即将到来的请求是否针对一个『静态』文件，比如：图片和样式表。如果文件是静态的，此方法应当返回静态文件在磁盘上的完全限定路径。如果即将到来的请求不是针对一个静态文件，这个方法应当返回 `false`：
+`isStaticFile` 应当确定传入的请求是否针对一个『静态』文件，比如：图片和样式表。如果文件是静态的，此方法应当返回静态文件在磁盘上的完全限定路径。如果传入的请求不是针对一个静态文件，这个方法应当返回 `false`：
 
 ```php
 /**
- * 确定即将到来的请求是否针对静态文件。
+ * 确定传入的请求是否针对静态文件。
  *
  * @param  string  $sitePath
  * @param  string  $siteName
@@ -225,7 +225,7 @@ public function isStaticFile($sitePath, $siteName, $uri)
 
 {% hint style="danger" %}
 
-如果 `serves` 方法对即将到来的请求且请求 URI 不是 `/` 返回 `true` 时，才会调用 `isStaticFile` 方法。
+如果 `serves` 方法对传入的请求且请求 URI 不是 `/` 返回 `true` 时，才会调用 `isStaticFile` 方法。
 
 {% endhint %}
 

@@ -14,7 +14,7 @@
 
 中间件提供了一种方便的机制来过滤进入应用程序的 HTTP 请求。例如，Laravel 包含一个验证应用程序用户身份认证的中间件。如果用户没有认证，中间件将重定向用户到登录界面。但是，如果用户认证过，中间件将允许请求进一步进入应用程序。
 
-除了认证之外，还可以编写额外的中间件来执行各种任务。一个 CORS 中间件可能负责为离开你的应用程序的的所有响应头添加正确的标头。日志记录中间件可能记录应用程序的所有即将到来的请求。
+除了认证之外，还可以编写额外的中间件来执行各种任务。一个 CORS 中间件可能负责为离开你的应用程序的的所有响应头添加正确的标头。日志记录中间件可能记录应用程序的所有传入的请求。
 
 有几个中间件包含在 Laravel 框架内，包括用户身份认证和 CSRF 保护中间件。所有的这些中间件位于 `app/Http/Middleware` 目录中。
 
@@ -38,7 +38,7 @@ use Closure;
 class CheckAge
 {
     /**
-     * 处理即将到来的请求。
+     * 处理传入的请求。
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
@@ -246,7 +246,7 @@ use Closure;
 class CheckRole
 {
     /**
-     * 处理即将到来的请求。
+     * 处理传入的请求。
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next

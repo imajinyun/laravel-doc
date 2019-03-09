@@ -2,7 +2,7 @@
 
 ## 简介
 
-Laravel 提供几个不同的方式去验证你的应用程序即将传入的数据。默认情况下，Laravel 的基控制器类使用 `ValidatesRequests` 特性，该特性提供一种方便的方法以各种强大的验证规则去验证即将传入的 HTTP 请求。
+Laravel 提供几个不同的方式去验证你的应用程序传入的数据。默认情况下，Laravel 的基控制器类使用 `ValidatesRequests` 特性，该特性提供一种方便的方法以各种强大的验证规则去验证传入的 HTTP 请求。
 
 ## 验证快速入门
 
@@ -110,7 +110,7 @@ $request->validate([
 
 ### 显示验证错误
 
-那么，如果即将传入的请求参数没有通过验证规则该怎么办？如前所述，Laravel 将自动重定向用户回到他们之前的位置。此外，所有的验证错误将自动 [闪存到会话](https://laravel.com/docs/5.8/session#flash-data)。
+那么，如果传入的请求参数没有通过验证规则该怎么办？如前所述，Laravel 将自动重定向用户回到他们之前的位置。此外，所有的验证错误将自动 [闪存到会话](https://laravel.com/docs/5.8/session#flash-data)。
 
 再次，注意我们不必显式绑定错误消息到 `GET` 路由的视图。这是因为 Laravel 将检查会话数据中的错误，并自动绑定它们到视图（如果可用）。`$errors` 变量是 `Illuminate\Support\MessageBag`的一个实例。有关使用此对象的更多信息，[查看其文档](https://laravel.com/docs/5.8/validation#working-with-error-messages)。
 
@@ -159,6 +159,53 @@ $request->validate([
 在此实例中，我们使用传统的表单去发送数据到应用程序。然而，许多应用程序使用 AJAX 请求。当在一个 AJAX 请求期间使用 `validate` 方法，Laravel 将不生成一个重定向响应。相反，Laravel 生成一个包含所有验证错误的 JSON 响应。此 JSON 响应将与一个 422 HTTP 状态码一并发送。
 
 ## 表单请求验证
+
+对于更复杂的验证场景，你可能希望去创建一个『表单请求』。表单请求是包含验证逻辑的自定义请求类。要创建一个表单请求类，使用 `make:request` Artisan CLI 命令：
+
+```php
+php artisan make:request StoreBlogPost
+```
+
+生成的类将放置在 `app/Http/Requests` 目录。如果此目录不存在，当你运行 `make:request` 命令时将创建。让我们添加一些验证规则到 `rules` 方法：
+
+```php
+/**
+ * 获取应用到请求的验证规则。
+ *
+ * @return array
+ */
+public function rules()
+{
+    return [
+        'title' => 'required|unique:posts|max:255',
+        'body' => 'required',
+    ];
+}
+```
+
+{% hint style="info" %}
+
+你可以在 `rules` 方法的签名上键入类型提示所需的任何依赖项。它们将通过 Laravel [服务容器](https://laravel.com/docs/5.8/container) 自动解析。
+
+{% endhint %}
+
+那么，如何评估验证规则呢？所有你需要做的就是在你的控制器方法上键入类型提示请求。在调用控制器的方法之前验证传入的表单请求，意味着你不需要你使用任何验证逻辑掺杂到你的控制器中：
+
+```php
+/**
+ * 存储传入的博客文章。
+ *
+ * @param  StoreBlogPost  $request
+ * @return Response
+ */
+public function store(StoreBlogPost $request)
+{
+    // 传入的请求通过验证...
+
+    // 检索通过验证的输入数据...
+    $validated = $request->validated();
+}
+```
 
 ### 创建表单请求
 

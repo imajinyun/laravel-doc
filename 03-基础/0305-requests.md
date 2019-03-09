@@ -2,7 +2,7 @@
 
 ## 访问请求
 
-要通过依赖注入获取当前 HTTP 请求实例，你应该在你的控制器方法上键入类型提示 `Illuminate\Http\Request` 类。即将到来的请求实例将自动通过 [服务容器](https://laravel.com/docs/5.8/container) 注入：
+要通过依赖注入获取当前 HTTP 请求实例，你应该在你的控制器方法上键入类型提示 `Illuminate\Http\Request` 类。传入的请求实例将自动通过 [服务容器](https://laravel.com/docs/5.8/container) 注入：
 
 ```php
 <?php
@@ -63,7 +63,7 @@ class UserController extends Controller
 
 **通过路由闭包访问路由**
 
-你还可以在一个路由 Closure 上键入类型提示 `Illuminate\Http\Request` 类。服务容器将它执行时自动注入即将到来的请求到 Closure：
+你还可以在一个路由 Closure 上键入类型提示 `Illuminate\Http\Request` 类。服务容器将它执行时自动注入传入的请求到 Closure：
 
 ```php
 use Illuminate\Http\Request;
@@ -79,13 +79,13 @@ Route::get('/', function (Request $request) {
 
 #### 检索请求的路径
 
-`path` 方法返回请求的路径信息。因此，如果即将到来的请求目标是 `http://domain.com/foo/bar`，`path` 文件将返回 `foo/bar`：
+`path` 方法返回请求的路径信息。因此，如果传入的请求目标是 `http://domain.com/foo/bar`，`path` 文件将返回 `foo/bar`：
 
 ```php
 $uri = $request->path();
 ```
 
-`is` 方法允许你去验证即将到来的请求路径是否匹配一个给定的模式。在使用此方法时你可以使用 `*` 字符作为一个通配符：
+`is` 方法允许你去验证传入的请求路径是否匹配一个给定的模式。在使用此方法时你可以使用 `*` 字符作为一个通配符：
 
 ```php
 if ($request->is('admin/*')) {
@@ -95,7 +95,7 @@ if ($request->is('admin/*')) {
 
 #### 检索请求的 URL
 
-你可以使用 `url` 或 `fullUrl` 方法去检索即将到来的请求的完整 URL。`url` 方法将返回没有查询字符串的 URL，而 `fullUrl` 方法包含查询字符串：
+你可以使用 `url` 或 `fullUrl` 方法去检索传入的请求的完整 URL。`url` 方法将返回没有查询字符串的 URL，而 `fullUrl` 方法包含查询字符串：
 
 ```php
 // 没有查询字符串...
