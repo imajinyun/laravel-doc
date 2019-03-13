@@ -278,7 +278,7 @@ public function authorize()
 
 {% endhint %}
 
-### 自定义错误消息
+### 定制错误消息
 
 你可以通过覆盖 `messages` 方法来自定义表单请求使用的错误消息。此方法应当返回一个属性 / 规则键值对的数组以及相对应的错误消息：
 
@@ -406,15 +406,189 @@ if ($validator->fails()) {
 
 在 `Validator` 实例上调用 `errors` 方法之后，你将接受到一个 `Illuminate\Support\MessageBag` 实例，该实例具有处理错误消息的各种方便的方法。自动提供给所有视图的 `$errors` 变量也是 `MessageBag` 类的一个实例。
 
-### 检索字段的第一条错误消息
+- **检索字段的第一条错误消息**
 
-### 检索字段的所有错误消息
+为了检索给定字段的第一条错误消息，使用 `first` 方法：
 
-### 检索所有字段的所有错误消息
+```php
+$errors = $validator->errors();
 
-### 确定字段是否存在消息
+echo $errors->first('email');
+```
+
+- **检索字段的所有错误消息**
+
+如果你需要检索一个给定字段的所有消息数组，使用 `get` 方法：
+
+```php
+foreach ($errors->get('email') as $message) {
+    //
+}
+```
+
+如果你要验证数组表单字段，你可以使用 `*` 字符检索每个数组元素的所有消息：
+
+```php
+foreach ($errors->get('attachments.*') as $message) {
+    //
+}
+```
+
+- **检索所有字段的所有错误消息**
+
+要检索所有字段的所消息数组，使用 `all` 方法：
+
+```php
+foreach ($errors->all() as $message) {
+    //
+}
+```
+
+- **确定字段是否存在消息**
+
+`has` 方法可以用于确定一个给定的字段是否存在任何错误消息：
+
+```php
+if ($errors->has('email')) {
+    //
+}
+```
+
+### 自定义错误消息
+
+如果需要，你可以使用自定义错误消息进行验证而不是默认值。有几种方法去指定自定义消息。首先，你可以将自定义消息作为第三个参数传递到 `Validator:make` 方法：
+
+```php
+$messages = [
+    'required' => 'The :attribute field is required.',
+];
+
+$validator = Validator::make($input, $rules, $messages);
+```
+
+在这个实例中，`:attribute` 占位符将通过实际的验证中的字段名称替换。你还可以在验证消息中利用其它占位符。例如：
+
+```php
+$messages = [
+    'same'    => 'The :attribute and :other must match.',
+    'size'    => 'The :attribute must be exactly :size.',
+    'between' => 'The :attribute value :input is not between :min - :max.',
+    'in'      => 'The :attribute must be one of the following types: :values',
+];
+```
+
+#### 为给定属性指定自定义消息
+
+有时你可能希望仅为一个特定的字段去指定一个自定义的错误消息。你可以使用『点』表示法来这样做。首先指定属性的名称，其次是规则：
+
+```php
+$messages = [
+    'email.required' => 'We need to know your e-mail address!',
+];
+```
+
+#### 在语言文件中指定自定义消息
+
+在大多数情况下，你可能会在语言文件中指定自定义消息，而不是直接将它们传递到 `Validator`。为此，在 `resources/lang/xx/validation.php` 文件中添加你的消息到 `custom` 数组：
+
+```php
+'custom' => [
+    'email' => [
+        'required' => 'We need to know your e-mail address!',
+    ],
+],
+```
+
+#### 在语言文件中指定自定义属性
+
+如果你希望你的验证消息的 `:attribute` 部分替换为自定义属性名称，你可以在你的 `resources/lang/xx/validation.php` 语言文件的 `attribute` 数组中指定自定义名称：
+
+```php
+'attributes' => [
+    'email' => 'email address',
+],
+```
+
+#### 在语言文件中指定自定义值
+
+有时你可能需要你的验证消息的 `:value` 部分替换为值的自定义表示。例如，考虑如下的规则，如果 `payment_type` 的值为 `cc` 时该规则指定必须有一个信用卡号：
+
+```php
+$request->validate([
+    'credit_card_number' => 'required_if:payment_type,cc'
+]);
+```
+
+如果此验证规则失败，它将产生如下错误消息：
+
+```bash
+支付类型为 cc 时信用卡号字段必须填写。
+```
+
+你可以在你的 `validation` 语言文件中通过定义一个 `values` 数组指定一个自定义值表示，而不是将 `cc` 显示为付款类型值：
+
+```php
+'values' => [
+    'payment_type' => [
+        'cc' => 'credit card'
+    ],
+],
+```
+
+现在，如果验证规则失败，它将产生如下消息：
+
+```bash
+支付类型为信用卡时信用卡号字段必须填写。
+```
 
 ## 可用的验证规则
+
+以下是所有可用验证规则及其它们功能的列表：
+
+[Accepted](https://laravel.com/docs/5.8/validation#rule-accepted)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Distince](https://laravel.com/docs/5.8/validation#rule-distinct)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Nullable](https://laravel.com/docs/5.8/validation#rule-nullable)
+
+[Active URL](https://laravel.com/docs/5.8/validation#rule-active-url)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[E-Mail](https://laravel.com/docs/5.8/validation#rule-email)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Numeric](https://laravel.com/docs/5.8/validation#rule-numeric)
+
+[After(Date)](https://laravel.com/docs/5.8/validation#rule-after)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Exists(Database)](https://laravel.com/docs/5.8/validation#rule-exists)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Present](https://laravel.com/docs/5.8/validation#rule-present)
+
+[After Or Equal(Date)](https://laravel.com/docs/5.8/validation#rule-after-or-equal)&emsp;&emsp;&emsp;&emsp;&emsp;[File](https://laravel.com/docs/5.8/validation#rule-file)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Regular Expression](https://laravel.com/docs/5.8/validation#rule-regex)
+
+[Alpha](https://laravel.com/docs/5.8/validation#rule-alpha)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Filled](https://laravel.com/docs/5.8/validation#rule-filled)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required](https://laravel.com/docs/5.8/validation#rule-required)
+
+[Alpha Dash](https://laravel.com/docs/5.8/validation#rule-alpha-dash)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Greater Than](https://laravel.com/docs/5.8/validation#rule-gt)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required If](https://laravel.com/docs/5.8/validation#rule-required-if)
+
+[Alpha Numeric](https://laravel.com/docs/5.8/validation#rule-alpha-num)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Greater Than Or Equal](https://laravel.com/docs/5.8/validation#rule-gte)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Unless](https://laravel.com/docs/5.8/validation#rule-required-unless)
+
+[Array](https://laravel.com/docs/5.8/validation#rule-array)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Image(File)](https://laravel.com/docs/5.8/validation#rule-image)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required With](https://laravel.com/docs/5.8/validation#rule-required-without)
+
+[Bail](https://laravel.com/docs/5.8/validation#rule-bail)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[In](https://laravel.com/docs/5.8/validation#rule-in)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required With All](https://laravel.com/docs/5.8/validation#rule-required-with-all)
+
+[Before(Date)](https://laravel.com/docs/5.8/validation#rule-before)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[In Array](https://laravel.com/docs/5.8/validation#rule-in-array)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Without](https://laravel.com/docs/5.8/validation#rule-required-without)
+
+[Before Or Equal(Date)](https://laravel.com/docs/5.8/validation#rule-before-or-equal)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Integer](https://laravel.com/docs/5.8/validation#rule-integer)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Without All](https://laravel.com/docs/5.8/validation#rule-required-without-all)
+
+[Between](https://laravel.com/docs/5.8/validation#rule-between)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[IP Address](https://laravel.com/docs/5.8/validation#rule-ip)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Same](https://laravel.com/docs/5.8/validation#rule-same)
+
+[Boolean](https://laravel.com/docs/5.8/validation#rule-boolean)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[JSON](https://laravel.com/docs/5.8/validation#rule-json)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Size](https://laravel.com/docs/5.8/validation#rule-size)
+
+[Confirmed](https://laravel.com/docs/5.8/validation#rule-confirmed)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Less Than](https://laravel.com/docs/5.8/validation#rule-lt)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Starts With](https://laravel.com/docs/5.8/validation#rule-starts-with)
+
+[Date](https://laravel.com/docs/5.8/validation#rule-date)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Less Than Or Equal](https://laravel.com/docs/5.8/validation#rule-lte)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[String](https://laravel.com/docs/5.8/validation#rule-string)
+
+[Date Equals](https://laravel.com/docs/5.8/validation#rule-date-equals)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Max](https://laravel.com/docs/5.8/validation#rule-max)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Timezone](https://laravel.com/docs/5.8/validation#rule-timezone)
+
+[Date Format](https://laravel.com/docs/5.8/validation#rule-date-format)&emsp;&emsp;&emsp;&emsp;&emsp;[MIME Types](https://laravel.com/docs/5.8/validation#rule-mimetypes)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Unique(Database)](https://laravel.com/docs/5.8/validation#rule-unique)
+
+[Different](https://laravel.com/docs/5.8/validation#rule-different)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[MIME Type By File Extension](https://laravel.com/docs/5.8/validation#rule-mimes)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[URL](https://laravel.com/docs/5.8/validation#rule-url)
+
+[Digits](https://laravel.com/docs/5.8/validation#rule-digits)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Min](https://laravel.com/docs/5.8/validation#rule-min)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[UUID](https://laravel.com/docs/5.8/validation#rule-uuid)
+
+[Digits Between](https://laravel.com/docs/5.8/validation#rule-digits-between)&emsp;&emsp;&emsp;&emsp;&emsp;[NotIn](https://laravel.com/docs/5.8/validation#rule-not-in)
+
+[Dimensions(Image Files)](https://laravel.com/docs/5.8/validation#rule-dimensions)&emsp;[Not Regex](https://laravel.com/docs/5.8/validation#rule-not-regex)
+
+- **accepted**
+- **active_url**
 
 ## 有条件地添加规则
 
