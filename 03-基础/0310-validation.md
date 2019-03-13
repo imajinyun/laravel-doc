@@ -160,6 +160,8 @@ $request->validate([
 
 ## 表单请求验证
 
+### 创建表单请求
+
 对于更复杂的验证场景，你可能希望去创建一个『表单请求』。表单请求是包含验证逻辑的自定义请求类。要创建一个表单请求类，使用 `make:request` Artisan CLI 命令：
 
 ```php
@@ -207,17 +209,210 @@ public function store(StoreBlogPost $request)
 }
 ```
 
-### 创建表单请求
+如果验证失败，生成的重定向响应发送使用户回到到他们之前的位置。错误也将闪存到会话以便于显示可用。如果请求是一个 AJAX 请求，一个 422 状态码的 HTTP 请求将返回到用户，包括验证错误的 JSON 表示。
+
+#### 添加表单请求后钩子
+
+如果你想在表单请求中添加一个『之后』钩子，你可以使用 `withValidator` 方法。此方法接受完全构造的验证器，允许你在实际评估验证规则之前调用其任何方法：
+
+```php
+/**
+ * Configure the validator instance.
+ *
+ * @param  \Illuminate\Validation\Validator  $validator
+ * @return void
+ */
+public function withValidator($validator)
+{
+    $validator->after(function ($validator) {
+        if ($this->somethingElseIsInvalid()) {
+            $validator->errors()->add('field', 'Something is wrong with this field!');
+        }
+    });
+}
+```
 
 ### 授权表单请求
 
+表单请求类还包含一个 `authorize` 方法。在这个方法中，你可以检查认证的用户是否实际有更新一个给定资源的权限。例如，你可以确定一个用户是否实际拥有一个他们试图去更新博客评论的权限：
+
+```php
+/**
+ * 确定用户是否有权限发出此请求。
+ *
+ * @return bool
+ */
+public function authorize()
+{
+    $comment = Comment::find($this->route('comment'));
+
+    return $comment && $this->user()->can('update', $comment);
+}
+```
+
+由于所有表单请求继承基础 Laravel 请求类，我们可以使用 `user` 方法去访问当前认证的用户。也注意上面示例中对 `route` 方法的调用。此方法允许你访问在被调用路由上定义的 URI 参数，比如：在下面实例的 `{comment}` 参数：
+
+```php
+Route::post('comment/{comment}');
+```
+
+如果 `authorize` 方法返回 `false`，一个 403 状态码的 HTTP 响应将自动返回，并且你的控制器方法将不执行：
+
+如果你计划在你应用程序的另一部分中有授权逻辑，从 `authorize` 方法返回 `true`：
+
+```php
+/**
+ * 确定用户是否被授权发出此请求。
+ *
+ * @return bool
+ */
+public function authorize()
+{
+    return true;
+}
+```
+
+{% hint style="info" %}
+
+你可以在 `authorize` 方法的签名中键入类型提示你需要的任何依赖项。它们将自动通过 [服务容器](https://laravel.com/docs/5.8/container) 自动解析。
+
+{% endhint %}
+
 ### 自定义错误消息
+
+你可以通过覆盖 `messages` 方法来自定义表单请求使用的错误消息。此方法应当返回一个属性 / 规则键值对的数组以及相对应的错误消息：
+
+```php
+/**
+ * 获取已定义验证规则的错误消息。
+ *
+ * @return array
+ */
+public function messages()
+{
+    return [
+        'title.required' => 'A title is required',
+        'body.required'  => 'A message is required',
+    ];
+}
+```
 
 ### 自定义验证属性
 
+如果你想把你的验证消息的 `:attribute` 部分替换为一个自定义属性名称，你可以通过覆盖 `attributes` 方法指定自定义名称。此方法应当返回一个属性 / 名称键值对的数组：
+
+```php
+/**
+ * 获取验证器错误的自定义属性。
+ *
+ * @return array
+ */
+public function attributes()
+{
+    return [
+        'email' => 'email address',
+    ];
+}
+```
+
 ## 手动创建验证器
 
+如果你不想在请求上使用 `validate` 方法，你可以使用 `Validator` [facade](https://laravel.com/docs/5.8/facades) 手动创建一个验证器实例。facade 上的 `make` 方法生成一个新的验证器实例：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Validator;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+
+class PostController extends Controller
+{
+    /**
+     * 存储一个新博客文章。
+     *
+     * @param  Request  $request
+     * @return Response
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|unique:posts|max:255',
+            'body' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect('post/create')
+                        ->withErrors($validator)
+                        ->withInput();
+        }
+
+        // 存储博客文章...
+    }
+}
+```
+
+传递到 `make` 方法的第一个参数是验证中的数据。第二个参数是应当应用于数据的验证规则。
+
+检查请求验证是否失败之后，你可以使用 `withErrors` 方法去闪存错误消息到会话。当使用此方法时，`$errors` 变量将自动共享到重定向后的视图，允许你去轻松把它们显示回用户。`withErrors` 方法接受一个验证器，一个 `MessageBag` 或一个 PHP 数组。
+
+### 自动重定向
+
+如果你想手动创建一个验证器实例，但仍然利用请求的 `validate` 方法提供的自动重定向，你可以在现有的验证器实例上调用 `validate` 方法。如果验证失败，用户将自动重定向，或者在一个 AJAX 请求情形下，将返回一个 JSON 响应：
+
+```php
+Validator::make($request->all(), [
+    'title' => 'required|unique:posts|max:255',
+    'body' => 'required',
+])->validate();
+```
+
+### 命名错误包
+
+如果在单页中你有多个表单，你可能希望命名错误的 `MessageBag`，允许你检索指定表单的错误消息。将名称作为第二个参数传递给 `withErrors`：
+
+```php
+return redirect('register')
+            ->withErrors($validator, 'login');
+```
+
+接下来你可以从 `$errors` 变量中访问命名的 `MessageBag` 实例：
+
+```php
+{{ $errors->login->first('email') }}
+```
+
+### 验证后钩子
+
+验证器还允许你附加验证完成后运行的回调。这允许你轻松地执行进一步验证并甚至添加更多错误消息到消息收集器中。首先，在验证器实例上使用 `after` 方法：
+
+```php
+$validator = Validator::make(...);
+
+$validator->after(function ($validator) {
+    if ($this->somethingElseIsInvalid()) {
+        $validator->errors()->add('field', 'Something is wrong with this field!');
+    }
+});
+
+if ($validator->fails()) {
+    //
+}
+```
+
 ## 处理错误消息
+
+在 `Validator` 实例上调用 `errors` 方法之后，你将接受到一个 `Illuminate\Support\MessageBag` 实例，该实例具有处理错误消息的各种方便的方法。自动提供给所有视图的 `$errors` 变量也是 `MessageBag` 类的一个实例。
+
+### 检索字段的第一条错误消息
+
+### 检索字段的所有错误消息
+
+### 检索所有字段的所有错误消息
+
+### 确定字段是否存在消息
 
 ## 可用的验证规则
 
