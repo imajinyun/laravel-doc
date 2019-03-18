@@ -563,9 +563,9 @@ $request->validate([
 
 [Bail](https://laravel.com/docs/5.8/validation#rule-bail)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[In](https://laravel.com/docs/5.8/validation#rule-in)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required With All](https://laravel.com/docs/5.8/validation#rule-required-with-all)
 
-[Before(Date)](https://laravel.com/docs/5.8/validation#rule-before)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[In Array](https://laravel.com/docs/5.8/validation#rule-in-array)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Without](https://laravel.com/docs/5.8/validation#rule-required-without)
+[Before(Date)](https://laravel.com/docs/5.8/validation#rule-before)&emsp;&emsp;&emsp;&emsp;&emsp;[In Array](https://laravel.com/docs/5.8/validation#rule-in-array)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Without](https://laravel.com/docs/5.8/validation#rule-required-without)
 
-[Before Or Equal(Date)](https://laravel.com/docs/5.8/validation#rule-before-or-equal)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Integer](https://laravel.com/docs/5.8/validation#rule-integer)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Without All](https://laravel.com/docs/5.8/validation#rule-required-without-all)
+[Before Or Equal(Date)](https://laravel.com/docs/5.8/validation#rule-before-or-equal)&emsp;[Integer](https://laravel.com/docs/5.8/validation#rule-integer)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Without All](https://laravel.com/docs/5.8/validation#rule-required-without-all)
 
 [Between](https://laravel.com/docs/5.8/validation#rule-between)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[IP Address](https://laravel.com/docs/5.8/validation#rule-ip)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Same](https://laravel.com/docs/5.8/validation#rule-same)
 
@@ -577,9 +577,9 @@ $request->validate([
 
 [Date Equals](https://laravel.com/docs/5.8/validation#rule-date-equals)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Max](https://laravel.com/docs/5.8/validation#rule-max)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Timezone](https://laravel.com/docs/5.8/validation#rule-timezone)
 
-[Date Format](https://laravel.com/docs/5.8/validation#rule-date-format)&emsp;&emsp;&emsp;&emsp;&emsp;[MIME Types](https://laravel.com/docs/5.8/validation#rule-mimetypes)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Unique(Database)](https://laravel.com/docs/5.8/validation#rule-unique)
+[Date Format](https://laravel.com/docs/5.8/validation#rule-date-format)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[MIME Types](https://laravel.com/docs/5.8/validation#rule-mimetypes)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Unique(Database)](https://laravel.com/docs/5.8/validation#rule-unique)
 
-[Different](https://laravel.com/docs/5.8/validation#rule-different)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[MIME Type By File Extension](https://laravel.com/docs/5.8/validation#rule-mimes)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[URL](https://laravel.com/docs/5.8/validation#rule-url)
+[Different](https://laravel.com/docs/5.8/validation#rule-different)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[MIME Type By File Extension](https://laravel.com/docs/5.8/validation#rule-mimes)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[URL](https://laravel.com/docs/5.8/validation#rule-url)
 
 [Digits](https://laravel.com/docs/5.8/validation#rule-digits)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Min](https://laravel.com/docs/5.8/validation#rule-min)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[UUID](https://laravel.com/docs/5.8/validation#rule-uuid)
 
@@ -588,7 +588,42 @@ $request->validate([
 [Dimensions(Image Files)](https://laravel.com/docs/5.8/validation#rule-dimensions)&emsp;[Not Regex](https://laravel.com/docs/5.8/validation#rule-not-regex)
 
 - **accepted**
+
+验证字段必须为 _yes_，_on_，_1_ 或 _true_。这有助于验证『服务条款』的接受程度。
+
 - **active_url**
+
+根据 PHP 的 `dns_get_record` 函数，验证字段必须为一个有效的 A 或者 AAAA 记录。
+
+- **after:date**
+
+验证中的字段必须是给定日期以后的值。该日期将被传递到 PHP 的 `strtotime` 函数中:
+
+```php
+'start_date' => 'required|date|after:tomorrow'
+```
+
+你可以指定另一个与日期进行比较的字段，而不是传递通过 `strtotime` 评估的日期字符串：
+
+```php
+'finish_date' => 'required|date|after:start_date'
+```
+
+- **after_or_equal:date**
+
+验证字段必须是一个给定日期之后或等于给定日期的值。有关更多信息，看 [after](https://laravel.com/docs/5.8/validation#rule-after) 规则。
+
+- **alpha**
+
+验证字段必须完全是字母字符。
+
+- **alpha_dash**
+
+验证字段可以包含字母数字字符以及中划线和下划线。
+
+- **alpha_num**
+
+验证字段必须完全是字母数字字符。
 
 ## 有条件地添加规则
 
