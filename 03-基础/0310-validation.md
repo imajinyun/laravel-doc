@@ -545,47 +545,29 @@ $request->validate([
 
 以下是所有可用验证规则及其它们功能的列表：
 
-[Accepted](https://laravel.com/docs/5.8/validation#rule-accepted)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Distince](https://laravel.com/docs/5.8/validation#rule-distinct)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Nullable](https://laravel.com/docs/5.8/validation#rule-nullable)
-
-[Active URL](https://laravel.com/docs/5.8/validation#rule-active-url)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[E-Mail](https://laravel.com/docs/5.8/validation#rule-email)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Numeric](https://laravel.com/docs/5.8/validation#rule-numeric)
-
-[After(Date)](https://laravel.com/docs/5.8/validation#rule-after)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Exists(Database)](https://laravel.com/docs/5.8/validation#rule-exists)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Present](https://laravel.com/docs/5.8/validation#rule-present)
-
-[After Or Equal(Date)](https://laravel.com/docs/5.8/validation#rule-after-or-equal)&emsp;&emsp;&emsp;&emsp;&emsp;[File](https://laravel.com/docs/5.8/validation#rule-file)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Regular Expression](https://laravel.com/docs/5.8/validation#rule-regex)
-
-[Alpha](https://laravel.com/docs/5.8/validation#rule-alpha)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Filled](https://laravel.com/docs/5.8/validation#rule-filled)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required](https://laravel.com/docs/5.8/validation#rule-required)
-
-[Alpha Dash](https://laravel.com/docs/5.8/validation#rule-alpha-dash)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Greater Than](https://laravel.com/docs/5.8/validation#rule-gt)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required If](https://laravel.com/docs/5.8/validation#rule-required-if)
-
-[Alpha Numeric](https://laravel.com/docs/5.8/validation#rule-alpha-num)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Greater Than Or Equal](https://laravel.com/docs/5.8/validation#rule-gte)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Unless](https://laravel.com/docs/5.8/validation#rule-required-unless)
-
-[Array](https://laravel.com/docs/5.8/validation#rule-array)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Image(File)](https://laravel.com/docs/5.8/validation#rule-image)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required With](https://laravel.com/docs/5.8/validation#rule-required-without)
-
-[Bail](https://laravel.com/docs/5.8/validation#rule-bail)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[In](https://laravel.com/docs/5.8/validation#rule-in)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required With All](https://laravel.com/docs/5.8/validation#rule-required-with-all)
-
-[Before(Date)](https://laravel.com/docs/5.8/validation#rule-before)&emsp;&emsp;&emsp;&emsp;&emsp;[In Array](https://laravel.com/docs/5.8/validation#rule-in-array)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Without](https://laravel.com/docs/5.8/validation#rule-required-without)
-
-[Before Or Equal(Date)](https://laravel.com/docs/5.8/validation#rule-before-or-equal)&emsp;[Integer](https://laravel.com/docs/5.8/validation#rule-integer)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Required Without All](https://laravel.com/docs/5.8/validation#rule-required-without-all)
-
-[Between](https://laravel.com/docs/5.8/validation#rule-between)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[IP Address](https://laravel.com/docs/5.8/validation#rule-ip)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Same](https://laravel.com/docs/5.8/validation#rule-same)
-
-[Boolean](https://laravel.com/docs/5.8/validation#rule-boolean)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[JSON](https://laravel.com/docs/5.8/validation#rule-json)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Size](https://laravel.com/docs/5.8/validation#rule-size)
-
-[Confirmed](https://laravel.com/docs/5.8/validation#rule-confirmed)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Less Than](https://laravel.com/docs/5.8/validation#rule-lt)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Starts With](https://laravel.com/docs/5.8/validation#rule-starts-with)
-
-[Date](https://laravel.com/docs/5.8/validation#rule-date)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Less Than Or Equal](https://laravel.com/docs/5.8/validation#rule-lte)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[String](https://laravel.com/docs/5.8/validation#rule-string)
-
-[Date Equals](https://laravel.com/docs/5.8/validation#rule-date-equals)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Max](https://laravel.com/docs/5.8/validation#rule-max)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Timezone](https://laravel.com/docs/5.8/validation#rule-timezone)
-
-[Date Format](https://laravel.com/docs/5.8/validation#rule-date-format)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[MIME Types](https://laravel.com/docs/5.8/validation#rule-mimetypes)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Unique(Database)](https://laravel.com/docs/5.8/validation#rule-unique)
-
-[Different](https://laravel.com/docs/5.8/validation#rule-different)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[MIME Type By File Extension](https://laravel.com/docs/5.8/validation#rule-mimes)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[URL](https://laravel.com/docs/5.8/validation#rule-url)
-
-[Digits](https://laravel.com/docs/5.8/validation#rule-digits)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[Min](https://laravel.com/docs/5.8/validation#rule-min)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;[UUID](https://laravel.com/docs/5.8/validation#rule-uuid)
-
-[Digits Between](https://laravel.com/docs/5.8/validation#rule-digits-between)&emsp;&emsp;&emsp;&emsp;&emsp;[NotIn](https://laravel.com/docs/5.8/validation#rule-not-in)
-
-[Dimensions(Image Files)](https://laravel.com/docs/5.8/validation#rule-dimensions)&emsp;[Not Regex](https://laravel.com/docs/5.8/validation#rule-not-regex)
+|                                                                                       |                                                                                   |                                                                                           |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| [Accepted](https://laravel.com/docs/5.8/validation#rule-accepted)                     | [Distince](https://laravel.com/docs/5.8/validation#rule-distinct)                 | [Nullable](https://laravel.com/docs/5.8/validation#rule-nullable)                         |
+| [Active URL](https://laravel.com/docs/5.8/validation#rule-active-url)                 | [E-Mail](https://laravel.com/docs/5.8/validation#rule-email)                      | [Numeric](https://laravel.com/docs/5.8/validation#rule-numeric)                           |
+| [After(Date)](https://laravel.com/docs/5.8/validation#rule-after)                     | [Exists(Database)](https://laravel.com/docs/5.8/validation#rule-exists)           | [Present](https://laravel.com/docs/5.8/validation#rule-present)                           |
+| [After Or Equal(Date)](https://laravel.com/docs/5.8/validation#rule-after-or-equal)   | [File](https://laravel.com/docs/5.8/validation#rule-file)                         | [Regular Expression](https://laravel.com/docs/5.8/validation#rule-regex)                  |
+| [Alpha](https://laravel.com/docs/5.8/validation#rule-alpha)                           | [Filled](https://laravel.com/docs/5.8/validation#rule-filled)                     | [Required](https://laravel.com/docs/5.8/validation#rule-required)                         |
+| [Alpha Dash](https://laravel.com/docs/5.8/validation#rule-alpha-dash)                 | [Greater Than](https://laravel.com/docs/5.8/validation#rule-gt)                   | [Required If](https://laravel.com/docs/5.8/validation#rule-required-if)                   |
+| [Alpha Numeric](https://laravel.com/docs/5.8/validation#rule-alpha-num)               | [Greater Than Or Equal](https://laravel.com/docs/5.8/validation#rule-gte)         | [Required Unless](https://laravel.com/docs/5.8/validation#rule-required-unless)           |
+| [Array](https://laravel.com/docs/5.8/validation#rule-array)                           | [Image(File)](https://laravel.com/docs/5.8/validation#rule-image)                 | [Required With](https://laravel.com/docs/5.8/validation#rule-required-without)            |
+| [Bail](https://laravel.com/docs/5.8/validation#rule-bail)                             | [In](https://laravel.com/docs/5.8/validation#rule-in)                             | [Required With All](https://laravel.com/docs/5.8/validation#rule-required-with-all)       |
+| [Before(Date)](https://laravel.com/docs/5.8/validation#rule-before)                   | [In Array](https://laravel.com/docs/5.8/validation#rule-in-array)                 | [Required Without](https://laravel.com/docs/5.8/validation#rule-required-without)         |
+| [Before Or Equal(Date)](https://laravel.com/docs/5.8/validation#rule-before-or-equal) | [Integer](https://laravel.com/docs/5.8/validation#rule-integer)                   | [Required Without All](https://laravel.com/docs/5.8/validation#rule-required-without-all) |
+| [Between](https://laravel.com/docs/5.8/validation#rule-between)                       | [IP Address](https://laravel.com/docs/5.8/validation#rule-ip)                     | [Same](https://laravel.com/docs/5.8/validation#rule-same)                                 |
+| [Boolean](https://laravel.com/docs/5.8/validation#rule-boolean)                       | [JSON](https://laravel.com/docs/5.8/validation#rule-json)                         | [Size](https://laravel.com/docs/5.8/validation#rule-size)                                 |
+| [Confirmed](https://laravel.com/docs/5.8/validation#rule-confirmed)                   | [Less Than](https://laravel.com/docs/5.8/validation#rule-lt)                      | [Starts With](https://laravel.com/docs/5.8/validation#rule-starts-with)                   |
+| [Date](https://laravel.com/docs/5.8/validation#rule-date)                             | [Less Than Or Equal](https://laravel.com/docs/5.8/validation#rule-lte)            | [String](https://laravel.com/docs/5.8/validation#rule-string)                             |
+| [Date Equals](https://laravel.com/docs/5.8/validation#rule-date-equals)               | [Max](https://laravel.com/docs/5.8/validation#rule-max)                           | [Timezone](https://laravel.com/docs/5.8/validation#rule-timezone)                         |
+| [Date Format](https://laravel.com/docs/5.8/validation#rule-date-format)               | [MIME Types](https://laravel.com/docs/5.8/validation#rule-mimetypes)              | [Unique(Database)](https://laravel.com/docs/5.8/validation#rule-unique)                   |
+| [Different](https://laravel.com/docs/5.8/validation#rule-different)                   | [MIME Type By File Extension](https://laravel.com/docs/5.8/validation#rule-mimes) | [URL](https://laravel.com/docs/5.8/validation#rule-url)                                   |
+| [Digits](https://laravel.com/docs/5.8/validation#rule-digits)                         | [Min](https://laravel.com/docs/5.8/validation#rule-min)                           | [UUID](https://laravel.com/docs/5.8/validation#rule-uuid)                                 |
+| [Digits Between](https://laravel.com/docs/5.8/validation#rule-digits-between)         | [NotIn](https://laravel.com/docs/5.8/validation#rule-not-in)                      |
+| [Dimensions(Image Files)](https://laravel.com/docs/5.8/validation#rule-dimensions)    | [Not Regex](https://laravel.com/docs/5.8/validation#rule-not-regex)               |
 
 - **accepted**
 
@@ -611,7 +593,7 @@ $request->validate([
 
 - **after_or_equal:date**
 
-验证字段必须是一个给定日期之后或等于给定日期的值。有关更多信息，看 [after](https://laravel.com/docs/5.8/validation#rule-after) 规则。
+验证字段必须是一个给定日期之后或等于给定日期的值。有关更多信息，看 [之后](https://laravel.com/docs/5.8/validation#rule-after) 规则。
 
 - **alpha**
 
@@ -624,6 +606,26 @@ $request->validate([
 - **alpha_num**
 
 验证字段必须完全是字母数字字符。
+
+- **array**
+
+验证中的字段必须是 PHP 数组。
+
+- **bail**
+
+第一次验证失败后停止运行验证规则。
+
+- **before:date**
+
+验证中的字段必须是给定日期之前的一个值。日期将被传递到 PHP 的 `strtotime` 函数中。此外，像 [之后](https://laravel.com/docs/5.8/validation#rule-after) 规则一样，验证的另一个字段的名称可以作为 `date` 值提供。
+
+- **before_or_equal:date**
+
+验证字段必须是一个给定日期之前的或者等于给定日期的值。该日期将传递到 PHP 的 `strtotime` 函数。此外，像 [之后](https://laravel.com/docs/5.8/validation#rule-after) 规则一样，验证的另一个字段的名称可以作为 `date` 值提供。
+
+- **between:min,max**
+
+验证字段的大小必须在给定的 *min* 和 *max* 之间。字符串，数字，数组和文件的计算方式与 `size` 规则相同。
 
 ## 有条件地添加规则
 
