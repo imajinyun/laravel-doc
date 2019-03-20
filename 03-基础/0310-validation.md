@@ -627,6 +627,126 @@ $request->validate([
 
 验证字段的大小必须在给定的 *min* 和 *max* 之间。字符串，数字，数组和文件的计算方式与 `size` 规则相同。
 
+- **boolean**
+
+验证字段必须能够转换为一个布尔值。接受的输入是 `true`，`false`，`1`，`0`，`"1"`，`"0"`。
+
+- **confirmed**
+
+验证的字段必须具有 `foo_confirmation` 字段的匹配。例如，如果验证字段是 `password`，在输入中必须存在一个匹配的 `password_confirmation` 字段。
+
+- **date**
+
+根据 PHP 的 `strtotime` 函数，验证字段必须是一个有效的非相对日期。
+
+- **date_equals:date**
+
+验证字段必须等于给定的日期。日期将传递到 PHP 的 `strtotime` 函数。
+
+- **date_format:format**
+
+验证字段必须与给定的格式匹配。当验证一个字段时，你应该即可以使用 `date` 也可以使用 `date_format`，而不是两者都使用。
+
+- **different:field**
+
+验证字段必须具有与 *field* 不同的值。
+
+- **digits:value**
+
+验证字段必须是数字，并且具有确切的值长度。
+
+- **digits_between:min,max**
+
+验证字段的长度必须介于给定的最大值和最小值之间。
+
+- **dimensions**
+
+验证中的字段必须是图片并满足符合规则参数指定的约束尺寸：
+
+```php
+'avatar' => 'dimensions:min_width=100,min_height=200'
+```
+
+可用的约束有：`min_width`，`max_width`，`min_height`，`max_height`，`width`，`height`，`ratio`。
+
+约束比例应该表示为宽除以高。该约束比例可以指定为一个像 `3/2` 的语句或者一个像 `1.5` 的浮点数：
+
+```php
+'avatar' => 'dimensions:ratio=3/2'
+```
+
+由于此规则要求几个参数，你可以使用 `Rule::dimensions` 方法流畅地构造规则：
+
+```php
+use Illuminate\Validation\Rule;
+
+Validator::make($data, [
+    'avatar' => [
+        'required',
+        Rule::dimensions()->maxWidth(1000)->maxHeight(500)->ratio(3 / 2),
+    ],
+]);
+```
+
+- **distinct**
+
+当使用数组时，验证字段必须没有任何重复的值。
+
+```php
+'foo.*.id' => 'distinct'
+```
+
+- **email**
+
+验证字段必须是一个格式化的电子邮件地址。
+
+- **exists:table,column**
+
+验证字段必须存在于一个给定的数据表中。
+
+### 存在规则的基本用法
+
+```php
+'state' => 'exists:states'
+```
+
+如果 `column` 选项没有指定，则将使用字段名称。
+
+### 指定自定义列名
+
+```php
+'state' => 'exists:states,abbreviation'
+```
+
+偶尔，你可能需要去指定用于 `exists` 查询的一个特定的数据库连接。你可以使用『点』语法将连接名称添加到表名称前来完成此操作：
+
+```php
+'email' => 'exists:connection.staff,email'
+```
+
+如果你希望通过验证规则去自定义执行的查询，你可以使用 `Rule` 类去流畅定义规则。在这个实例中，我们也指定验证规则作为一个数组而不是使用 `|` 字符去分隔它们：
+
+```php
+use Illuminate\Validation\Rule;
+
+Validator::make($data, [
+    'email' => [
+        'required',
+        Rule::exists('staff')->where(function ($query) {
+            $query->where('account_id', 1);
+        }),
+    ],
+]);
+```
+
+- **file**
+
+验证的字段必须是一个成功上传的文件。
+
+- **filled**
+
+验证的字段存在时必须不能为空。
+
 ## 有条件地添加规则
 
 ## 验证数组
