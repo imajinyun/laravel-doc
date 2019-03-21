@@ -1049,6 +1049,8 @@ $v = Validator::make($data, [
 
 ### 复杂条件验证
 
+有时你可能希望添加基于更复杂条件逻辑的验证规则。例如，只有当另一个字段的值大于 100 时，你可能希望要求一个给定的字段。或者，只有当另一个字段存在时，才需要两个字段有给定的值。添加这些验证规则并不一定很痛苦。首先，用静态规则创建一个从不改变的 `Validator` 实例:
+
 ```php
 $v = Validator::make($data, [
     'email' => 'required|email',
@@ -1056,20 +1058,242 @@ $v = Validator::make($data, [
 ]);
 ```
 
+让我们假设我们的应用程序是为游戏收藏家准备的。如果游戏收藏者注册了我们的应用程序，并且他们拥有 100 多个游戏，我们希望他们解释为什么他们拥有这么多游戏。例如，也许他们经营一家游戏转售商店，或者他们只是喜欢收集。为了有条件地添加这个需求，我们可以在 `Validator` 实例上使用 `sometimes` 方法。
+
+```php
+$v->sometimes('reason', 'required|max:500', function ($input) {
+    return $input->games >= 100;
+});
+```
+
+传递给 `sometimes` 方法的第一个参数是我们有条件验证的字段的名称。第二个参数是我们想要添加的规则。如果 `Closure` 在第三个参数返回 `true` 时被传递，则规则将被添加。此种方法使得构建复杂的条件验证变得轻而易举。你甚至可以一次为多个字段添加条件验证:
+
+```php
+$v->sometimes(['reason', 'cost'], 'required', function ($input) {
+    return $input->games >= 100;
+});
+```
+
+{% hint style="info" %}
+
+传递到你的 `Closure` 的 `$input` 参数是一个 `Illuminate\Support\Fluent` 的实例，可以用于访问你的输入和文件。
+
+{% endhint %}
+
 ## 验证数组
+
+验证基于数组的表单输入字段不一定很麻烦。你可以使用『点符号』去验证数组中的属性。例如，如果传入的 HTTP 请求包含一个 `photos[profile]` 字段，你可以像这样验证它：
+
+```php
+$validator = Validator::make($request->all(), [
+    'photos.profile' => 'required|image',
+]);
+```
+
+你还可以验证数组中的每个元素。例如，要验证给定数组输入字段中的每个电子邮件是否唯一，你可以像如下这样做：
+
+```php
+$validator = Validator::make($request->all(), [
+    'person.*.email' => 'email|unique:users',
+    'person.*.first_name' => 'required_with:person.*.last_name',
+]);
+```
+
+同时，你可以在你的语言文件中指定验证消息时使用 `*` 字符，从而可以轻松地为基于数组的字段使用单个验证消息：
+
+```php
+'custom' => [
+    'person.*.email' => [
+        'unique' => 'Each person must have a unique e-mail address',
+    ]
+],
+```
 
 ## 自定义验证规则
 
 ### 使用规则对象
 
+Laravel 提供各种有用的验证规则；然而，你可能希望去指定一些你自己的。注册自定义验证规则的一种方法是使用规则对象。要生成新的规则对象，可以使用 `make:rule` Artisan 命令。让我们使用这个命令来生成一个验证字符串是否大写的规则。Laravel 会将新规则放置在 `app/Rules` 目录中：
+
+```php
+php artisan make:rule Uppercase
+```
+
+一旦规则被创建，我们就可以定义它的行为了。规则对象包含两个方法：`passes` 和 `message`。`passes` 方法接收属性值和名称，并根据属性值是否有效返回 `true` 或 `false`。`message` 方法应当返回验证失败时应当使用的验证错误消息:
+
+```php
+<?php
+
+namespace App\Rules;
+
+use Illuminate\Contracts\Validation\Rule;
+
+class Uppercase implements Rule
+{
+    /**
+     * 确定验证规则是否通过。
+     *
+     * @param  string  $attribute
+     * @param  mixed  $value
+     * @return bool
+     */
+    public function passes($attribute, $value)
+    {
+        return strtoupper($value) === $value;
+    }
+
+    /**
+     * 获取验证错误消息。
+     *
+     * @return string
+     */
+    public function message()
+    {
+        return 'The :attribute must be uppercase.';
+    }
+}
+```
+
+如果你希望从你的转译文件中返回错误消息，你可以从 `message` 方法中调用 `trans` 助手函数：
+
+```php
+/**
+ * 获取验证错误消息。
+ *
+ * @return string
+ */
+public function message()
+{
+    return trans('validation.uppercase');
+}
+```
+
+一旦规则被定义，你可以通过与你的其它验证规则一起传递规则对象的实例将其附加到一个验证器上：
+
+```php
+use App\Rules\Uppercase;
+
+$request->validate([
+    'name' => ['required', 'string', new Uppercase],
+]);
+```
+
 ### 使用闭包
+
+如果在整个应用程序中只需要一次自定义规则的功能，可以使用一个 `Closure` 来代替规则对象。`Closure` 接收属性的名称，属性的值和一个验证失败时应当调用的 `$fail` 回调：
+
+```php
+$validator = Validator::make($request->all(), [
+    'title' => [
+        'required',
+        'max:255',
+        function ($attribute, $value, $fail) {
+            if ($value === 'foo') {
+                $fail($attribute.' is invalid.');
+            }
+        },
+    ],
+]);
+```
 
 ### 使用扩展
 
+注册自定义规则的另一种方法是在 `Validator` [facade](https://laravel.com/docs/5.8/facades) 上使用 `extend` 方法。让我们在一个 [服务提供者](https://laravel.com/docs/5.8/providers) 中使用该方法来注册自定义的验证规则：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Validator;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 引导任何应用服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Validator::extend('foo', function ($attribute, $value, $parameters, $validator) {
+            return $value == 'foo';
+        });
+    }
+
+    /**
+     * 注册服务提供者。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+}
+```
+
+自定义验证 `Closure` 接收四个参数：验证的 `$attribute` 名称，属性的 `$value`，传递到规则的 `$parameter` 数组和 `Validator` 实例。
+
+你还可以传递一个类和方法到 `extend` 方法而不是一个 `Closure`：
+
+```php
+Validator::extend('foo', 'FooValidator@validate');
+```
+
 #### 定义错误信息
+
+你还需要为你的自定义规则定义一条错误消息。你可以使用内联自定义消息数组或通过在验证语言文件中添加条目来这样做。此消息应放在数组的第一级，而不是 `custom` 数组中，此数组仅用于特定属性的错误消息：
+
+```php
+"foo" => "Your input was invalid!",
+
+"accepted" => "The :attribute must be accepted.",
+
+// 其余的验证错误消息...
+```
+
+当创建自定义验证规则时，有时可能需要为错误消息定义自定义占位符替换。你可以通过创建如上所述的自定义验证器，然后调用 `Validator` facade 上的 `replacer` 方法来这样做。你可以在 [服务提供者](https://laravel.com/docs/5.8/providers) 的 `boot` 方法中这样做：
+
+```php
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    Validator::extend(...);
+
+    Validator::replacer('foo', function ($message, $attribute, $rule, $parameters) {
+        return str_replace(...);
+    });
+}
+```
 
 #### 隐式扩展
 
+默认情况下，当验证的一个属性不存在或包含空字符串时，不会运行正常的验证规则，包括自定义扩展。例如，`unique` 规则不会针对空字符串运行：
+
+```php
+$rules = ['name' => 'unique:users,name'];
+
+$input = ['name' => ''];
+
+Validator::make($input, $rules)->passes(); // true
+```
+
+即使属性为空，规则也要运行，规则必须暗指属性是必要的。要创建这样一个『隐式』扩展，使用 `Validator::extendImplicit()` 方法:
+
+```php
+Validator::extendImplicit('foo', function ($attribute, $value, $parameters, $validator) {
+    return $value == 'foo';
+});
+```
+
 {% hint style="info" %}
+
+『隐式』扩展仅暗示该属性是必需的。它实际上是否是一个丢失的或空的属性失效取决于你。
 
 {% endhint %}
