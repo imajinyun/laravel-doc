@@ -747,6 +747,114 @@ Validator::make($data, [
 
 验证的字段存在时必须不能为空。
 
+- **gt:field**
+
+验证的字段必须大于给定的字段。两个字段必须具有相同的类型。字符串，数字，数组和文件使用与 `size` 规则相同的约束进行计算。
+
+- **gte:field**
+
+验证字段必须大于或者等于给定的字段。两个字段必须具有相同的类型。字符串，数字，数组和文件使用与 `size` 规则相同的约束进行计算。
+
+- **image**
+
+验证字段必须是一个图像（jpeg，png，bmp，gif 或 svg）。
+
+- **in:foo,bar,...**
+
+验证字段必须包含在一个给定的值列表中。由于此规则通常要求你 `implode` 一个数组，`Rule::in` 方法可以用于流畅地构造规则 ：
+
+```php
+use Illuminate\Validation\Rule;
+
+Validator::make($data, [
+    'zones' => [
+        'required',
+        Rule::in(['first-zone', 'second-zone']),
+    ],
+]);
+```
+
+- **in_array:anotherfield.***
+
+验证字段必须存在于别一个字段的值中。
+
+- **integer**
+
+验证字段必须是一个整数。
+
+- **ip**
+
+验证字段必须是一个 IP 地址。
+
+- **ipv4**
+
+验证字段必须是一个 IPv4 地址。
+
+- **ipv6**
+
+验证字是必须一个 IPv6 地址。
+
+- **json**
+
+验证字段必须是有效的 JSON 字符串。
+
+- **lt:field**
+
+验证字段必须小于给定的字段。两个字段必须具有相同的类型。字符串，数字，数组和文件使用与 `size` 规则相同的约束进行计算。
+
+- **lte:field**
+
+验证字段必须小于或等于给定的字段。两个字段必须具有相同的类型。字符串，数字，数组和文件使用与 `size` 规则相同的约束进行计算。
+
+- **max:value**
+
+验证规则必须小于或等于最大值。字符串，数字，数组和文件的计算方式与 `size` 规则相同。
+
+- **mimetypes:text/plain,...**
+
+验证字段必须匹配给定 MIME 类型中的一种：
+
+```php
+'video' => 'mimetypes:video/avi,video/mpeg,video/quicktime'
+```
+
+要确定上传文件的 MIME 类型，将读取文件的内容，框架将尝试猜测 MIME 类型，这可以与客户端提供的 MIME 类型不一样。
+
+- **mimes:foo,bar,...**
+
+验证的字段必须有一个与列出的扩展名之一相对应的 MIME 类型。
+
+### MIME 规则的基本用法
+
+```php
+'photo' => 'mimes:jpeg,bmp,png'
+```
+
+即使你仅需要去指定扩展，此规则实际上验证文件的 MIME 类型是通过读取文件的内容并猜测它的 MIME 类型。
+
+可以在以下的位置找到一个完整的 MIME 类型及其它们对应的扩展列表：`https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types`。
+
+- **min:value**
+
+验证的字段必须有一个最小值。字符串，数字，数组和文件的计算方式与 `size` 规则相同。
+
+- **not_in:foo,bar,...**
+
+验证的字段必须不包含在给定的值列表中。`Rule::notIn` 方法可用于流畅地构造规则:
+
+```php
+use Illuminate\Validation\Rule;
+
+Validator::make($data, [
+    'toppings' => [
+        'required',
+        Rule::notIn(['sprinkles', 'cherries']),
+    ],
+]);
+```
+
+- **not_regex:pattern**
+
 ## 有条件地添加规则
 
 ## 验证数组
