@@ -912,25 +912,112 @@ Validator::make($request->all(), [
 
 ### required_unless:anotherfield,value,...
 
+验证字段必须存在且不为空，除非另一个字段等于任何值。
+
 ### required_with:foo,bar,...
+
+验证字段必须存在，并且仅在其它任何字段存在时才不为空。
 
 ### required_with_all:foo,bar,...
 
+验证字段必须存在，并且仅在其它所有指定字段存在时才不为空。
+
 ### required_without:foo,bar,...
+
+验证字段必须存在，并且仅当其它任何指定字段不存在时才不为空。
 
 ### required_without_all:foo,bar,...
 
+验证字段必须存在，并且仅当其它所有指定字段不存在时才不为空。
+
 ### same:field
+
+给定的字段必须匹配验证字段。
 
 ### size:value
 
+验证字段必须有一个与给定值匹配的大小。对于字符串数据，值对应字符数。对于数值数据，值对应给定的整数值。对于数组，大小对应数组的 `count`。对于文件，大小对应以千字节为单位的文件大小。
+
 ### starts_with:foo,bar,...
+
+验证字段必须从给定值中的一个开始。
 
 ### string
 
+验证字段必须是一个字符串。如果你希望该字段也为 `null`，你应当分配 `nullable` 规则给该字段。
+
 ### timezone
 
+验证字段必须是一个根据 PHP `timezone_identifiers_list` 函数的有效时区标识符。
+
 ### unique:table,column,except,idColumn
+
+验证字段在给定的数据表中必须是唯一的。如果 `column` 选项不被指定，将使用字段名。
+
+#### 指定一个自定义列名
+
+```php
+'email' => 'unique:users,email_address'
+```
+
+#### 自定义数据库连接
+
+偶尔，你可能需要通过验证器为数据库查询设置一个自定义连接。如前所述，设置 `unique:users` 作为一个验证规则将使用默认的数据库连接去查询数据库。要覆盖这个，要使用『点』语法指定连接和表名：
+
+```php
+'email' => 'unique:connection.users,email_address'
+```
+
+#### 强制唯一规则而忽略给定的标识
+
+有时，你可能希望在唯一检查期间去忽略给定的 ID。例如，考虑一个包含用户的姓名，电子邮件地址和位置的『更新个人资料』界面。你可能想去验证电子邮件是否唯一。然而，如果用户仅改变姓名字段并不更改电子邮件字段，你不想抛出验证错误，因为用户已经是电子邮件地址的所有者。
+
+为了指示验证器去忽略用户的 ID，我们将使用 `Rule` 类流畅地定义规则。在本示例中，我们也将指定验证规则为一个数组而不是使用 `|` 字符去分隔规则：
+
+```php
+use Illuminate\Validation\Rule;
+
+Validator::make($data, [
+    'email' => [
+        'required',
+        Rule::unique('users')->ignore($user->id),
+    ],
+]);
+```
+
+{% hint style="danger" %}
+
+你应当从不传递任何用户控制的请求输入到 `ignore` 方法。相反，你应当从一个 Eloquent 模型实例上仅传递一个系统生成的唯一 ID（如自增 ID 或 UUID）。否则，你的应用程序将易受 SQL 注入的攻击。
+
+{% endhint %}
+
+你可以传递整个模型实例，而不是传递模型键的值到 `ignore` 方法。Laravel 将自动从模型中提取该键：
+
+```php
+Rule::unique('users')->ignore($user)
+```
+
+如果你的表使用一个除 `id` 之外的主键列名，你可以在调用 `ignore` 方法时指定列名：
+
+```php
+Rule::unique('users')->ignore($user->id, 'user_id')
+```
+
+默认情况下，`unique` 规则将检查与验证的属性名称匹配的列的唯一性。然而，你可以把一个不同的列名作为第二个参数传递到 `unique` 方法：
+
+```php
+Rule::unique('users', 'email_address')->ignore($user->id),
+```
+
+#### 添加其它条件子句
+
+你还可以使用 `where` 方法通过自定义查询指定额外查询约束。例如，让我们添加一个验证 `account_id` 为 `1` 的约束：
+
+```php
+'email' => Rule::unique('users')->where(function ($query) {
+    return $query->where('account_id', 1);
+})
+```
 
 ### url
 
@@ -942,9 +1029,46 @@ Validator::make($request->all(), [
 
 ## 有条件地添加规则
 
+### 存在时验证
+
+在一些情形下，你可能希望 **仅** 在输入数组中存在字段时才去运行验证检查。要快速完成此任务，添加 `sometimes` 规则到你的规则列表中：
+
+```php
+$v = Validator::make($data, [
+    'email' => 'sometimes|required|email',
+]);
+```
+
+在上面的示例中，如果在 `$data` 数组中存在 `email` 字段时才将验证它。
+
+{% hint style="info" %}
+
+如果你企图去验证的字段始终存在，但可能是空的，查看 [关于可选字段的说明](https://laravel.com/docs/5.8/validation#a-note-on-optional-fields)。
+
+{% endhint %}
+
+### 复杂条件验证
+
+```php
+$v = Validator::make($data, [
+    'email' => 'required|email',
+    'games' => 'required|numeric',
+]);
+```
+
 ## 验证数组
 
 ## 自定义验证规则
+
+### 使用规则对象
+
+### 使用闭包
+
+### 使用扩展
+
+#### 定义错误信息
+
+#### 隐式扩展
 
 {% hint style="info" %}
 
