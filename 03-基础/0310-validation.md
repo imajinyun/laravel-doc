@@ -569,15 +569,15 @@ $request->validate([
 | [Digits Between](https://laravel.com/docs/5.8/validation#rule-digits-between)         | [NotIn](https://laravel.com/docs/5.8/validation#rule-not-in)                      |
 | [Dimensions(Image Files)](https://laravel.com/docs/5.8/validation#rule-dimensions)    | [Not Regex](https://laravel.com/docs/5.8/validation#rule-not-regex)               |
 
-- **accepted**
+### accepted
 
 验证字段必须为 _yes_，_on_，_1_ 或 _true_。这有助于验证『服务条款』的接受程度。
 
-- **active_url**
+### active_url
 
 根据 PHP 的 `dns_get_record` 函数，验证字段必须为一个有效的 A 或者 AAAA 记录。
 
-- **after:date**
+### after:date
 
 验证中的字段必须是给定日期以后的值。该日期将被传递到 PHP 的 `strtotime` 函数中:
 
@@ -591,75 +591,75 @@ $request->validate([
 'finish_date' => 'required|date|after:start_date'
 ```
 
-- **after_or_equal:date**
+### after_or_equal:date
 
 验证字段必须是一个给定日期之后或等于给定日期的值。有关更多信息，看 [之后](https://laravel.com/docs/5.8/validation#rule-after) 规则。
 
-- **alpha**
+### alpha
 
 验证字段必须完全是字母字符。
 
-- **alpha_dash**
+### alpha_dash
 
 验证字段可以包含字母数字字符以及中划线和下划线。
 
-- **alpha_num**
+### alpha_num
 
 验证字段必须完全是字母数字字符。
 
-- **array**
+### array
 
 验证中的字段必须是 PHP 数组。
 
-- **bail**
+### bail
 
 第一次验证失败后停止运行验证规则。
 
-- **before:date**
+### before:date
 
 验证中的字段必须是给定日期之前的一个值。日期将被传递到 PHP 的 `strtotime` 函数中。此外，像 [之后](https://laravel.com/docs/5.8/validation#rule-after) 规则一样，验证的另一个字段的名称可以作为 `date` 值提供。
 
-- **before_or_equal:date**
+### before_or_equal:date
 
 验证字段必须是一个给定日期之前的或者等于给定日期的值。该日期将传递到 PHP 的 `strtotime` 函数。此外，像 [之后](https://laravel.com/docs/5.8/validation#rule-after) 规则一样，验证的另一个字段的名称可以作为 `date` 值提供。
 
-- **between:min,max**
+### between:min,max
 
 验证字段的大小必须在给定的 *min* 和 *max* 之间。字符串，数字，数组和文件的计算方式与 `size` 规则相同。
 
-- **boolean**
+### boolean
 
 验证字段必须能够转换为一个布尔值。接受的输入是 `true`，`false`，`1`，`0`，`"1"`，`"0"`。
 
-- **confirmed**
+### confirmed
 
 验证的字段必须具有 `foo_confirmation` 字段的匹配。例如，如果验证字段是 `password`，在输入中必须存在一个匹配的 `password_confirmation` 字段。
 
-- **date**
+### date
 
 根据 PHP 的 `strtotime` 函数，验证字段必须是一个有效的非相对日期。
 
-- **date_equals:date**
+### date_equals:date
 
 验证字段必须等于给定的日期。日期将传递到 PHP 的 `strtotime` 函数。
 
-- **date_format:format**
+### date_format:format
 
 验证字段必须与给定的格式匹配。当验证一个字段时，你应该即可以使用 `date` 也可以使用 `date_format`，而不是两者都使用。
 
-- **different:field**
+### different:field
 
 验证字段必须具有与 *field* 不同的值。
 
-- **digits:value**
+### digits:value
 
 验证字段必须是数字，并且具有确切的值长度。
 
-- **digits_between:min,max**
+### digits_between:min,max
 
 验证字段的长度必须介于给定的最大值和最小值之间。
 
-- **dimensions**
+### dimensions
 
 验证中的字段必须是图片并满足符合规则参数指定的约束尺寸：
 
@@ -688,7 +688,7 @@ Validator::make($data, [
 ]);
 ```
 
-- **distinct**
+### distinct
 
 当使用数组时，验证字段必须没有任何重复的值。
 
@@ -696,15 +696,15 @@ Validator::make($data, [
 'foo.*.id' => 'distinct'
 ```
 
-- **email**
+### email
 
 验证字段必须是一个格式化的电子邮件地址。
 
-- **exists:table,column**
+### exists:table,column
 
 验证字段必须存在于一个给定的数据表中。
 
-### 存在规则的基本用法
+#### 存在规则的基本用法
 
 ```php
 'state' => 'exists:states'
@@ -712,7 +712,7 @@ Validator::make($data, [
 
 如果 `column` 选项没有指定，则将使用字段名称。
 
-### 指定自定义列名
+#### 指定自定义列名
 
 ```php
 'state' => 'exists:states,abbreviation'
@@ -739,27 +739,27 @@ Validator::make($data, [
 ]);
 ```
 
-- **file**
+### file
 
 验证的字段必须是一个成功上传的文件。
 
-- **filled**
+### filled
 
 验证的字段存在时必须不能为空。
 
-- **gt:field**
+### gt:field
 
 验证的字段必须大于给定的字段。两个字段必须具有相同的类型。字符串，数字，数组和文件使用与 `size` 规则相同的约束进行计算。
 
-- **gte:field**
+### gte:field
 
 验证字段必须大于或者等于给定的字段。两个字段必须具有相同的类型。字符串，数字，数组和文件使用与 `size` 规则相同的约束进行计算。
 
-- **image**
+### image
 
 验证字段必须是一个图像（jpeg，png，bmp，gif 或 svg）。
 
-- **in:foo,bar,...**
+### in:foo,bar,...
 
 验证字段必须包含在一个给定的值列表中。由于此规则通常要求你 `implode` 一个数组，`Rule::in` 方法可以用于流畅地构造规则 ：
 
@@ -774,43 +774,43 @@ Validator::make($data, [
 ]);
 ```
 
-- **in_array:anotherfield.***
+### in_array:anotherfield.*
 
 验证字段必须存在于别一个字段的值中。
 
-- **integer**
+### integer
 
 验证字段必须是一个整数。
 
-- **ip**
+### ip
 
 验证字段必须是一个 IP 地址。
 
-- **ipv4**
+### ipv4
 
 验证字段必须是一个 IPv4 地址。
 
-- **ipv6**
+### ipv6
 
 验证字是必须一个 IPv6 地址。
 
-- **json**
+### json
 
 验证字段必须是有效的 JSON 字符串。
 
-- **lt:field**
+### lt:field
 
 验证字段必须小于给定的字段。两个字段必须具有相同的类型。字符串，数字，数组和文件使用与 `size` 规则相同的约束进行计算。
 
-- **lte:field**
+### lte:field
 
 验证字段必须小于或等于给定的字段。两个字段必须具有相同的类型。字符串，数字，数组和文件使用与 `size` 规则相同的约束进行计算。
 
-- **max:value**
+### max:value
 
 验证规则必须小于或等于最大值。字符串，数字，数组和文件的计算方式与 `size` 规则相同。
 
-- **mimetypes:text/plain,...**
+### mimetypes:text/plain,...
 
 验证字段必须匹配给定 MIME 类型中的一种：
 
@@ -820,11 +820,11 @@ Validator::make($data, [
 
 要确定上传文件的 MIME 类型，将读取文件的内容，框架将尝试猜测 MIME 类型，这可以与客户端提供的 MIME 类型不一样。
 
-- **mimes:foo,bar,...**
+### mimes:foo,bar,...
 
 验证的字段必须有一个与列出的扩展名之一相对应的 MIME 类型。
 
-### MIME 规则的基本用法
+#### MIME 规则的基本用法
 
 ```php
 'photo' => 'mimes:jpeg,bmp,png'
@@ -834,11 +834,11 @@ Validator::make($data, [
 
 可以在以下的位置找到一个完整的 MIME 类型及其它们对应的扩展列表：`https://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types`。
 
-- **min:value**
+### min:value
 
 验证的字段必须有一个最小值。字符串，数字，数组和文件的计算方式与 `size` 规则相同。
 
-- **not_in:foo,bar,...**
+### not_in:foo,bar,...
 
 验证的字段必须不包含在给定的值列表中。`Rule::notIn` 方法可用于流畅地构造规则:
 
@@ -853,10 +853,99 @@ Validator::make($data, [
 ]);
 ```
 
-- **not_regex:pattern**
+### not_regex:pattern
+
+验证字段必须与给定的正则表达式不匹配。
+
+在内部，此规则使用 PHP 的 `preg_match` 函数。指定的模式应该遵循 `preg_match` 所需的相同格式，并因此还包含有效的分隔符。例如：`'email' => 'not_regex:/^.+$/i'`。
+
+**注意：**当使用 `regex` / `not_regex` 模式时，它可能需要在数组中指定规则而不是使用管道分隔符，尤其是正则表达式包含一个管道符时。
+
+### nullable
+
+验证字段可以为 `null`。当验证基础类型（如可以包含 `null` 值的字符串和数字）时特别有用。
+
+### numeric
+
+验证字段必须是数字。
+
+### present
+
+验证字段必须在输入数据中存在，但可以为空。
+
+### regex:pattern
+
+验证字段必须匹配给定的正则表达式。
+
+在内部，此规则使用 PHP 的 `preg_match` 函数。指定的模式应该遵循 `preg_match` 所需的相同格式，并因此还包含有效的分隔符。例如：`'email' => 'regex:/^.+@.+$/i'`。
+
+**注意**：当使用 `regex` / `not_regex` 模式时，它可能需要在数组中指定规则而不是使用管道分隔符，尤其是正则表达式包含一个管道符时。
+
+### required
+
+验证字段必须在输入数据中存在且不为空。如果以下条件之一为真，则一个字段被认为为『空』：
+
+- 值是 `null`；
+- 值是一个空字符串；
+- 值是一个空数组或者空 `Countable` 对象；
+- 值是一个没有路径的上传文件。
+
+### required_if:anotherfield,value,...
+
+如果另一个字段等于任何值，则验证字段必须存在并且不为空。
+
+如果你希望为 `required_if` 规则构造更多复杂条件，你可以使用 `Rule::requiredIf` 方法。此方法接受一个布尔或者一个闭包。当传递一个闭包时，闭包应当返回 `true` 或者 `false`，以指示验证字段是否是必需的：
+
+```php
+use Illuminate\Validation\Rule;
+
+Validator::make($request->all(), [
+    'role_id' => Rule::requiredIf($request->user()->is_admin),
+]);
+
+Validator::make($request->all(), [
+    'role_id' => Rule::requiredIf(function () use ($request) {
+        return $request->user()->is_admin;
+    }),
+]);
+```
+
+### required_unless:anotherfield,value,...
+
+### required_with:foo,bar,...
+
+### required_with_all:foo,bar,...
+
+### required_without:foo,bar,...
+
+### required_without_all:foo,bar,...
+
+### same:field
+
+### size:value
+
+### starts_with:foo,bar,...
+
+### string
+
+### timezone
+
+### unique:table,column,except,idColumn
+
+### url
+
+验证字段必须是一个有效的 URL。
+
+### uuid
+
+验证字段必须是一个有效的 RFC 4122（版本：1，3，4 或 5）通用唯一标识符（UUID）。
 
 ## 有条件地添加规则
 
 ## 验证数组
 
 ## 自定义验证规则
+
+{% hint style="info" %}
+
+{% endhint %}
