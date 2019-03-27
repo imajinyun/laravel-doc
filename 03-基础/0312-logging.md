@@ -172,3 +172,127 @@ Log::stack(['single', 'slack'])->info('Something happened!');
 ```
 
 ## 高级的 Monlog 通道定制
+
+### 为通道定制 Monolog
+
+有时你可能需要完全控制如何为现有通道配置 Monolog。例如，我可能想要为给定通道的处理器配置一个自定义的 Monolog `FormatterInterface` 接口实现。
+
+首先，在通道配置中定义一个 `tap` 数组。`tap` 数组应当包含一个类列表，该类应当有机会在创建 Monolog 实例后对其进行定制（或者『tap』进入）。
+
+```php
+'single' => [
+    'driver' => 'single',
+    'tap' => [App\Logging\CustomizeFormatter::class],
+    'path' => storage_path('logs/laravel.log'),
+    'level' => 'debug',
+],
+```
+
+一旦你在你的通道上配置了 `tap` 选项，你就可以准备去定义自定义的你的 Monolog 实例的类了。该类仅需要一个方法：`__invoke`，它接收一个 `Illuminate\Log\Logger` 实例。`Illuminate\Log\Logger` 实例代理所有对底层 Monolog 方法的调用：
+
+```php
+<?php
+
+namespace App\Logging;
+
+class CustomizeFormatter
+{
+    /**
+     * 自定义给定日志器的实例。
+     *
+     * @param  \Illuminate\Log\Logger  $logger
+     * @return void
+     */
+    public function __invoke($logger)
+    {
+        foreach ($logger->getHandlers() as $handler) {
+            $handler->setFormatter(...);
+        }
+    }
+}
+```
+
+{% hint style="info" %}
+
+所有『tap』类都由 [服务容器](https://laravel.com/docs/5.8/container) 来解析，因此它们需要的任何构造依赖都将自动注入。
+
+{% endhint %}
+
+### 创建 Monolog 处理器通道
+
+Monolog 有各种 [可用的处理器](https://github.com/Seldaek/monolog/tree/master/src/Monolog/Handler)。在一些情况下，你希望创建的日志器类型仅仅是一个特定处理器实例的 Monolog 驱动器。这些通道可以使用 `monolog` 驱动器创建。
+
+当使用 `monlog` 驱动器时，`handler` 配置选项用于指定哪个处理器被实例化。可选地，可以使用 `with` 配置选项指定处理器所需要的任何构造参数：
+
+```php
+'logentries' => [
+    'driver'  => 'monolog',
+    'handler' => Monolog\Handler\SyslogUdpHandler::class,
+    'with' => [
+        'host' => 'my.logentries.internal.datahubhost.company.com',
+        'port' => '10000',
+    ],
+],
+```
+
+#### Monolog 格式化
+
+当使用 `monolog` 驱动器时，Monolog `LineFormatter` 将作为默认的格式化被使用。然而，你可以使用 `formatter` 和 `formatter_with` 配置选项自定义格式化类型传递到处理器：
+
+```php
+'browser' => [
+    'driver' => 'monolog',
+    'handler' => Monolog\Handler\BrowserConsoleHandler::class,
+    'formatter' => Monolog\Formatter\HtmlFormatter::class,
+    'formatter_with' => [
+        'dateFormat' => 'Y-m-d',
+    ],
+],
+```
+
+如果你使用一个能够提供它自己格式化的 Monolog 处理器，你可以将 `formatter` 配置选项的值设置为 `default`：
+
+```php
+'newrelic' => [
+    'driver' => 'monolog',
+    'handler' => Monolog\Handler\NewRelicHandler::class,
+    'formatter' => 'default',
+],
+```
+
+### 经由工厂创建通道
+
+如果你想定义一个完整自定义通道，在该通道中你可以完全控制 Monolog 的实例和配置，你可以在你的 `config/logging.php` 配置文件中指定一个 `custom` 驱动类型。你的配置应当包含一个 `via` 选项去指向将调用的工厂类去创建 Monolog 实例：
+
+```php
+'channels' => [
+    'custom' => [
+        'driver' => 'custom',
+        'via' => App\Logging\CreateCustomLogger::class,
+    ],
+],
+```
+
+一旦你配置了 `custom` 通道，你就可以准备去定义创建你的 Monolog 实例的类。该类仅仅需要一个方法：`__invoke`，它应当返回 Monolog 实例：
+
+```php
+<?php
+
+namespace App\Logging;
+
+use Monolog\Logger;
+
+class CreateCustomLogger
+{
+    /**
+     * 创建一个自定义的 Monolog 实例。
+     *
+     * @param  array  $config
+     * @return \Monolog\Logger
+     */
+    public function __invoke(array $config)
+    {
+        return new Logger(...);
+    }
+}
+```
