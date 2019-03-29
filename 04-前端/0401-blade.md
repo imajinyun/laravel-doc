@@ -73,6 +73,36 @@ Route::get('blade', function () {
 
 ## 组件 & 插槽
 
+组件和插槽为部分和布局提供了类似的好处；然而，有些人发现组件和插槽的心理模型更容易理解。首先，让我们想像一下希望在整个应用程序中可重用的『alert』组件：
+
+```php
+<!-- /resources/views/alert.blade.php -->
+
+<div class="alert alert-danger">
+    {{ $slot }}
+</div>
+```
+
+`{{ $slot }}` 变量将包含我们希望注入到组件的内容。现在，去构造这个组件，我们可以使用 Blade 的 `@component` 指令：
+
+```php
+@component('alert')
+    <strong>Whoops!</strong> Something went wrong!
+@endcomponent
+```
+
+有时为组件定义多个插槽会很有帮助。让我们修改我们的警告组件以允许注入一个『标题』。命名的插槽可以通过『回显』与它们的名称相匹配的变量来显示：
+
+```php
+<!-- /resources/views/alert.blade.php -->
+
+<div class="alert alert-danger">
+    <div class="alert-title">{{ $title }}</div>
+
+    {{ $slot }}
+</div>
+```
+
 ## 显示数据
 
 ## 控制结构
