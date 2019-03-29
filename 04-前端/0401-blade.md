@@ -108,10 +108,10 @@ Route::get('blade', function () {
 ```php
 @component('alert')
     @slot('title')
-        禁止
+        Forbidden
     @endslot
 
-    您无权访问此资源！
+    You are not allowed to access this resource!
 @endcomponent
 ```
 
@@ -127,7 +127,7 @@ Route::get('blade', function () {
 
 ### 别名组件
 
-如果你的 Blade 组件存储在一个子目录中，你可能希望为了容易访问他们而添加别名。例如，想像一个 Blade 组件被存储在 `resources/views/components/alert.blade.php`。你可以使用 `component` 方法组件 `components.alert` 别名为 `alert`。通常，这应该在 `AppServiceProvider` 类的 `boot` 方法中去做：
+如果你的 Blade 组件存储在一个子目录中，你可能希望为了容易访问他们而添加别名。例如，想像一个 Blade 组件被存储在 `resources/views/components/alert.blade.php`。你可以使用 `component` 方法将 `components.alert` 组件别名为 `alert`。通常，这应该在 `AppServiceProvider` 类的 `boot` 方法中去做：
 
 ```php
 use Illuminate\Support\Facades\Blade;
@@ -135,7 +135,137 @@ use Illuminate\Support\Facades\Blade;
 Blade::component('components.alert', 'alert');
 ```
 
+一旦组件被别名化，你可以使用一个指令来渲染它：
+
+```php
+@alert(['type' => 'danger'])
+    You are not allowed to access this resource!
+@endalert
+```
+
+如果组件没有额外的插槽，你可以忽略组件的参数：
+
+```php
+@alert
+    You are not allowed to access this resource!
+@endalert
+```
+
 ## 显示数据
+
+你也可以通过将变量包裹花括号中来显示传递到 Blade 视图的数据。例如，给定以下的路由：
+
+```php
+Route::get('greeting', function () {
+    return view('welcome', ['name' => 'Samantha']);
+});
+```
+
+你可以显示 `name` 变量的内容像这样：
+
+```php
+Hello, {{ $name }}.
+```
+
+{% hint style="info" %}
+Blade `{{ }}` 语句将通过 PHP 的 `htmlspecialchars` 函数自动发送，以防止 XSS 攻击。
+{% endhint %}
+
+不局限于显示传递给视图的变量内容。你也可以显示任何 PHP 函数的结果。实际上，你可以在 Blade 显示语句中放置你希望的任何 PHP 代码：
+
+```php
+The current UNIX timestamp is {{ time() }}.
+```
+
+### 显示未转义的数据
+
+默认情况下，Blade `{{ }}` 语句将通过 PHP 的 `htmlspecialchars` 函数自动发送以阻止 XSS 攻击。如果你不想你的数据被转义，你可以使用以下的语法：
+
+```php
+Hello, {!! $name !!}.
+```
+
+{% hint style="info" %}
+当显示应用程序用户提供的内容时要非常小心。在显示用户提供的数据时，始终使用转义的双花括号来防止 XSS 攻击。
+{% endhint %}
+
+### 渲染 JSON 数据
+
+有时你可以将数组传递到你的视图，以打算将其渲染作为 JSON 以初始化一个 JavaScript 变量。例如：
+
+```php
+<script>
+    var app = <?php echo json_encode($array); ?>;
+</script>
+```
+
+然而，你可以使用 Blade 的 `@json` 指令，而不是手动调用 `json_encode`：
+
+```php
+<script>
+    var app = @json($array);
+</script>
+```
+
+`@json` 指令对于接入 Vue 组件或 `data-*` 属性也是很有用的：
+
+```php
+<example-component :some-prop='@json($array)'></example-component>
+```
+
+{% hint style="danger" %}
+在元素属性中使用 `@json` 需要用单引号括起来。
+{% endhint %}
+
+### HTML 实体编码
+
+默认情况下，Blade（和 Laravel `e` 帮助程序）将对 HTML 实体进行双重编码。如果要禁用双重编码，请从 `AppServiceProvider` 的 `boot` 方法中调用 `Blade::withoutDoubleEncoding` 方法：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Blade::withoutDoubleEncoding();
+    }
+}
+```
+
+### Blade & JavaScript 框架
+
+由于许多 JavaScript 框架也使用『花』括号来表示应在浏览器中显示给定的表达式，你也可以使用 `@` 符号去通知 Blade 渲染引擎一个表达式应当保持不变。例如：
+
+```php
+<h1>Laravel</h1>
+
+Hello, @{{ name }}.
+```
+
+在这个实例中，符号 `@` 将被 Blade 移除；然而，`{{ name }}` 表达式将仍然不受 Blade 引擎的影响，允许它由 JavaScript 框架去渲染。
+
+### 指令 @verbatim
+
+如果你在你的模板大部分中显示 JavaScript 变量，你可以将 HTML 包裹在 `@verbatim` 指令中，以便于你不必为每个 Blade 显示语句添加一个 `@` 符号：
+
+```php
+@verbatim
+    <div class="container">
+        Hello, {{ name }}.
+    </div>
+@endverbatim
+```
 
 ## 控制结构
 
