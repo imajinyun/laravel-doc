@@ -103,6 +103,38 @@ Route::get('blade', function () {
 </div>
 ```
 
+现在，我们能使用 `@slot` 指令注入内容到命名的插槽中。任何不在 `@slot` 指令内的内容都将被传递给 `@slot` 变量中的组件：
+
+```php
+@component('alert')
+    @slot('title')
+        禁止
+    @endslot
+
+    您无权访问此资源！
+@endcomponent
+```
+
+### 传递额外的数据到组件
+
+有时你需要传递额外的数据到组件。为了这个原因，你可能传递一个数组数据作为第二个参数到 `@compoent` 指令。所有数据都将作为变量提供给组件模板：
+
+```php
+@component('alert', ['foo' => 'bar'])
+    ...
+@endcomponent
+```
+
+### 别名组件
+
+如果你的 Blade 组件存储在一个子目录中，你可能希望为了容易访问他们而添加别名。例如，想像一个 Blade 组件被存储在 `resources/views/components/alert.blade.php`。你可以使用 `component` 方法组件 `components.alert` 别名为 `alert`。通常，这应该在 `AppServiceProvider` 类的 `boot` 方法中去做：
+
+```php
+use Illuminate\Support\Facades\Blade;
+
+Blade::component('components.alert', 'alert');
+```
+
 ## 显示数据
 
 ## 控制结构
