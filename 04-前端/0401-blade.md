@@ -347,6 +347,69 @@ Hello, @{{ name }}.
 
 ### Switch 语句
 
+可以使用 `@switch`，`@case`，`break`，`@default` 和 `@endswitch` 指令来构造 Switch 语句：
+
+```php
+@switch($i)
+    @case(1)
+        First case...
+        @break
+
+    @case(2)
+        Second case...
+        @break
+
+    @default
+        Default case...
+@endswitch
+```
+
+### 循环
+
+除了条件语句之外，Blade 提供了简单的指令来处理 PHP 的循环结构。同样，这些指令的每个功能都与它们对应的 PHP 相同：
+
+```php
+@for ($i = 0; $i < 10; $i++)
+    The current value is {{ $i }}
+@endfor
+
+@foreach ($users as $user)
+    <p>This is user {{ $user->id }}</p>
+@endforeach
+
+@forelse ($users as $user)
+    <li>{{ $user->name }}</li>
+@empty
+    <p>No users</p>
+@endforelse
+
+@while (true)
+    <p>I'm looping forever.</p>
+@endwhile
+```
+
+{% hint style="info" %}
+
+当循环时，你可以使用 [循环变量]() 来获取关于循环的有价值的信息，比如你是否在循环的第一次或者最后一次迭代中。
+
+{% endhint %}
+
+当使用循环时，你还可以结束循环或者跳过当前迭代：
+
+```php
+@foreach ($users as $user)
+    @if ($user->type == 1)
+        @continue
+    @endif
+
+    <li>{{ $user->name }}</li>
+
+    @if ($user->number == 5)
+        @break
+    @endif
+@endforeach
+```
+
 ## 表单
 
 ## 包含子视图
