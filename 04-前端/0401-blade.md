@@ -390,7 +390,7 @@ Hello, @{{ name }}.
 
 {% hint style="info" %}
 
-当循环时，你可以使用 [循环变量]() 来获取关于循环的有价值的信息，比如你是否在循环的第一次或者最后一次迭代中。
+当循环时，你可以使用 [循环变量](https://laravel.com/docs/5.8/blade#the-loop-variable) 来获取关于循环的有价值的信息，比如你是否在循环的第一次或者最后一次迭代中。
 
 {% endhint %}
 
@@ -408,6 +408,70 @@ Hello, @{{ name }}.
         @break
     @endif
 @endforeach
+```
+
+你还可以在一行中包含带有指令的声明条件：
+
+```php
+@foreach ($users as $user)
+    @continue($user->type == 1)
+
+    <li>{{ $user->name }}</li>
+
+    @break($user->number == 5)
+@endforeach
+```
+
+### 循环变量
+
+当循环时，一个 `$loop` 变量将在循环内部可以。该变量提供对一些有用信息的访问，比如当前循环索引及是否这是循环的第一次迭代还是最后一次迭代：
+
+```php
+@foreach ($users as $user)
+    @if ($loop->first)
+        This is the first iteration.
+    @endif
+
+    @if ($loop->last)
+        This is the last iteration.
+    @endif
+
+    <p>This is user {{ $user->id }}</p>
+@endforeach
+```
+
+如果在嵌套循环中，你可以通过循环的 `parent` 属性访问父循环的 `$loop` 变量：
+
+```php
+@foreach ($users as $user)
+    @foreach ($user->posts as $post)
+        @if ($loop->parent->first)
+            This is first iteration of the parent loop.
+        @endif
+    @endforeach
+@endforeach
+```
+
+`$loop` 变量也包含各种其它用户的属性：
+
+| 属性 | 描述 |
+| `$loop->index` | 当前循环迭代的索引（从 0 开始） |
+| `$loop->iteration` | 当前循环迭代（从 1 开始） |
+| `$loop->remaining` | 循环中剩余的迭代 |
+| `$loop->count` | 迭代数组中的项目总数 |
+| `$loop->first` | 这是否是循环的第一次迭代 |
+| `$loop->last` | 这是否是循环的最后一次迭代 |
+| `$loop->even` | 这是否是循环中的偶数迭代 |
+| `$loop->odd` | 这是否是循环中的奇数迭代 |
+| `$loop->depth` | 当前循环的嵌套级别 |
+| `$loop->parent` | 在嵌套循环中，父级的循环变量 |
+
+### 注释
+
+Blade 还允许你在你的视图去定义注释。但是，不像 HTML 注释，Blade 注释不包含在通过应用程序返回的 HTML 中：
+
+```php
+{{-- This comment will not be present in the rendered HTML --}}
 ```
 
 ## 表单
