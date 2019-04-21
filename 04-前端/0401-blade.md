@@ -269,6 +269,84 @@ Hello, @{{ name }}.
 
 ## 控制结构
 
+除了模板继承和显示数据外，Blade 还为常见的 PHP 控制结构（如条件语句和循环）提供了方便的快捷方式。这些快捷方式提供了一个非常干净，简洁的 PHP 控制结构工作方式，同时也保留了对 PHP 对应的相似性。
+
+### IF 语句
+
+你可以构造 `if` 语句使用 `@if`，`@elseif`，`@else`，`endif` 指令，这些指令的功能与它们的 PHP 对应程序完全相同：
+
+```php
+@if (count($records) === 1)
+    I have one record!
+@elseif (count($records) > 1)
+    I have multiple records!
+@else
+    I don't have any records!
+@endif
+```
+
+为了方便，Blade 也提供一个 `@unless` 指令：
+
+```php
+@unless (Auth::check())
+    You are not signed in.
+@endunless
+```
+
+除了已经讨论过的条件指令之外，`@isset` 和 `@empty` 指令还可以作为相应 PHP 函数的快捷方式：
+
+```php
+@isset($records)
+    // $records is defined and is not null...
+@endisset
+
+@empty($records)
+    // $records is "empty"...
+@endempty
+```
+
+#### 认证指令
+
+`@auth` 和 `@guest` 指令还可以被用来快速确定当前用户是认证过的或是一个游客：
+
+```php
+@auth
+    // The user is authenticated...
+@endauth
+
+@guest
+    // The user is not authenticated...
+@endguest
+```
+
+如果需要，你可以指定在使用 `@auth` 和 `@guest` 指令时应当检查的 [`认证保护`](https://laravel.com/docs/5.8/authentication)：
+
+```php
+@auth('admin')
+    // The user is authenticated...
+@endauth
+
+@guest('admin')
+    // The user is not authenticated...
+@endguest
+```
+
+#### 部分指令
+
+你可以使用 `@hasSection` 指令检查一个部分是否有内容：
+
+```php
+@hasSection('navigation')
+    <div class="pull-right">
+        @yield('navigation')
+    </div>
+
+    <div class="clearfix"></div>
+@endif
+```
+
+### Switch 语句
+
 ## 表单
 
 ## 包含子视图
