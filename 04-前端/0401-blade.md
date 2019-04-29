@@ -474,9 +474,151 @@ Blade 还允许你在你的视图去定义注释。但是，不像 HTML 注释�
 {{-- This comment will not be present in the rendered HTML --}}
 ```
 
+### PHP
+
+在某些情况下，将 PHP 代码嵌入到你的视图中是有用的。我可以使用 Blade `@php` 指令在模版中去执行一个纯 PHP 代码块：
+
+```php
+@php
+    //
+@endphp
+```
+
+{% hint style="info" %}
+
+虽然 Blade 提供了这个特性，但频繁使用它可能会意味着模版中嵌入了过多的逻辑。
+
+{% endhint %}
+
 ## 表单
 
+### CSRF 字段
+
+无论何时在你的应用程序中定义一个 HTML 表单，你应该在表单中包含一个隐藏的 CSRF 令牌字段以便于 [CSRF 保护](https://laravel.com/docs/5.8/csrf) 中间件能验证请求。你可以使用 `@csrf` Blade 指令去生成令牌字段：
+
+```php
+<form method="POST" action="/profile">
+    @csrf
+
+    ...
+</form>
+```
+
+### 方法字段
+
+由于 HTML 表单不能生成 `PUT`，`PATCH` 或 `DELETE` 请求，因此需要添加一个隐藏 `_method` 字段去欺骗这些 HTTP 动词。`@method` Blade 指令可以为你创建：
+
+```php
+<form action="/foo/bar" method="POST">
+    @method('PUT')
+
+    ...
+</form>
+```
+
+### 验证错误
+
+`@errors` 指令可以被用来快速检查一个给定的属性是否存在 [验证错误消息](https://laravel.com/docs/5.8/validation#quick-displaying-the-validation-errors)。在 `@errors` 指令中，你可以回显 `$message` 变量去显示错误消息：
+
+```php
+<!-- /resources/views/post/create.blade.php -->
+
+<label for="title">Post Title</label>
+
+<input type="text" class="@error('title') is-invalid @enderror">
+
+@error('title')
+    <div class="alert alert-danger">{{ $message }}</div>
+@enderror
+```
+
 ## 包含子视图
+
+Blade `@include` 指令允许你从另一个视图中包含一个 Blade 视图。父视图可用的所有变量将对包含的视图可用：
+
+```php
+<div>
+    @include('shared.errors')
+
+    <form>
+        <!-- Form Contents -->
+    </form>
+</div>
+```
+
+即使包含的视图将继承父视图中所有可用的数据，你也可以将一组额外的数组数据传递给包含的视图：
+
+```php
+@include('view.name', ['some' => 'data'])
+```
+
+如果你企图去 `@include` 个不存在的视图，Laravel 将抛出一个错误。如果你想包含一个可能存在或不存在的视图，你应当使用 `@includeIf` 指令：
+
+```php
+@includeIf('view.name', ['some' => 'data'])
+```
+
+如果你希望去 `@include` 一个视图根据一个给定的布尔条件，你可以使用 `@includeWhen` 指令：
+
+```php
+@includeWhen($boolean, 'view.name', ['some' => 'data'])
+```
+
+要包含一个给定的视图数组中存在的第一个视图，可以使用 `includeFirst` 指令：
+
+```php
+@includeFirst(['custom.admin', 'admin'], ['some' => 'data'])
+```
+
+{% hint style="danger" %}
+
+你应该避免在你的 Blade 视图中使用 `__DIR__` 和 `__FILE__` 常量，
+
+{% endhint %}
+
+**别名包含**
+
+如果你的 Blade 包含存储在一个子目录中，为了容易访问你可以希望去别名它们。例如，假设存储在 `resources/views/includes/input.blade.php` 的一个 Blade 包含以下内容：
+
+```php
+<input type="{{ $type ?? 'text' }}">
+```
+
+你可以使用 `include` 方法去别名从 `includes.input` 到 `input` 的包含。通常，你应该在 `AppServiceProvider` 类的 `boot` 方法中完成：
+
+```php
+use Illuminate\Support\Facades\Blade;
+
+Blade::include('includes.input', 'input');
+```
+
+一旦包含被别名，你可以使用别名作为 Blade 指令渲染它：
+
+```php
+@input(['type' => 'email'])
+```
+
+### 渲染视图集合
+
+你可以使用 Blade 的 `@each` 指令将循环和包含合并成一行：
+
+```php
+@each('view.name', $jobs, 'job')
+```
+
+第一个参数是数组或集合中每个元素要渲染的局部视图。第二个参数是要迭代的数组或集合，而第三个参数是将分配给视图中当前迭代的变量名。因此，例如，如果你正在迭代一个 `jobs` 数组，通常你将希望在视图部分以一个 `job` 变量的形式访问每个作业。当前迭代的键将作为视图部分中的 `key` 变量可用。
+
+你可以传递第四个参数到 `@each` 指令中。如果给定的数组为空，这个参数决定将渲染的视图。
+
+```php
+@each('view.name', $jobs, 'job', 'view.empty')
+```
+
+{% hint style="danger" %}
+
+通过 `@each` 渲染的视图不会继承来自父视图中的变量。如果子视图需要这些变量，你应当使用 `@foreach` 和 `@include`。
+
+{% endhint %}
 
 ## 堆栈
 
