@@ -622,6 +622,130 @@ Blade::include('includes.input', 'input');
 
 ## 堆栈
 
+Blade 允许你推送命名堆栈，这些堆栈可以在另一个视图或布局中的其他地方渲染。这对于指定子视图所需的任何 JavaScript 库特别有用：
+
+```php
+@push('scripts')
+    <script src="/example.js"></script>
+@endpush
+```
+
+你可以根据需要多次推送堆栈。要渲染完整的栈内容，将堆栈名称传递到 `@stack` 指令：
+
+```php
+<head>
+    <!-- Head Contents -->
+
+    @stack('scripts')
+</head>
+```
+
+如果希望在堆栈的开始部分预先添加内容，你应该使用 `@prepend` 指令：
+
+```php
+@push('scripts')
+    This will be second...
+@endpush
+
+// Later...
+
+@prepend('scripts')
+    This will be first...
+@endprepend
+```
+
 ## 服务注入
 
+`@inject` 指令可以用于从 Laravel [服务容器](https://laravel.com/docs/5.8/container) 中检索一个服务。传递到 `@inject` 的第一个参数是要放入的服务的变量名称，而第二个参数你希望解析的服务的类或接口名：
+
+```php
+@inject('metrics', 'App\Services\MetricsService')
+
+<div>
+    Monthly Revenue: {{ $metrics->monthlyRevenue() }}.
+</div>
+```
+
 ## 扩展 Blade
+
+Blade 允许你使用 `directive` 方法去定义自定义指令。当 Blade 编译器遇到自定义指令时，它将使用该指令包含的表达式调用所提供的回调。
+
+以下示例创建一个 `@datetime($var)` 指令，该指令格式化一个给定的 `$var`，它应该是 `DateTime` 的一个实例：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 在容器中注册绑定。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Blade::directive('datetime', function ($expression) {
+            return "<?php echo ($expression)->format('m/d/Y H:i'); ?>";
+        });
+    }
+}
+```
+
+如你所见，我们将 `format` 方法链接到传递给指令的任何表达式上。因此，在这个实例中，这个指令生成的最终 PHP 将是：
+
+```php
+<?php echo ($var)->format('m/d/Y H:i'); ?>
+```
+
+{% hint style="danger" %}
+
+更新了一个 Blade 指令的逻辑之后，你将需要去删除所有缓存的 Blade 视图。可以使用 `view:clear` Artisan 命令删除缓存的 Blade 视图。
+
+{% endhint %}
+
+### 自定义 If 声明
+
+在定义简单的自定义条件语句时，编写自定义指令有时比必要的要复杂得多。为此，Blade 提供了一个 `Blade::if` 方法，允许你使用闭包快速定义自定义条件指令。例如，让我们定义一个检查当前应用程序环境的自定义条件。我们可以在 `AppServiceProvider` 的 `boot` 方法中这样做：
+
+```php
+use Illuminate\Support\Facades\Blade;
+
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    Blade::if('env', function ($environment) {
+        return app()->environment($environment);
+    });
+}
+```
+
+一旦定义了自定义条件，我们就可以在模板上轻松使用它:
+
+```php
+@env('local')
+    // The application is in the local environment...
+@elseenv('testing')
+    // The application is in the testing environment...
+@else
+    // The application is not in the local or testing environment...
+@endenv
+```
