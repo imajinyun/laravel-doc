@@ -61,3 +61,38 @@ npm run dev
 默认情况下，Laravel `webpack.mix.js` 文件编译你的 SASS 和 `resources/js/app.js` 文件。在 `app.js` 文件中，你可以注册你的 Vue 组件，或者，如果你偏好不同的框架，配置你自己的 JavaScript 应用程序。你编译的 JavaScript 通常会位于 `public/js` 目录中。
 
 ## 编写 Vue 组件
+
+默认情况下，新的 Laravel 应用程序包含位于 `resources/js/components` 目录中的 `ExampleComponent.vue` Vue 组件。`ExampleComponent.vue` 文件是 [单个文件 Vue 组件](https://vuejs.org/v2/guide/single-file-components.html) 的一个例子，它在同一个文件中定义了它的 JavaScript 和 HTML 模板。单个文件组件为构建 JavaScript 驱动的应用程序提供了一种非常方便的方法。示例组件已在 `app.js` 文件中注册：
+
+```js
+Vue.component(
+    'example-component',
+    require('./components/ExampleComponent.vue')
+);
+```
+
+要在应用程序中使用该组件，你可以将其放入一个 HTML 模板中。例如，在运行 `make:auth` Artisan 命令来构建应用程序的身份认证和注册屏幕之后，你可以将组件放入 `home.blade.php` Blade 模板中：
+
+```php
+@extends('layouts.app')
+
+@section('content')
+    <example-component></example-component>
+@endsection
+```
+
+{% hint style="info" %}
+
+记住，每次更改 Vue 组件时，都应该运行 `npm run dev` 命令。或者，你可以运行 `npm run watch` 命令去监视并在每次修改组件时自动重新编译它们。
+
+{% endhint %}
+
+### 使用 React
+
+如果你偏好使用 React 来构建 JavaScript 应用程序，Laravel 可以容易的让 Vue 脚手架与 React 脚手架交换。在任何新的 Laravel 应用程序中，你可以使用带有 `react` 选项的 `preset` 命令：
+
+```php
+php artisan preset react
+```
+
+该单命令将移除 Vue 脚手架并将其替换为 React 脚手架，包括示例组件。
