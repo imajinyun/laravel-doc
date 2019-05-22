@@ -56,9 +56,52 @@ php artisan make:auth
 
 #### 路径自定义
 
+当一个用户成功通过身份认证后，他们将被重定向到 `/home` URI。你可以通过在 `LoginController`，`RegisterController`，`ResetPasswordController` 和 `VerificationController` 上定义 `redirectTo` 属性来自定义验证后重定向位置：
+
+```php
+protected $redirectTo = '/';
+```
+
+接下来，你应该修改 `RedirectIfAuthenticated` 中间件的 `handle` 方法，为了在重定向用户时使用新的 URI。
+
+如果重定向路径需要自定义生成逻辑，可以定义 `redirectTo` 方法，而不是 `redirectTo` 属性：
+
+```php
+protected function redirectTo()
+{
+    return '/path';
+}
+```
+
+{% hint style="info" %}
+
+`redirectTo` 方法将优先于 `redirectTo` 属性。
+
+{% endhint %}
+
 #### 用户名自定义
 
+默认情况下，`Laravel` 使用 `email` 字段进行身份认证。如果你想自定义它，你可以在 `LoginController` 上定义一个 `username` 方法：
+
+```php
+public function username()
+{
+    return 'username';
+}
+```
+
 #### 守卫自定义
+
+你还可以自定义用于验证和注册用户的『守卫』。首先，在 `LoginController`、`RegisterController` 和 `ResetPasswordController` 上定义一个守卫方法。方法应该返回一个守卫实例：
+
+```php
+use Illuminate\Support\Facades\Auth;
+
+protected function guard()
+{
+    return Auth::guard('guard-name');
+}
+```
 
 #### 验证 / 存储自定义
 
