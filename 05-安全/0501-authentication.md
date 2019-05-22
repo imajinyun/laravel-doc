@@ -105,9 +105,77 @@ protected function guard()
 
 #### 验证 / 存储自定义
 
+当一个新用户向应用程序注册时要修改所需的表单字段，或自定义如何将新用户存储到数据库中，可以修改 `RegisterController` 类。该类负责验证和创建应用程序的新用户。
+
+`RegisterController` 类的 `validator` 方法为应用程序的新用户包含验证规则。你根据你的需要随意修改这个方法。
+
+`RegisterController` 类的 `create` 方法使用 [Eloquent ORM](https://laravel.com/docs/5.8/eloquent) 负责在你的数据库中创建新的 `App\User` 记录。你根据你的数据库的需要随意修改这个方法。
+
 ### 检索认证的用户
 
+你可以通过 `Auth` facade 访问认证的用户：
+
+```php
+use Illuminate\Support\Facades\Auth;
+
+// 获取当前认证的用户...
+$user = Auth::user();
+
+// 获取当前认证的用户 ID...
+$id = Auth::id();
+```
+
+或者，一旦用户通过身份认证，您可以通过一个 `Illuminate\Http\Request` 实例访问经过认证的用户。记住，类型提示类将自动注入控制器方法：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class ProfileController extends Controller
+{
+    /**
+     * 更新用户的个人资料。
+     *
+     * @param  Request  $request
+     * @return Response
+     */
+    public function update(Request $request)
+    {
+        // $request->user() 返回一个认证用户的实例...
+    }
+}
+```
+
+#### 确定当前用户是否经过认证
+
+要确定用户是否已经登录到你的应用程序，你可以使用 `Auth` facade 上的 `check` 方法，如果用户已经认证过，该方法将返回 `true`：
+
+```php
+use Illuminate\Support\Facades\Auth;
+
+if (Auth::check()) {
+    // 用户已登录...
+}
+```
+
+{% hint style="info" %}
+
+尽管可以使用 `check` 方法确定用户是否已通过认证，但在允许用户访问某些路由 / 控制器之前，通常会使用中间件来验证用户是否已通过身份认证。要了解有关此内容的更多信息，请查看有关 [保护路由](https://laravel.com/docs/5.8/authentication#protecting-routes) 的文档。
+
+{% endhint %}
+
 ### 保护路由
+
+[路由中间件](https://laravel.com/docs/5.8/middleware) 可用于只允许认证的用户去访问一个给定的路由。Laravel 附带了一个 `auth` 中间件，该中间件在 `Illuminate\Auth\Middleware\Authenticate` 中定义。由于这个中间件已经注册在你的 HTTP 内核中，你需要做的是将该中间件系到路由定义上：
+
+```php
+Route::get('profile', function () {
+    // 仅认证的用户可以进入...
+})->middleware('auth');
+```
 
 ### 登录限制
 
