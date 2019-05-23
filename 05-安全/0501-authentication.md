@@ -177,7 +177,46 @@ Route::get('profile', function () {
 })->middleware('auth');
 ```
 
+如果你使用 [控制器](https://laravel.com/docs/5.8/controllers)，你可以从控制器的构造方法中调用 `middleware` 方法而不是直接将它系在路由定义上：
+
+```php
+public function __construct()
+{
+    $this->middleware('auth');
+}
+```
+
+#### 重定向未经认证的用户
+
+当 `auth` 中间件检测到一个未认证的用户，它将重定向用户到 `login` [命名的路由](https://laravel.com/docs/5.8/routing#named-routes)。你可以在 `app/Http/Middleware/Authenticate.php` 文件中通过更新 `redirectTo` 方法来修改这个行为：
+
+```php
+/**
+ * 获取用户应当被重定向的路径。
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return string
+ */
+protected function redirectTo($request)
+{
+    return route('login');
+}
+```
+
+#### 指定一个守卫
+
+当将 `auth` 中间件系到一个路由上时，还可以指定应该使用哪个守卫来对用户进行身份认证。指定的守卫应该与 `auth.php` 配置文件的 `guards` 数组中的一个键相对应：
+
+```php
+public function __construct()
+{
+    $this->middleware('auth:api');
+}
+```
+
 ### 登录限制
+
+如果你使用 Laravel 内置的 `LoginController` 类，`Illuminate\Foundation\Auth\ThrottlesLogins` 特性已经包含在你的控制器中。默认情况下，如果多次尝试后用户无法提供正确的凭据，则用户将无法登录一分钟。限制对于用户的用户名 / 电子邮件地址及其 IP 地址是唯一的。
 
 ## 手动认证用户
 
