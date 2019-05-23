@@ -220,6 +220,43 @@ public function __construct()
 
 ## 手动认证用户
 
+注意，你不需要使用 Laravel 中包含的身份认证控制器。如果选择删除这些控制器，则需要直接使用 Laravel 身份认证类来管理用户认证。别担心，这很容易！
+
+我们将通过 `Auth` facade 访问 Laravel 的身份认证服务，因此我们需要确保在类的顶部导入 `Auth` facade。接下来，让我们检查一下 `attempt` 方法：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class LoginController extends Controller
+{
+    /**
+     * 处理身份认证尝试。
+     *
+     * @param  \Illuminate\Http\Request $request
+     *
+     * @return Response
+     */
+    public function authenticate(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::attempt($credentials)) {
+            // 认证通过...
+            return redirect()->intended('dashboard');
+        }
+    }
+}
+```
+
+`attempt` 方法接受一个键 / 值对数组作为其第一个参数。数组中的值将用于查找数据库表中的用户。因此，在上面的示例中，将通过 `email` 列的值检索用户。如果找到用户，则将数据库中存储的散列密码与通过数组传递给方法的 `password` 值进行比较。你不应该将指定的密码哈希为 `password` 值，因为框架会在将它与数据库中的哈希密码进行比较之前自动对其进行哈希处理。如果两个散列密码匹配，则将为用户启动经过身份认证的会话。
+
+如果身份认证成功，则 `attempt` 方法将返回 `true`。 否则，将返回 `false`。
+
 ## HTTP 基础认证
 
 ## 注销
