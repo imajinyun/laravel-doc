@@ -280,7 +280,75 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 ### 无状态 HTTP 基础认证
 
+你也可以使用 HTTP 基础认证，而无需在会话中设置用户标识符 cookie，这对 API 认证特别有用。为此，请定义一个调用 `onceBasic` 方法的 [中间件](https://laravel.com/docs/5.8/middleware)。 如果 `onceBasic` 方法没有返回任何响应，则该请求可以进一步传递到应用程序中：
+
+```php
+<?php
+
+namespace App\Http\Middleware;
+
+use Illuminate\Support\Facades\Auth;
+
+class AuthenticateOnceWithBasicAuth
+{
+    /**
+     * 处理传入的请求。
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return mixed
+     */
+    public function handle($request, $next)
+    {
+        return Auth::onceBasic() ?: $next($request);
+    }
+
+}
+```
+
+接下来，[注册路由中间件](https://laravel.com/docs/5.8/middleware#registering-middleware) 并将其系到一个路由上：
+
+```php
+Route::get('api/user', function () {
+    // 只有经过认证的用户才能进入...
+})->middleware('auth.basic.once');
+```
+
 ## 注销
+
+要手动将用户从应用程序中注销，可以使用 `Auth` facade 上的 `logout` 方法。这将清除用户会话中的认证信息：
+
+```php
+use Illuminate\Support\Facades\Auth;
+
+Auth::logout();
+```
+
+### 使其他设备上的会话无效
+
+Laravel 还提供了一种机制，用于在其他设备上激活和『注销』用户会话，而不会在他们当前设备上的会话无效。在开始之前，你应确保在你的 `app/Http/Kernel.php` 类的 `web` 中间件组中存在 `Illuminate\Session\Middleware\AuthenticateSession` 中间件并取消注释：
+
+```php
+'web' => [
+    // ...
+    \Illuminate\Session\Middleware\AuthenticateSession::class,
+    // ...
+],
+```
+
+然后，你可以使用 `Auth` facade 上的 `logoutOtherDevices` 方法。此方法要求用户提供其当前密码，应用程序应该通过输入表单接受该密码：
+
+```php
+use Illuminate\Support\Facades\Auth;
+
+Auth::logoutOtherDevices($password);
+```
+
+{% hint style="danger" %}
+
+当调用 `logoutOtherDevices` 方法时，用户的其他会话将完全失效，这意味着它们将从之前通过认证的所有守卫中『注销』。
+
+{% endhint %}
 
 ## 社交认证
 
