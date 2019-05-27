@@ -259,6 +259,27 @@ class LoginController extends Controller
 
 ## HTTP 基础认证
 
+[HTTP 基础认证](https://en.wikipedia.org/wiki/Basic_access_authentication) 提供一个快速的方式去认证你的应用程序的用户，而无需设计一个专门的『登录』页面。首先，把 `auth.basic` [中间件](https://laravel.com/docs/5.8/middleware) 系到你的路由上。`auth.basic` 中间件包含在 Laravel 框架中，所以你不需要定义它：
+
+```php
+Route::get('profile', function () {
+    // 仅认证可能进入的用户...
+})->middleware('auth.basic');
+```
+
+一旦中间件被附加到路由上，当你在浏览器中访问路由时，将自动提示你输入凭据。默认情况下，是 `auth.basic` 中间件将使用用户记录上的 `email` 列作为『用户名』。
+
+**关于 FastCGI 的说明**
+
+如果你使用 PHP FastCGI，HTTP 基础认证可能无法立即正确工作。应该将以下行添加到 `.htaccess` 文件中：
+
+```bash
+RewriteCond %{HTTP:Authorization} ^(.+)$
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+```
+
+### 无状态 HTTP 基础认证
+
 ## 注销
 
 ## 社交认证
