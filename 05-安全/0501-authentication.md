@@ -350,9 +350,53 @@ Auth::logoutOtherDevices($password);
 
 {% endhint %}
 
-## 社交认证
+## [社交认证](https://github.com/laravel/socialite)
 
 ## 添加自定义防护
+
+你可以使用 `Auth` 外观上的 `extend` 方法定义自己的认证守卫。你应该将此调用放在一个 [服务提供者](https://laravel.com/docs/5.8/providers) 中进行 `extend`。由于 Laravel 已经附带了 `AuthServiceProvider`，我们可以将代码放在该提供程序中：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use App\Services\Auth\JwtGuard;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+
+class AuthServiceProvider extends ServiceProvider
+{
+    /**
+     * 注册任何应用程序认证 / 认证服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        $this->registerPolicies();
+
+        Auth::extend('jwt', function ($app, $name, array $config) {
+            // 返回一个 Illuminate\Contracts\Auth\Guard 实例...
+
+            return new JwtGuard(Auth::createUserProvider($config['provider']));
+        });
+    }
+}
+```
+
+正如你在上面的示例中所看到的，传递给 `extend` 方法的回调应该返回一个 `Illuminate\Contracts\Auth\Guard` 的实现。这个接口包含一些方法，你需要实现这些方法来定义自定义守卫。一旦定义了自定义守卫，就可以在 `auth.php` 配置文件的 `guards` 配置中使用该守卫：
+
+```php
+'guards' => [
+    'api' => [
+        'driver' => 'jwt',
+        'provider' => 'users',
+    ],
+],
+```
+
+### 关闭请求守卫
 
 ## 添加自定义用户提供者
 
