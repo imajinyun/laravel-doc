@@ -368,7 +368,7 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 class AuthServiceProvider extends ServiceProvider
 {
     /**
-     * 注册任何应用程序认证 / 认证服务。
+     * 注册任何应用程序认证 / 授权服务。
      *
      * @return void
      */
@@ -398,6 +398,116 @@ class AuthServiceProvider extends ServiceProvider
 
 ### 关闭请求守卫
 
+实现基于 HTTP 请求的自定义认证系统的最简单方法是使用 `Auth::viaRequest` 方法。此方法允许你使用单个 `Closure` 快速定义认证过程。
+
+首先，在 `AuthServiceProvider` 的 `boot` 方法中调用 `Auth::viaRequest` 方法。`viaRequest` 方法接受认证驱动程序名称作为它的第一个参数。此名称可以是描述自定义守卫的任何字符串。传递给方法的第二个参数应该是一个闭包，它接收传入的 HTTP 请求并返回一个用户实例，如果认证失败，则返回 `null`：
+
+```php
+use App\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+/**
+ * 注册任何应用程序认证 / 授权服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    $this->registerPolicies();
+
+    Auth::viaRequest('custom-token', function ($request) {
+        return User::where('token', $request->token)->first();
+    });
+}
+```
+
+一旦定义了自定义认证驱动程序，就可以将其用作 `auth.php` 配置文件的 `guards` 配置的一个驱动程序：
+
+```php
+'guards' => [
+    'api' => [
+        'driver' => 'custom-token',
+    ],
+],
+```
+
 ## 添加自定义用户提供者
+
+如果不使用传统的关系数据库存储用户，则需要使用自己的认证用户提供程序扩展 Laravel。我们将使用 `Auth` facade 上的 `provider` 方法来定义一个自定义用户提供者：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\Auth;
+use App\Extensions\RiakUserProvider;
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+
+class AuthServiceProvider extends ServiceProvider
+{
+    /**
+     * 注册任何应用程序认证 / 授权服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        $this->registerPolicies();
+
+        Auth::provider('riak', function ($app, array $config) {
+            // 返回一个 Illuminate\Contracts\Auth\UserProvider 实例...
+
+            return new RiakUserProvider($app->make('riak.connection'));
+        });
+    }
+}
+```
+
+使用 `provider` 方法注册了提供者之后，你可以在 `auth.php` 配置文件中切换到新的用户提供者。首先，定义一个使用新驱动程序的 `provider`：
+
+```php
+'providers' => [
+    'users' => [
+        'driver' => 'riak',
+    ],
+],
+```
+
+最后，可以在 `guards` 配置中使用此提供程序：
+
+```php
+'guards' => [
+    'web' => [
+        'driver' => 'session',
+        'provider' => 'users',
+    ],
+],
+```
+
+### 用户提供者契约
+
+`Illuminate\Contracts\Auth\UserProvider` 实现仅负责从持久存储系统（如：MySQL，Riak 等）中获取一个 `Illuminate\Contracts\Auth\Authenticatable` 实现。这两个接口允许 Laravel 认证机制继续起作用，而不管用户数据是如何存储的，或者使用什么类型的类来表示它。
+
+让我们来看一下 `Illuminate\Contracts\Auth\UserProvider` 契约：
+
+```php
+<?php
+
+namespace Illuminate\Contracts\Auth;
+
+interface UserProvider {
+
+    public function retrieveById($identifier);
+    public function retrieveByToken($identifier, $token);
+    public function updateRememberToken(Authenticatable $user, $token);
+    public function retrieveByCredentials(array $credentials);
+    public function validateCredentials(Authenticatable $user, array $credentials);
+
+}
+```
+
+`retrieveById` 函数通常接收表示用户的密钥，例如来自 MySQL 数据库的自增 ID。应该检索并返回与该 ID 匹配的 `Authenticatable` 实现。
 
 ## 事件
