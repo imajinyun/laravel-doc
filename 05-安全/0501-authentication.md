@@ -510,4 +510,35 @@ interface UserProvider {
 
 `retrieveById` 函数通常接收表示用户的密钥，例如来自 MySQL 数据库的自增 ID。应该检索并返回与该 ID 匹配的 `Authenticatable` 实现。
 
+`retrieveByToken` 方法通过用户唯一的 `$identifier` 和存储在 `remember_token` 字段上的『记住我』`$token` 检索用户。和之前的方法一样，应当返回 `Authenticatable` 的实现。
+
+`updateRememberToken` 方法用一个新的 `$token` 更新 `$user` 字段 `remember_token`。在成功的『记住我』登录尝试或当用户退出时分配一个新的令牌。
+
+`retrieveByCredentials` 方法接收当尝试登录应用程序时传递给 `Auth::attempt` 方法的凭据数组。然后，该方法应该『查询』匹配这些凭证的用户的底层持久存储。通常，该方法将运行一个 `$credentials['username']` 上带有『条件』的查询。然后，该方法应该返回 `Authenticatable` 的实现。**此方法不应尝试执行任何密码验证或认证。**
+
+`validateCredentials` 方法应该将给定的 `$user` 与 `$credentials` 进行比较以对用户进行认证。例如，该方法可能应该使用 `Hash::check` 来比较 `$user->getAuthPassword()` 和 `$credentials['password']` 的值。此方法应返回 `true` 或 `false` 以表明密码是否有效。
+
+### 认证契约
+
+现在，我们已经研究了 `UserProvider` 上的每个方法，让我们来看看 `Authenticatable` 契约。请记住，提供者应该从 `retrieveById`，`retrieveByToken` 和 `retrieveByCredentials` 方法返回此接口的实现：
+
+```php
+<?php
+
+namespace Illuminate\Contracts\Auth;
+
+interface Authenticatable {
+
+    public function getAuthIdentifierName();
+    public function getAuthIdentifier();
+    public function getAuthPassword();
+    public function getRememberToken();
+    public function setRememberToken($value);
+    public function getRememberTokenName();
+
+}
+```
+
+这个接口很简单。`getAuthIdentifierName` 方法应该返回用户的『主键』字段的名称，`getAuthIdentifier` 方法应该返回用户的『主键』。同样，在 MySQL 后端，这将是自增的主键。`getAuthPassword` 应该返回用户的散列密码。这个接口允许认证系统与任何用户类一起工作，不管你使用的是什么 ORM 或存储抽象层。默认情况下，Laravel 在 `app` 目录中包含实现该接口的一个 `User` 类，所以你可以参考这个类来实现一个示例。
+
 ## 事件
