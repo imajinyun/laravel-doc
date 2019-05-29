@@ -542,3 +542,46 @@ interface Authenticatable {
 这个接口很简单。`getAuthIdentifierName` 方法应该返回用户的『主键』字段的名称，`getAuthIdentifier` 方法应该返回用户的『主键』。同样，在 MySQL 后端，这将是自增的主键。`getAuthPassword` 应该返回用户的散列密码。这个接口允许认证系统与任何用户类一起工作，不管你使用的是什么 ORM 或存储抽象层。默认情况下，Laravel 在 `app` 目录中包含实现该接口的一个 `User` 类，所以你可以参考这个类来实现一个示例。
 
 ## 事件
+
+Laravel 在认证过程中引发各种 [事件](https://laravel.com/docs/5.8/events)。你可以系侦听器到你的 `EventServiceProvider` 类的这些事件上：
+
+```php
+/**
+ * 应用程序的事件监听器映射。
+ *
+ * @var array
+ */
+protected $listen = [
+    'Illuminate\Auth\Events\Registered' => [
+        'App\Listeners\LogRegisteredUser',
+    ],
+
+    'Illuminate\Auth\Events\Attempting' => [
+        'App\Listeners\LogAuthenticationAttempt',
+    ],
+
+    'Illuminate\Auth\Events\Authenticated' => [
+        'App\Listeners\LogAuthenticated',
+    ],
+
+    'Illuminate\Auth\Events\Login' => [
+        'App\Listeners\LogSuccessfulLogin',
+    ],
+
+    'Illuminate\Auth\Events\Failed' => [
+        'App\Listeners\LogFailedLogin',
+    ],
+
+    'Illuminate\Auth\Events\Logout' => [
+        'App\Listeners\LogSuccessfulLogout',
+    ],
+
+    'Illuminate\Auth\Events\Lockout' => [
+        'App\Listeners\LogLockout',
+    ],
+
+    'Illuminate\Auth\Events\PasswordReset' => [
+        'App\Listeners\LogPasswordReset',
+    ],
+];
+```
