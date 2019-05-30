@@ -54,6 +54,57 @@ protected function create(array $data)
 
 ### 哈希令牌
 
+在上面的示例中，API 令牌以纯文本形式存储在数据库中。如果你想使用 SHA-256 哈希散列你的 API 令牌，你可以将 `api` 守卫配置的 `hash` 选项设置为 `true`。 `api` 守卫在 `config/auth.php` 配置文件中定义：
+
+```php
+'api' => [
+    'driver' => 'token',
+    'provider' => 'users',
+    'hash' => true,
+],
+```
+
+#### 生成哈希令牌
+
+使用散列 API 令牌时，你不应在用户注册期间生成 `API` 令牌。相反，你需要在应用程序中实现自己的 `API` 令牌管理页面。此页面应允许用户初始化和刷新其 `API` 令牌。当用户发出初始化或刷新其令牌的请求时，你应该在数据库中存储令牌的哈希副本，并将令牌的纯文本副本返回到视图 / 前端客户端以进行一次性显示。
+
+例如，为给定用户初始化 / 刷新令牌并将纯文本令牌作为 JSON 响应返回的控制器方法可能如下所示：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+
+class ApiTokenController extends Controller
+{
+    /**
+     * 更新已认证用户的 API 令牌。
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function update(Request $request)
+    {
+        $token = Str::random(60);
+
+        $request->user()->forceFill([
+            'api_token' => hash('sha256', $token),
+        ])->save();
+
+        return ['token' => $token];
+    }
+}
+```
+
+{% hint style="info" %}
+
+由于上面示例中的 API 令牌具有足够的信息熵，因此创建『彩虹表』来查找散列令牌的原始值是不切实际的。因此，像 `bcrypt` 这样的慢哈希方法是不必要的。
+
+{% endhint %}
+
 ## 保护路由
 
 ## 在请求中传递令牌
