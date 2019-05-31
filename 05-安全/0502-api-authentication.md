@@ -107,4 +107,14 @@ class ApiTokenController extends Controller
 
 ## 保护路由
 
+Laravel 包含一个 [认证守卫](https://laravel.com/docs/5.8/authentication#adding-custom-guards) ，它将在请求传入时自动验证 API 令牌。你仅需要在任何需要有效访问令牌的路由上指定 `auth:api` 中间件：
+
+```php
+use Illuminate\Http\Request;
+
+Route::middleware('auth:api')->get('/user', function(Request $request) {
+    return $request->user();
+});
+```
+
 ## 在请求中传递令牌
