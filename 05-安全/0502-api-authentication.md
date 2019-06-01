@@ -118,3 +118,41 @@ Route::middleware('auth:api')->get('/user', function(Request $request) {
 ```
 
 ## 在请求中传递令牌
+
+有几种方法可以将 API 令牌传递给你的应用程序。我们将在使用 Guzzle HTTP 库演示它们的用法时讨论这些方法。你可以根据应用程序的需要选择这些方法中的任何一种。
+
+### 查询字符串
+
+你的应用程序的 API 使用者可以将其令牌指定为 `api_token` 查询字符串值：
+
+```php
+$response = $client->request('GET', '/api/user?api_token='.$token);
+```
+
+### 请求负载
+
+你的应用程序的 API 使用者可以在请求的表单参数中包含其 API 令牌作为 `api_token`：
+
+```php
+$response = $client->request('POST', '/api/user', [
+    'headers' => [
+        'Accept' => 'application/json',
+    ],
+    'form_params' => [
+        'api_token' => $token,
+    ],
+]);
+```
+
+### Bearer 令牌
+
+你的应用程序的 API 使用者可以在请求 `Authorization` 头中提供其 API 令牌作为一个 `Bearer` 令牌
+
+```php
+$response = $client->request('POST', '/api/user', [
+    'headers' => [
+        'Authorization' => 'Bearer '.$token,
+        'Accept' => 'application/json',
+    ],
+]);
+```
