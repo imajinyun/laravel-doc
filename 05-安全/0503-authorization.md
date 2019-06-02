@@ -116,7 +116,54 @@ php artisan make:policy PostPolicy
 php artisan make:policy PostPolicy --model=Post
 ```
 
+{% hint style="info" %}
+
+所有的策略通过 Laravel [服务容器](https://laravel.com/docs/5.8/container) 去解析，允许你在策略构造中键入类型提示任何需要的依赖，它们将被自动注入。
+
+{% endhint %}
+
 ### 注册策略
+
+一旦策略存在，就需要注册它。新 Laravel 应用程序中包含的 `AuthServiceProvider` 包含一个 `policy` 属性，它将你的 Eloquent 模型映射到它们相应的策略上。注册策略将指示 Laravel 在授权针对给定模型的动作时利用哪个策略：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use App\Post;
+use App\Policies\PostPolicy;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+
+class AuthServiceProvider extends ServiceProvider
+{
+    /**
+     * 应用程序的策略映射。
+     *
+     * @var array
+     */
+    protected $policies = [
+        Post::class => PostPolicy::class,
+    ];
+
+    /**
+     * 注册任何应用程序认证 / 授权服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        $this->registerPolicies();
+
+        //
+    }
+}
+```
+
+#### 策略自动发现
+
+只要模型和策略遵循标准的 Laravel 命名约定，Laravel 就可以自动发现策略，而不是手动注册模型策略。具体而言，策略必须位于包含模型的目录下的 `Policies` 目录中。因此，例如，模型可以放在 `app` 目录中，而策略可以放在 `app/Policies` 目录中。此外，策略名称必须与模型名称匹配，并具有策略后缀。因此，`User` 模型将对应于 `UserPolicy` 类。
 
 ## 编写策略
 
