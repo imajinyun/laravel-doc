@@ -225,9 +225,69 @@ class PostPolicy
 
 一些策略方法只接收当前经过认证的用户，而不接收它们授权的模型的实例。这种情况在授权 `create` 操作时最为常见。例如，如果你正在创建博客，你可能希望检查用户是否被授权创建任何文章。
 
+当定义不接收模型实例的策略方法时，例如一个 `create` 方法，它将不接收模型实例。相反，你应该将方法定义为只期望经过认证的用户：
+
+```php
+/**
+ * 确定给定用户是否可以创建文章。
+ *
+ * @param  \App\User  $user
+ * @return bool
+ */
+public function create(User $user)
+{
+    //
+}
+```
+
 ### Guest 用户
 
+默认情况下，如果传入的 HTTP 请求不是由经过认证的用户发起的，所有的 Gates 和策略都会自动返回 `false`。但是，你可以通过声明『可选』类型提示或为用户参数定义提供 `null` 默认值，从而允许这些授权检查传递到你的 Gates 和策略：
+
+```php
+<?php
+
+namespace App\Policies;
+
+use App\User;
+use App\Post;
+
+class PostPolicy
+{
+    /**
+     * 确定用户是否可以更新给定的文章。
+     *
+     * @param  \App\User  $user
+     * @param  \App\Post  $post
+     * @return bool
+     */
+    public function update(?User $user, Post $post)
+    {
+        return $user->id === $post->user_id;
+    }
+}
+```
+
 ### 策略过滤
+
+对于某些用户，你可能希望授权给定策略中的所有动作。为此，在策略上定义一个 `before` 方法。`before` 方法将在策略上的任何其他方法之前执行，从而使你有机会在实际调用预期的策略方法之前授权动作。此功能最常用来授权给应用程序的管理员来执行任何动作：
+
+```php
+public function before($user, $ability)
+{
+    if ($user->isSuperAdmin()) {
+        return true;
+    }
+}
+```
+
+如果你想拒绝用户的所有授权，你应该从 `before` 方法返回 `false`。如果返回 `null`，则授权将传递给策略方法。
+
+{% hint style="danger" %}
+
+如果策略类不包含具有与正在检查的功能名称匹配的一个名称的方法，则不会调用策略类的 `before` 方法。
+
+{% endhint %}
 
 ## 使用策略授权动作
 
