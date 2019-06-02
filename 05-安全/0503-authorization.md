@@ -165,11 +165,65 @@ class AuthServiceProvider extends ServiceProvider
 
 只要模型和策略遵循标准的 Laravel 命名约定，Laravel 就可以自动发现策略，而不是手动注册模型策略。具体而言，策略必须位于包含模型的目录下的 `Policies` 目录中。因此，例如，模型可以放在 `app` 目录中，而策略可以放在 `app/Policies` 目录中。此外，策略名称必须与模型名称匹配，并具有策略后缀。因此，`User` 模型将对应于 `UserPolicy` 类。
 
+如果你想提供你自己的策略发现逻辑，你可以使用 `Gate::guessPolicyNamesUsing` 方法去注册一个自定义回调。通常，这个方法应该从你的应用程序的 `AuthServiceProvider` 的 `boot` 方法中被调用：
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+Gate::guessPolicyNamesUsing(function ($modelClass) {
+    // 返回策略类名称...
+});
+```
+
+{% hint style="danger" %}
+
+在 `AuthServiceProvider` 中显式映射的任何策略都将优先于任何潜在的自动发现策略。
+
+{% endhint %}
+
 ## 编写策略
 
-### 策略模型
+### 策略方法
+
+一旦注册了策略，你可以为它授权的每个动作添加方法。例如，让我们在 `PostPolicy` 上定义一个 `update` 方法，它确定给定 `User` 是否可以更新给定的 `Post` 实例。
+
+`update` 方法将接收一个 `User` 和一个 `Post` 实例作为它的参数，并且应该返回 `true` 或 `false`，指示用户是否被授权更新给定的 `Post`。因此，在本示例中，让我们验证用户的 `id` 是否与文章上的 `user_id` 匹配：
+
+```php
+<?php
+
+namespace App\Policies;
+
+use App\User;
+use App\Post;
+
+class PostPolicy
+{
+    /**
+     * 确定用户是否可以更新给定的文章。
+     *
+     * @param  \App\User  $user
+     * @param  \App\Post  $post
+     * @return bool
+     */
+    public function update(User $user, Post $post)
+    {
+        return $user->id === $post->user_id;
+    }
+}
+```
+
+你可以根据授权的各种动作的需要，继续在策略上定义其他方法。例如，你可以定义 `view` 或 `delete` 方法来授权各种 `Post` 操作，但是请记住，你可以自由地为策略方法指定任何你喜欢的名称。
+
+{% hint style="info" %}
+
+如果你通过 Artisan 控制台生成你的策略时使用 `--model` 选项，它将包含 `view`，`create`，`update`，`delete`，`restore` 和 `forceDelete` 动作方法。
+
+{% endhint %}
 
 ### 无模型的方法
+
+一些策略方法只接收当前经过认证的用户，而不接收它们授权的模型的实例。这种情况在授权 `create` 操作时最为常见。例如，如果你正在创建博客，你可能希望检查用户是否被授权创建任何文章。
 
 ### Guest 用户
 
