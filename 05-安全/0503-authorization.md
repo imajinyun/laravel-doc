@@ -74,9 +74,47 @@ if (Gate::forUser($user)->denies('update-post', $post)) {
 
 ### Gate 拦截检查
 
+有时，你可能希望将所有能力授予特定的用户。你可以使用 `before` 方法来定义一个在所有其他授权检查之前运行的回调：
+
+```php
+Gate::before(function ($user, $ability) {
+    if ($user->isSuperAdmin()) {
+        return true;
+    }
+});
+```
+
+如果 `before` 回调返回非空结果，则该结果将被视为检查的结果。
+
+你可以使用 `after` 方法去定义一个在所有其它授权检查之后执行的回调：
+
+```php
+Gate::after(function ($user, $ability, $result, $arguments) {
+    if ($user->isSuperAdmin()) {
+        return true;
+    }
+});
+```
+
+类似于 `before` 检查，如果 `after` 回调所有一个非空结果，则该结果将被视为检查的结果。
+
 ## 创建策略
 
 ### 生成策略
+
+策略是围绕特定模型或资源组织授权逻辑的类。例如，如果你的应用程序是一个博客，你可能有一个 `Post 模型和相应的 `PostPolicy` 来授权用户动作（比如创建或更新帖子）。
+
+你可以使用 `make:policy` [Artisan 命令](https://laravel.com/docs/5.8/artisan) 生成一个策略。生成的策略位于 `app/Policies` 目录中。如果这个目录在你的应用程序中不存在，Laravel 将为你创建它：
+
+```bash
+php artisan make:policy PostPolicy
+```
+
+`make:policy` 命令将生成一个空策略类。如果你希望生成一个类，该类中已经包含基本的『CRUD』策略方法，你可以在执行命令时指定一个 `--model` 参数：
+
+```bash
+php artisan make:policy PostPolicy --model=Post
+```
 
 ### 注册策略
 
