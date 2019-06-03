@@ -293,7 +293,44 @@ public function before($user, $ability)
 
 ### 通过用户模型
 
+Laravel 应用程序中包含的 `User` 模型包含两个用于授权动作的有用方法：`can` 和 `cant`。`can` 方法接收你希望授权的动作和相关模型。例如，让我们来确定是否授权用户更新给定的 `Post` 模型：
+
+```php
+if ($user->can('update', $post)) {
+    //
+}
+```
+
+如果为给定模型 [注册了策略](https://laravel.com/docs/5.8/authorization#registering-policies)，`can` 方法将自动调用适当的策略并返回布尔结果。如果没有为模型注册策略，`can` 方法将尝试调用基于闭包的 Gate，该 Gate 与给定的操作名称匹配。
+
+#### 不需要模型的动作
+
+记住，像 `create` 这样的一些动作可能不需要模型实例。在这些情况下，可以将类名传递给 `can` 方法。类名将用于确定在授权动作时使用哪个策略：
+
+```php
+use App\Post;
+
+if ($user->can('create', Post::class)) {
+    // Executes the "create" method on the relevant policy...
+    // 在相关策略上执行『create』方法...
+}
+```
+
 ### 通过中间件
+
+Laravel 包含一个中间件，可以在传入的请求到达路由或控制器之前对动作进行授权。默认情况下，在应用程序的 `App\Http\Kernel` 类中分配了 `Illuminate\Auth\Middleware\Authorize` 中间件的 `can` 键名。让我们探究一个使用 `can` 中间件授权用户更新博客文章的示例：
+
+```php
+use App\Post;
+
+Route::put('/post/{post}', function (Post $post) {
+    // 当前用户可以更新文章...
+})->middleware('can:update,post');
+```
+
+在本例中，我们传递 `can` 中间件两个参数。第一个是希望授权的动作的名称，第二个是希望传递给策略方法的路由参数。在这种情况下，由于我们使用 [隐式模型绑定](https://laravel.com/docs/5.8/routing#implicit-binding)，`Post` 模型将传递给策略方法。如果用户没有被授权执行给定的动作，则中间件将生成一个带有 `403` 状态代码的 HTTP 响应。
+
+#### 不需要模型的动作
 
 ### 通过控制器助手
 
