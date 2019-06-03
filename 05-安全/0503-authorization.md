@@ -332,6 +332,66 @@ Route::put('/post/{post}', function (Post $post) {
 
 #### 不需要模型的动作
 
+同样，像 `create` 这样的一些动作可能不需要模型实例。在这种情况下，可以将类名传递给中间件。类名将用于确定在授权动作时使用哪个策略：
+
+```php
+Route::post('/post', function () {
+    // 当前用户可以创建文章...
+})->middleware('can:create,App\Post');
+```
+
 ### 通过控制器助手
+
+除了向 `User` 模型提供有用的方法之外，Laravel 还为扩展 `App\Http\Controllers\Controller` 基类的任何控制器提供了一个有用的 `authorize` 方法。与 `can` 方法一样，此方法接受你希望授权的动作的名称和相关模型。如果操作未被授权，`authorize` 方法将抛出一个 `Illuminate\Auth\Access\AuthorizationException` 异常，默认的 Laravel 异常处理程序将使用 `403` 状态代码将其转换为 HTTP 响应：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Post;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+
+class PostController extends Controller
+{
+    /**
+     * 更新给定的博客文章.
+     *
+     * @param  Request  $request
+     * @param  Post  $post
+     * @return Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function update(Request $request, Post $post)
+    {
+        $this->authorize('update', $post);
+
+        // 当前用户可以更新博客文章...
+    }
+}
+```
+
+#### 不需要模型的动作
+
+如前所述，`create` 之类的一些动作可能不需要模型实例。在这种情况下，可以将类名传递给 `authorize` 方法。类名将用于确定在授权动作时使用哪个策略：
+
+```php
+/**
+ * 创建一个新的博客文章。
+ *
+ * @param  Request  $request
+ * @return Response
+ * @throws \Illuminate\Auth\Access\AuthorizationException
+ */
+public function create(Request $request)
+{
+    $this->authorize('create', Post::class);
+
+    // 当前用户可以更新博客文章...
+}
+```
+
+#### 授权资源控制器
 
 ### 通过 Blade 模版
