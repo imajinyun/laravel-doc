@@ -45,8 +45,39 @@ Auth::routes(['verify' => true]);
 
 ### 保护路由
 
+[路由中间件](https://laravel.com/docs/5.8/middleware) 仅可以被用于允许验证的用户去访问一个给定的路由。Laravel 附带一个 `verified` 中间件，它被定义在 `Illuminate\Auth\Middleware\EnsureEmailIsVerified`。由于此中间件已经注册在你的应用程序 HTTP 内核，所以你需要做的就是系这个中间件到路由定义上：
+
+```php
+Route::get('profile', function () {
+    // 仅验证的用户可以进入...
+})->middleware('verified');
+```
+
 ## 视图
 
-## 验证电子邮件后
+当 `make:auth` 执行时，Laravel 将生成所有必须的电子邮件验证视图。此视图位于 `resources/views/auth/verify.blade.php` 文件中。你根据你的应用程序的需要随意自定义此视图。
+
+## 验证电子邮件之后
+
+验证电子邮件地址后，用户将自动重定向到 `/home`。你可以通过在 `VerificationController` 上定义 `redirectTo` 方法或属性来自定义后验证重定向位置：
+
+```php
+protected $redirectTo = '/dashboard';
+```
 
 ## 事件
+
+Laravel 在电子邮件验证过程中调度 [事件](https://laravel.com/docs/5.8/events)。你可以将侦听器系到 `EventServiceProvider` 中的这些事件上：
+
+```php
+/**
+ * 应用程序的事件监听器映射。
+ *
+ * @var array
+ */
+protected $listen = [
+    'Illuminate\Auth\Events\Verified' => [
+        'App\Listeners\LogVerifiedUser',
+    ],
+];
+```
