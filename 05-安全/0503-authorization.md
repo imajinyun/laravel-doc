@@ -394,4 +394,74 @@ public function create(Request $request)
 
 #### 授权资源控制器
 
+如果你在使用 [资源控制器](https://laravel.com/docs/5.8/controllers#resource-controllers)，你可以在控制器的构造方法中使用 `authorizeResource` 方法。此方法将适当的 `can` 中间件定义系到资源控制器的方法。
+
+`authorizeResource` 方法接受模型的类名作为其第一个参数，以及将包含模型 ID 的路由 / 请求参数名作为其第二个参数：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Post;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+
+class PostController extends Controller
+{
+    public function __construct()
+    {
+        $this->authorizeResource(Post::class, 'post');
+    }
+}
+```
+
+{% hint style="info" %}
+
+你可以使用 `make:policy` 命令的 `--model` 选项为给定的模型去快速生成一个策略类：`php artisan make:policy PostPolicy --model=Post`。
+
+{% endhint %}
+
 ### 通过 Blade 模版
+
+在编写 Blade 模板时，你可能希望仅在授权用户执行给定动作时才显示页面的一部分。例如，你可能希望仅在用户能够实际更新博客文章时才显示博客文章的更新表单。在这种情况下，可以使用 `@can` 和 `@cannot` 指令簇：
+
+```php
+@can('update', $post)
+    <!-- The Current User Can Update The Post -->
+@elsecan('create', App\Post::class)
+    <!-- The Current User Can Create New Post -->
+@endcan
+
+@cannot('update', $post)
+    <!-- The Current User Can't Update The Post -->
+@elsecannot('create', App\Post::class)
+    <!-- The Current User Can't Create New Post -->
+@endcannot
+```
+
+这些指令是编写 `@if` 和 `@unless` 语句的方便快捷方式。上面的 `@can` 和 `@cannot` 语句分别转换成以下语句：
+
+```php
+@if (Auth::user()->can('update', $post))
+    <!-- The Current User Can Update The Post -->
+@endif
+
+@unless (Auth::user()->can('update', $post))
+    <!-- The Current User Can't Update The Post -->
+@endunless
+```
+
+#### 不需要模型的动作
+
+与大多数其他授权方法一样，如果动作不需要模型实例，可以将类名传递给 `@can` 和 `@cannot` 指令：
+
+```php
+@can('create', App\Post::class)
+    <!-- The Current User Can Create Posts -->
+@endcan
+
+@cannot('create', App\Post::class)
+    <!-- The Current User Can't Create Posts -->
+@endcannot
+```
