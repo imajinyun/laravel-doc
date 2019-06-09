@@ -18,9 +18,27 @@
 
 ## 数据库注意事项
 
+首先，验证你的 `App\User` 模型实现 `Illuminate\Contracts\Auth\CanResetPassword` 契约。框架中包含的 `App\User` 模型已经实现了此接口，并使用 `Illuminate\Auth\Passwords\CanResetPassword` 特性来包含实现该接口所需的方法。
+
+### 生成重置令牌表迁移
+
+接下来，必须创建一个表来存储密码重置令牌。此表的迁移包含在 Laravel 中，开箱即用，并存在于 `database/migrations` 目录中。因此，你需要做的就是运行数据库迁移：
+
+```bash
+php artisan migrate
+```
+
 ## 路由
 
+Laravel 包含 `Auth\ForgotPasswordController` 和 `Auth\ResetPasswordController` 类，它们包含电子邮件密码重置链接和重置用户密码所需的逻辑。可以使用 `make:auth` Artisan 命令生成执行密码重置所需的所有路由：
+
+```bash
+php artisan make:auth
+```
+
 ## 视图
+
+再次，当执行 `make:auth` 命令时，Laravel 将生成密码重置的所有必需视图。这些视图位于 `resources/views/auth/passwords` 中。你可以根据应用程序的需要随意定制它们。
 
 ## 重置密码之后
 
