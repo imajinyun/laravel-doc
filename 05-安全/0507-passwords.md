@@ -42,4 +42,71 @@ php artisan make:auth
 
 ## 重置密码之后
 
+一旦定义了路由和视图以重置用户的密码，你就可以在你的浏览器中访问 `/password/reset` 路由。框架中包含的 `ForgotPasswordController` 已经包含发送密码重置链接电子邮件的逻辑，而 `ResetPasswordController` 包含重置用户密码的逻辑。
+
+重置密码后，用户将自动登录到应用程序并重定向到 `/home`。你可以通过在 `ResetPasswordController` 上定义一个 `redirectTo` 属性来自定义密码重置后重定向的位置：
+
+```php
+protected $redirectTo = '/dashboard';
+```
+
+{% hint style="danger" %}
+
+默认情况下，密码重置令牌在一小时后过期。你可以通过 `config/auth.php` 文件中的密码重置 `expire` 选项更改此设置。
+
+{% endhint %}
+
 ## 自定义
+
+### 认证保护定制
+
+在你的 `auth.php` 配置文件中，你可以配置多个『守卫』，这些『守卫』可用于为多个用户表定义认证行为。你可以通过覆盖控制器上的 `guard` 方法自定义包含的 `ResetPasswordController` 来使用你选择的守卫。这个方法应该返回一个守卫实例：
+
+```php
+use Illuminate\Support\Facades\Auth;
+
+/**
+ * 获取密码重置期间使用的守卫。
+ *
+ * @return \Illuminate\Contracts\Auth\StatefulGuard
+ */
+protected function guard()
+{
+    return Auth::guard('guard-name');
+}
+```
+
+### 密码代理定制
+
+在你的 `auth.php` 配置文件中，可以配置多个密码『代理』，这些代理可用于重置多个用户表上的密码。你可以通过覆盖 `broker` 方法自定义包含的 `ForgotPasswordController` 和 `ResetPasswordController` 来使用你选择的代理：
+
+```php
+use Illuminate\Support\Facades\Password;
+
+/**
+ * 获取密码重置期间使用的代理。
+ *
+ * @return PasswordBroker
+ */
+public function broker()
+{
+    return Password::broker('name');
+}
+```
+
+### 重置电子邮件定制
+
+你可以轻松地修改用于向用户发送密码重置链接的通知类。首先，覆盖 `User` 模型上的 `sendPasswordResetNotification` 方法。在此方法中，可以使用选择的任何通知类发送通知。密码重置 `$token` 是该方法接收的第一个参数：
+
+```php
+/**
+ * 发送密码重置通知。
+ *
+ * @param  string  $token
+ * @return void
+ */
+public function sendPasswordResetNotification($token)
+{
+    $this->notify(new ResetPasswordNotification($token));
+}
+```
