@@ -134,10 +134,92 @@ protected function commands()
 {
     require base_path('routes/console.php');
 }
+```
 
+尽管这个文件没有定义 HTTP 路由，但是它定义了应用程序中基于控制台的入口点（路由）。在这个文件中，你可以使用 `Artisan::command` 方法定义所有基于闭包的路由。`command` 方法接受两个参数：[命令签名](https://laravel.com/docs/5.8/artisan#defining-input-expectations) 和一个接收命令参数和选项的闭包：
+
+```php
+Artisan::command('build {project}', function ($project) {
+    $this->info("Building {$project}!");
+});
+```
+
+闭包绑定到底层命令实例，因此你可以完全访问通常能够在完整命令类上访问的所有助手方法。
+
+#### 类型提示依赖
+
+除了接收你的命令的参数和选项外，命令闭包还可以类型提示你希望从 [服务容器](https://laravel.com/docs/5.8/container) 中解析的其他依赖项：
+
+```php
+use App\User;
+use App\DripEmailer;
+
+Artisan::command('email:send {user}', function (DripEmailer $drip, $user) {
+    $drip->send(User::find($user));
+});
+```
+
+#### 闭包命令描述
+
+在定义基于闭包的命令时，可以使用 `description` 方法向命令添加描述。当你运行 `php artisan list` 或 `php artisan help` 命令时，将显示此描述：
+
+```php
+Artisan::command('build {project}', function ($project) {
+    $this->info("Building {$project}!");
+})->describe('Build the project');
 ```
 
 ## 定义输入的期望
+
+在编写控制台命令时，通常通过参数或选项从用户收集输入。Laravel 使你可以非常方便地使用命令上的 `signature` 属性来定义你期望从用户得到的输入。`signature` 属性允许你用一种单一的、有表现力的、类似于路由的语法来定义命令的名称、参数和选项。
+
+### 参数
+
+所有用户提供的参数和选项都用大括号括起来。在下面的示例中，该命令定义了一个 **必须** 的参数：`user`：
+
+```php
+/**
+ * 控制台命令的名称和签名。
+ *
+ * @var string
+ */
+protected $signature = 'email:send {user}';
+```
+
+你还可以使参数成为可选的，并为参数定义默认值：
+
+```php
+// 可选的参数...
+email:send {user?}
+
+// 具有默认值的可选参数...
+email:send {user=foo}
+```
+
+### 选项
+
+选项和参数一样，是用户输入的另一种形式。选项在命令行上指定时，以两个连字符（`--`）作为前缀。有两种类型的选项：接收值的选项和不接收值的选项。不接受值的选项充当布尔『开关』。让我们看一个这类选项的例子:
+
+```php
+/**
+ * 控制台命令的名称和签名。
+ *
+ * @var string
+ */
+protected $signature = 'email:send {user} {--queue}';
+```
+
+在这个实例中，当调用 Artisan 命令时 `--queue` 开关可以被指定。如果 `--queue` 开关被传递，选项的值将为 `true`。否则，值将为 `false`：
+
+```bash
+php artisan email:send 1 --queue
+```
+
+#### 带有值的选项
+
+### 输入数组
+
+### 输入描述
 
 ## 命令 I/O
 
