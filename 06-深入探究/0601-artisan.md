@@ -54,9 +54,88 @@ Tinker 使用一个白列表来确定哪些 Artisan 命令可以在它的 shell 
 
 ### 生成命令
 
+要创建新命令，请使用 `make:command` Artisan 命令。此命令将在 `app/Console/Commands` 目录中创建一个新的命令类。如果你的应用程序中不存在此目录，请不要担心，因为它将在你第一次运行 `make:command` Artisan 命令时创建。生成的命令将包括所有命令上存在的默认属性和方法集：
+
+```php
+php artisan make:command SendEmails
+```
+
 ### 命令结构
 
+生成命令之后，应该填写该类的 `signature` 和 `description` 属性，这些属性将用于在 `list` 屏幕上显示你的命令。在执行命令时将调用 `handle` 方法。你可以将命令逻辑放在此方法中。
+
+{% hint style="info" %}
+
+为了实现更大的代码重用，最好让控制台命令保持轻量，并让它们遵从应用程序服务来完成他们的任务。在下面的示例中，请注意，我们注入了一个服务类来完成发送电子邮件的『繁重工作』。
+
+{% endhint %}
+
+让我们看一个示例命令。注意，我们能够将需要的任何依赖项注入到命令的 `handle` 方法中。Laravel [服务容器](https://laravel.com/docs/5.8/container) 将自动注入此方法的签名中类型提示的所有依赖项：
+
+```php
+<?php
+
+namespace App\Console\Commands;
+
+use App\User;
+use App\DripEmailer;
+use Illuminate\Console\Command;
+
+class SendEmails extends Command
+{
+    /**
+     * 控制台命令的名称和签名。
+     *
+     * @var string
+     */
+    protected $signature = 'email:send {user}';
+
+    /**
+     * 控制台命令描述。
+     *
+     * @var string
+     */
+    protected $description = 'Send drip e-mails to a user';
+
+    /**
+     * 创建一个新的命令实例。
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    /**
+     * 执行控制台命令。
+     *
+     * @param  \App\DripEmailer  $drip
+     * @return mixed
+     */
+    public function handle(DripEmailer $drip)
+    {
+        $drip->send(User::find($this->argument('user')));
+    }
+}
+```
+
 ### 闭包命令
+
+基于闭包的命令提供了将控制台命令定义为类的替代方法。与路由闭包是控制器的替代方法相同，可以将命令闭包视为命令类的替代方法。在 `app/Console/Kernel.php` 文件的 `commands` 方法中，Laravel 加载 `routes/console.php` 文件：
+
+```php
+/**
+ * 为应用程序注册基于闭包的命令。
+ *
+ * @return void
+ */
+protected function commands()
+{
+    require base_path('routes/console.php');
+}
+
+```
 
 ## 定义输入的期望
 
