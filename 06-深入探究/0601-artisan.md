@@ -217,11 +217,127 @@ php artisan email:send 1 --queue
 
 #### 带有值的选项
 
+接下来，让我们看看一个期望值的选项。如果用户必须为某个选项指定一个值，请在选项名称后面加上（`=`）符号：
+
+```php
+/**
+ * 控制台命令的名称和签名。
+ *
+ * @var string
+ */
+protected $signature = 'email:send {user} {--queue=}';
+```
+
+在这个实例中，用户可以像这样传递一个值：
+
+```php
+php artisan email:send 1 --queue=default
+```
+
+你可以通过在选项名称后面指定默认值来为选项分配默认值。如果用户没有传递选项值，则使用默认值：
+
+```bash
+email:send {user} {--queue=default}
+```
+
+#### 选项快捷方式
+
+要在定义选项时分配快捷方式，可以在选项名称之前指定它，并使用 `|` 分隔符将快捷方式与完整的选项名称分隔：
+
+```bash
+email:send {user} {--Q|queue}
+```
+
 ### 输入数组
+
+如果希望定义期望数组输入的参数或选项，可以使用 `*` 字符。首先，让我们看一个指定数组参数的示例：
+
+```bash
+email:send {user*}
+```
+
+调用此方法时，可以将 `user` 参数传递到命令行。例如，下面的命令将 `user` 的值设置为 `['foo', 'bar']`：
+
+```bash
+php artisan email:send foo bar
+```
+
+当定义期望数组输入的选项时，传递给命令的每个选项值都应该以选项名作为前缀：
+
+```bash
+email:send {user} {--id=*}
+
+php artisan email:send --id=1 --id=2
+```
 
 ### 输入描述
 
+你可以通过使用冒号将参数从描述中分隔开来，将描述分配给输入参数和选项。如果你需要一点额外的空间来定义你的命令，请随意将扩展定义跨越多行：
+
+```php
+/**
+ * 控制台命令的名称和签名。
+ *
+ * @var string
+ */
+protected $signature = 'email:send
+                        {user : The ID of the user}
+                        {--queue= : Whether the job should be queued}';
+```
+
 ## 命令 I/O
+
+### 检索输入
+
+在执行命令时，很显然你将需要去访问命令接受的参数和选项的值。为此，可以使用 `argument` 和 `option` 方法：
+
+```php
+/**
+ * 执行控制台命令。
+ *
+ * @return mixed
+ */
+public function handle()
+{
+    $userId = $this->argument('user');
+
+    //
+}
+```
+
+如果你需要检索所有参数作为一个 `array`，调用 `arguments` 方法：
+
+```php
+$arguments = $this->arguments();
+```
+
+使用 `option` 方法可以像检索参数一样轻松地检索选项。要以数组的形式检索所有选项，请调用 `options` 方法：
+
+```php
+// 检索一个指定的选项...
+$queueName = $this->option('queue');
+
+// 检索所有选项...
+$options = $this->options();
+```
+
+如果参数或选项不存在，则返回 `null`。
+
+### 提示输入
+
+除了显示输出，你还可以要求用户在执行命令期间提供输入。`ask` 方法将用给定的问题提示用户，接受他们的输入，然后将用户的输入返回给你的命令：
+
+```php
+/**
+ * 执行的控制台命令。
+ *
+ * @return mixed
+ */
+public function handle()
+{
+    $name = $this->ask('What is your name?');
+}
+```
 
 ## 注册命令
 
