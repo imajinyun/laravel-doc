@@ -105,6 +105,82 @@ Laravel 的事件广播允许你使用基于驱动程序的 WebSockets 方法将
 
 事件通过『通道』广播，可以指定为公共的或私有的。任何你的应用程序的访问者，可以在没有任何认证或授权的情况下订阅公共频道；但是，为了订阅一个私有通道，必须对用户进行认证并授权他在该通道上监听。
 
+### 使用一个示例应用程序
+
+在深入探究事件广播的每个组件之前，让我们以电子商务商店为例进行一个高层次的概述。我们不会讨论配置 [Pusher](https://pusher.com/) 或 [Laravel Echo](https://laravel.com/docs/5.8/broadcasting#installing-laravel-echo) 的细节，因为这将在本文档的其他部分中详细讨论。
+
+在我们的应用程序中，让我们假设有一个页面允许用户查看订单的发货状态。我们还假设，当应用程序处理发货状态更新时，一个 `ShippingStatusUpdated` 事件被触发:
+
+```php
+event(new ShippingStatusUpdated($update));
+```
+
+#### `ShouldBroadcast` 接口
+
+当用户查看他们的订单时，我们不希望他们必须刷新页面才能查看状态更新。相反，我们希望在应用程序创建时向其广播更新。因此，我们需要用 `ShouldBroadcast` 接口标记 `ShippingStatusUpdated` 事件。这将指示 Laravel 在事件触发时广播该事件：
+
+```php
+<?php
+
+namespace App\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+
+class ShippingStatusUpdated implements ShouldBroadcast
+{
+    /**
+     * 关于发货状态更新的信息。
+     *
+     * @var string
+     */
+    public $update;
+}
+```
+
+`ShouldBroadcast` 接口要求我们的事件定义成一个 `broadcastOn` 方法。此方法负责返回事件应该广播的通道。这个方法的空存根已经在生成的事件类上定义，所以我们只需要填充它的细节。我们只希望订单的创建者能够查看状态更新，因此我们将在与订单绑定的私有通道上广播事件：
+
+```php
+/**
+ * 获取事件应该广播的通道。
+ *
+ * @return \Illuminate\Broadcasting\PrivateChannel
+ */
+public function broadcastOn()
+{
+    return new PrivateChannel('order.'.$this->update->order_id);
+}
+```
+
+#### 授权通道
+
+请记住，用户必须有权通过私人通道收听。我们可以在 `routes/channels.php` 文件中定义我们的通道授权规则。在此示例中，我们需要验证尝试侦听私有 `order.1` 频道的任何用户实际上是订单的创建者：
+
+```php
+Broadcast::channel('order.{orderId}', function ($user, $orderId) {
+    return $user->id === Order::findOrNew($orderId)->user_id;
+});
+```
+
+`channel` 方法接受两个参数：通道的名称和一个回调函数，回调函数返回 `true` 或 `false`，指示是否授权用户监听通道。
+
+所有授权回调都将当前经过认证的用户作为它们的第一个参数，任何其他通配符参数作为它们的后续参数。在本例中，我们使用 `{orderId}` 占位符来指示通道名称的『ID』部分是通配符。
+
+#### 监听事件广播
+
+接下来，剩下的就是侦听 JavaScript 应用程序中的事件。我们可以使用 Laravel Echo 来实现这一点。首先，我们将使用 `private` 方法订阅私有通道。然后，我们可以使用 `listen` 方法侦听 `ShippingStatusUpdated` 事件。默认情况下，事件的所有公共属性都将包含在广播事件中：
+
+```js
+Echo.private(`order.${orderId}`)
+    .listen('ShippingStatusUpdated', (e) => {
+        console.log(e.update);
+    });
+```
+
 ## 定义广播事件
 
 ## 授权通道
