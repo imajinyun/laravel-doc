@@ -435,4 +435,119 @@ $bar->finish();
 
 ## 注册命令
 
+由于在控制台内核的 `commands` 方法中调用了 `load` 方法，所有在 `app/Console/Commands` 目录中的命令都将自动注册到 Artisan。实际上，你可以自由地去额外调用 `load` 方法来扫描 Artisan 命令的其他目录：
+
+```php
+/**
+ * 为应用程序注册命令。
+ *
+ * @return void
+ */
+protected function commands()
+{
+    $this->load(__DIR__.'/Commands');
+    $this->load(__DIR__.'/MoreCommands');
+
+    // ...
+}
+```
+
+你也可以通过将其类名添加到 `app/Console/Kernel.php` 文件的 `$commands` 属性来手动注册命令。当 Artisan 启动时，此属性中列出的所有命令都将由 [服务容器](https://laravel.com/docs/5.8/container) 解析并在 Artisan 中注册：
+
+```php
+protected $commands = [
+    Commands\SendEmails::class
+];
+```
+
 ## 以编程方式执行命令
+
+有时，你可能希望在 CLI 之外执行一个 Artisan 命令。例如，你可能希望从路由或控制器触发 Artisan 命令。你可以使用 `Artisan` facade 上的 `call` 方法来实现这一点。`call` 方法接受命令的名称或类作为第一个参数，命令参数数组作为第二个参数。将返回退出代码：
+
+```php
+Route::get('/foo', function () {
+    $exitCode = Artisan::call('email:send', [
+        'user' => 1, '--queue' => 'default'
+    ]);
+
+    //
+});
+```
+
+或者，你可以将整个 Artisan 命令作为字符串传递给 `call` 方法：
+
+```php
+Artisan::call('email:send 1 --queue=default');
+```
+
+使用 `Artisan` facade 上的 `queue` 方法，你甚至可以对 Artisan 命令进行队列处理，以便你的 [队列工作者](https://laravel.com/docs/5.8/queues) 在后台处理它们。在使用此方法之前，请确保配置了队列并正在运行队列侦听器：
+
+```php
+Route::get('/foo', function () {
+    Artisan::queue('email:send', [
+        'user' => 1, '--queue' => 'default'
+    ]);
+
+    //
+});
+```
+
+你还可以指定应该将 Artisan 命令调度到的连接或队列：
+
+```php
+Artisan::queue('email:send', [
+    'user' => 1, '--queue' => 'default'
+])->onConnection('redis')->onQueue('commands');
+```
+
+### 传值
+
+#### 传递数组值
+
+如果你的命令定义了接受数组的选项，则可以将值数组传递给该选项：
+
+```php
+Route::get('/foo', function () {
+    $exitCode = Artisan::call('email:send', [
+        'user' => 1, '--id' => [5, 13]
+    ]);
+});
+```
+
+#### 传递布尔值
+
+如果需要指定不接受字符串值的选项的值，比如 `migrate:refresh` 命令上的 `——force` 标志，则应该传递 `true` 或 `false`：
+
+```php
+$exitCode = Artisan::call('migrate:refresh', [
+    '--force' => true,
+]);
+```
+
+### 从其他命令调用命令
+
+有时，你可能希望从现有 Artisan 命令调用其他命令。你可以使用 `call` 方法这样做。此 `call` 方法接受命令名和命令参数数组：
+
+```php
+/**
+ * 执行控制台命令。
+ *
+ * @return mixed
+ */
+public function handle()
+{
+    $this->call('email:send', [
+        'user' => 1, '--queue' => 'default'
+    ]);
+
+    //
+}
+```
+
+如果你想调用另一个控制台命令并阻止其所有输出，可以使用 `callSilent` 方法。`callSilent` 方法具有与 `call` 方法相同的签名：
+
+```php
+$this->callSilent('email:send', [
+    'user' => 1, '--queue' => 'default'
+]);
+```
