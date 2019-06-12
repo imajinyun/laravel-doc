@@ -183,6 +183,109 @@ Echo.private(`order.${orderId}`)
 
 ## 定义广播事件
 
+要通知 Laravel 某个给定的事件应该被广播，要在事件类上实现 `Illuminate\Contracts\Broadcasting\ShouldBroadcast` 接口。这个接口已经导入到通过框架生成的所有事件类中，因此你可以轻松地将它添加到任何你的事件中。
+
+`ShouldBroadcast` 接口要求你实现一个方法：`broadcastOn`。`broadcastOn` 方法应该返回事件应该广播的通道或通道数组。通道应该是 `Channel`，`PrivateChannel` 或 `PresenceChannel` 的实例。`Channel` 实例表示任何用户都可以订阅的公共通道，而 `PrivateChannels` 和 `PresenceChannels` 表示需要 [通道授权](https://laravel.com/docs/5.8/broadcasting#authorizing-channels) 的私有通道：
+
+```php
+<?php
+
+namespace App\Events;
+
+use App\User;
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+
+class ServerCreated implements ShouldBroadcast
+{
+    use SerializesModels;
+
+    public $user;
+
+    /**
+     * 创建一个新的事件实例。
+     *
+     * @return void
+     */
+    public function __construct(User $user)
+    {
+        $this->user = $user;
+    }
+
+    /**
+     * 获取事件应该广播的通道。
+     *
+     * @return Channel|array
+     */
+    public function broadcastOn()
+    {
+        return new PrivateChannel('user.'.$this->user->id);
+    }
+}
+```
+
+然后，你只需要像往常一样 [触发事件](https://laravel.com/docs/5.8/events)。一旦事件被触发，[队列作业](https://laravel.com/docs/5.8/queues) 将自动通过指定的广播驱动程序广播事件。
+
+### 广播名称
+
+默认情况下，Laravel 将使用事件的类名广播事件。但是，你可以通过在事件上定义一个 `broadcastAs` 方法来定制广播名称：
+
+```php
+/**
+ * 事件的广播名称。
+ *
+ * @return string
+ */
+public function broadcastAs()
+{
+    return 'server.created';
+}
+```
+
+如果使用 `broadcastAs` 方法自定义广播名称，你应当确保用一个前导 `.` 符号注册你的侦听器。这将指示 Echo 不要将应用程序的命名空间预先添加到事件中：
+
+```js
+.listen('.server.created', function (e) {
+    ....
+});
+```
+
+### 广播数据
+
+当一个事件被广播时，它的所有 `public` 属性都会自动序列化并作为事件的有效负载进行广播，允许你从你的 JavaScript 应用程序访问它的任何公共数据。因此，例如，如果你的事件有一个包含 Eloquent 模型的公共 `$user` 属性，则事件的广播有效负载将是：
+
+```json
+{
+    "user": {
+        "id": 1,
+        "name": "Patrick Stewart"
+        ...
+    }
+}
+```
+
+但是，如果希望对广播负载有更细粒度的控制，可以向事件添加 `broadcastWith` 方法。此方法应该返回希望作为事件有效负载广播的数据数组：
+
+```php
+/**
+ * 获取广播的数据。
+ *
+ * @return array
+ */
+public function broadcastWith()
+{
+    return ['id' => $this->user->id];
+}
+```
+
+### 广播队列
+
+### 广播条件
+
 ## 授权通道
 
 ## 广播事件
