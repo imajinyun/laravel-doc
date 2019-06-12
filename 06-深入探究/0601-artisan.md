@@ -339,6 +339,100 @@ public function handle()
 }
 ```
 
+`secret` 方法类似于 `ask`，但是当用户在控制台中键入时，用户的输入将不可见。这种方法在询问敏感信息（如密码）时非常有用：
+
+```php
+$password = $this->secret('What is the password?');
+```
+
+#### 要求确认
+
+如果需要向用户请求简单的确认，可以使用 `confirm` 方法。默认情况下，该方法将返回 `false`。但是，如果用户响应提示输入 `y` 或 `yes`，该方法将返回 `true`。
+
+```php
+if ($this->confirm('Do you wish to continue?')) {
+    //
+}
+```
+
+#### 自动完成
+
+`anticipate` 方法可用于为可能的选择提供自动完成。无论自动完成提示是什么，用户仍然可以选择任何答案：
+
+```php
+$name = $this->anticipate('What is your name?', ['Taylor', 'Dayle']);
+```
+
+#### 多项选择题
+
+如果需要为用户提供一组预定义的选项，可以使用 `choice` 方法。如果没有选择任何选项，可以将默认值的数组索引设置为返回：
+
+```php
+$name = $this->choice('What is your name?', ['Taylor', 'Dayle'], $defaultIndex);
+```
+
+### 编写输出
+
+要将输出发送到控制台，要使用 `line`，`info`，`comment`，`question` 和 `error` 方法。每一种方法都将为他们的意图使用适当的 ANSI 颜色。例如，让我们向用户显示一些一般信息。通常，`info` 方法将在控制台中显示为绿色文本：
+
+```php
+/**
+ * 执行控制台命令。
+ *
+ * @return mixed
+ */
+public function handle()
+{
+    $this->info('Display this on the screen');
+}
+```
+
+要显示错误消息，使用 `error` 方法。错误消息文本通常显示为红色：
+
+```php
+$this->error('Something went wrong!');
+```
+
+如果你想显示没有颜色的控制台输出纯文本，使用 `line` 方法：
+
+```php
+$this->line('Display this on the screen');
+```
+
+#### 表格布局
+
+`table` 方法可以轻松地正确格式化多行 / 多列数据。只需将标题和行传递给方法即可。宽度和高度将基于给定的数据动态计算：
+
+```php
+$headers = ['Name', 'Email'];
+
+$users = App\User::all(['name', 'email'])->toArray();
+
+$this->table($headers, $users);
+```
+
+#### 进度条
+
+对于长时间运行的任务，显示进度指示器可能很有帮助。使用输出对象，我们可以启动、前进和停止进度条。首先，定义流程将迭代的总步骤数。然后，推进进度条之后再处理每个条目：
+
+```php
+$users = App\User::all();
+
+$bar = $this->output->createProgressBar(count($users));
+
+$bar->start();
+
+foreach ($users as $user) {
+    $this->performTask($user);
+
+    $bar->advance();
+}
+
+$bar->finish();
+```
+
+更多高级选项，查阅 [Symfony Process Bar 组件 文档](https://symfony.com/doc/current/components/console/helpers/progressbar.html)。
+
 ## 注册命令
 
 ## 以编程方式执行命令
