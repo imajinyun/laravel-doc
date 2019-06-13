@@ -495,13 +495,112 @@ var socketId = Echo.socketId();
 
 ### 安装 Laravel Echo
 
+Laravel Echo 是一个 JavaScript 库，可以轻松订阅频道并侦听 Laravel 广播的事件。你可以通过 NPM 包管理器安装 Echo。在本例中，我们还将安装 `pusher-js` 包，因为我们将使用 Pusher 广播器：
+
+```bash
+npm install --save laravel-echo pusher-js
+```
+
+安装 Echo 后，你就可以在应用程序的 JavaScript 中创建一个全新的 Echo 实例。这样做的好地方是 Laravel 框架附带的 `resources/js/bootstrap.js` 文件的底部：
+
+```js
+import Echo from "laravel-echo"
+
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: 'your-pusher-key'
+});
+```
+
+在创建使用 `pusher` 连接器的 Echo 实例时，你还可以指定一个 `cluster` 以及是否应该加密连接:
+
+```js
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: 'your-pusher-key',
+    cluster: 'eu',
+    encrypted: true
+});
+```
+
+#### 使用存在的客户端实例
+
+如果你已经有一个 Pusher 或 Socket.io 客户端实例，你希望 Echo 利用该实例，你可以通过 `client` 配置选项将其传递给 Echo：
+
+```js
+const client = require('pusher-js');
+
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: 'your-pusher-key',
+    client: client
+});
+```
+
 ### 监听事件
+
+一旦你安装并实例化 Echo 之后，就可以开始监听事件广播了。首先，使用 `channel` 方法检索一个通道的实例，然后调用 `listen` 方法侦听指定的事件：
+
+```js
+Echo.channel('orders')
+    .listen('OrderShipped', (e) => {
+        console.log(e.order.name);
+    });
+```
+
+如果希望侦听私有通道上的事件，要使用 `private` 方法替代。你可以继续对 `listen` 方法进行链式的调用，以侦听单个通道上的多个事件：
+
+```php
+Echo.private('orders')
+    .listen(...)
+    .listen(...)
+    .listen(...);
+```
 
 ### 离开一个通道
 
+要离开一个通道，你需要在你的 Echo 实例上调用 `leaveChannel` 方法：
+
+```js
+Echo.leaveChannel('orders');
+```
+
+如果希望离开通道及其关联的私有通道和存在通道，可以调用 `leave` 方法：
+
+```js
+Echo.leave('orders');
+```
+
 ### 命名空间
 
+我可能已经注意到在上面的示例中，我们没有为事件类指定完整的名称空间。这是因为 Echo 将自动假定事件位于 `App\Events` 命名空间中。但是，你可以在通过传递 `namespace` 配置选项实例化 Echo 时，可以配置根命名空间：
+
+```js
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: 'your-pusher-key',
+    namespace: 'App.Other.Namespace'
+});
+```
+
+或者，可以在事件类前面加上一个 `.` 当使用 Echo 订阅它们时。这将允许你始终指定完全限定的类名：
+
+```js
+Echo.channel('orders')
+    .listen('.Namespace\\Event\\Class', (e) => {
+        //
+    });
+```
+
 ## 存在通道
+
+存在通道建立在私有通道的安全性基础上，同时还暴露了意识到谁订阅了通道的附加功能。这使得构建功能强大的协作应用程序特性变得很容易，比如当其他用户正在查看同一页面时通知用户。
+
+### 认证存在的通道
+
+### 加入存在的通道
+
+### 广播到存在的通道
 
 ## 客户端事件
 
