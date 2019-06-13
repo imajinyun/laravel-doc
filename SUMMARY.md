@@ -37,6 +37,8 @@
   * [授权](05-安全/0503-authorization.md)
   * [验证](05-安全/0504-verification.md)
   * [加密](05-安全/0505-encryption.md)
+  * [哈希](05-安全/0506-hashing.md)
+  * [密码](05-安全/0507-password.md)
 * [深入探究](06-深入探究/README.md)
   * [Artisan](06-深入探究/0601-artisan.md)
   * [广播](06-深入探究/0602-broadcasting.md)
