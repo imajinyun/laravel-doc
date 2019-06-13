@@ -284,9 +284,113 @@ public function broadcastWith()
 
 ### 广播队列
 
+默认情况下，每个广播事件都放置在默认队列上，用于默认的队列连接在你的 `queue.php` 配置文件中指定的。你可以通过在你的事件类上定义一个 `broadcastQueue` 属性来定制广播器使用的队列。此属性应指定你希望在广播时使用的队列的名称：
+
+```php
+/**
+ * 放置事件的队列的名称。
+ *
+ * @var string
+ */
+public $broadcastQueue = 'your-queue-name';
+```
+
+如果你想使用 `sync` 队列广播你的事件而不是默认的队列驱动，你可以实现 `ShouldBroadcastNow` 接口而不是 `ShouldBroadcast`：
+
+```php
+<?php
+
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+
+class ShippingStatusUpdated implements ShouldBroadcastNow
+{
+    //
+}
+```
+
 ### 广播条件
 
+有时，只有在给定条件为真时，才希望广播你的事件。你可以通过向你的事件类添加 `broadcastWhen` 方法来定义这些条件：
+
+```php
+/**
+ * 决定该事件是否应当广播。
+ *
+ * @return bool
+ */
+public function broadcastWhen()
+{
+    return $this->value > 100;
+}
+```
+
 ## 授权通道
+
+私有通道要求你授权当前经过认证的用户可以在通道上实际侦听。这是通过使用通道名称向 Laravel 应用程序发出 HTTP 请求，并允许应用程序确定用户是否可以在该通道上侦听来实现的。当使用 [Laravel Echo](https://laravel.com/docs/5.8/broadcasting#installing-laravel-echo) 时，将自动发出 HTTP 请求来授权对私有通道的订阅；但是，你确实需要定义正确的路由来响应这些请求。
+
+### 定义认证路由
+
+值得庆幸的是，Laravel 可以轻松定义响应通道授权请求的路由。在 Laravel 应用程序附带的 `BroadcastServiceProvider` 中，你将看到对 `Broadcast::routes` 方法的调用。此方法将注册 `/broadcast/auth` 路由以处理授权请求：
+
+```php
+Broadcast::routes();
+```
+
+`Broadcast::routes` 方法将自动将其路由放置在 `web` 中间件组中；但是，如果希望自定义分配的属性，可以将路由属性数组传递到该方法：
+
+```php
+Broadcast::routes($attributes);
+```
+
+#### 自定义授权端点
+
+默认情况下，Echo 将使用 `/broadcast/auth` 端点来授权通道访问。但是，你可以通过将 `authEndpoint` 配置选项传递给 Echo 实例来指定自己的授权端点：
+
+```js
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: 'your-pusher-key',
+    authEndpoint: '/custom/endpoint/auth'
+});
+```
+
+### 定义认证回调
+
+接下来，我们需要定义实际执行通道授权的逻辑。这是在你的应用程序附带的 `routes/channels.php` 文件中完成的。在此文件中，您可以使用 `Broadcast::channel` 方法注册通道授权回调：
+
+```php
+Broadcast::channel('order.{orderId}', function ($user, $orderId) {
+    return $user->id === Order::findOrNew($orderId)->user_id;
+});
+```
+
+`channel` 方法接受两个参数：通道的名称和一个回调函数，回调函数返回 `true` 或 `false`，指示是否授权用户在通道上去监听。
+
+所有授权回调都将当前经过认证的用户作为它们的第一个参数，任何其他通配符参数作为它们的后续参数。在本例中，我们使用 `{orderId}` 占位符来指示通道名称的『ID』部分是通配符。
+
+#### 授权回调模型绑定
+
+就像 HTTP 路由一样，通道路由也可以利用隐式和显式 [路由模型绑定](https://laravel.com/docs/5.8/routing#route-model-binding)。例如：你可以请求一个实际的 `Order` 模型实例，而不是接收字符串或数字 order ID：
+
+```php
+use App\Order;
+
+Broadcast::channel('order.{order}', function ($user, Order $order) {
+    return $user->id === $order->user_id;
+});
+```
+
+#### 授权回调认证
+
+私有和存在广播通道通过应用程序的默认认证守卫对当前用户进行认证。如果用户没有经过认证，则会自动拒绝通道授权，并且永远不会执行授权回调。但是，如果必要，你可以分配多个自定义守卫来认证传入的请求：
+
+```php
+Broadcast::channel('channel', function() {
+    // ...
+}, ['guards' => ['web', 'admin']])
+```
+
+### 定义通道类
 
 ## 广播事件
 
