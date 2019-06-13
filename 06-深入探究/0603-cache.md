@@ -140,6 +140,76 @@ Cache::decrement('key', $amount);
 
 #### 检索 & 存储
 
+有时，你可能希望从缓存中检索条目，但如果请求的条目不存在，也要存储一个默认值。例如，你可能希望从缓存中检索所有用户，如果不存在，则从数据库中检索并将其添加到缓存中。你可以使用 `Cache::remember` 方法来完成此操作：
+
+```php
+$value = Cache::remember('users', $seconds, function () {
+    return DB::table('users')->get();
+});
+```
+
+如果条目在缓存中不存在，则将执行传递给 `remember` 方法的 `Closure`，并将其结果放在缓存中。
+
+你可以使用 `rememberForever` 方法从缓存或者去检索一个条目或者将其永久存储：
+
+```php
+$value = Cache::rememberForever('users', function () {
+    return DB::table('users')->get();
+});
+```
+
+#### 检索 & 删除
+
+如果需要从缓存中检索条目，然后删除条目，可以使用 `pull` 方法。与 `get` 方法一样，如果条目在缓存中不存在，则返回 `null`：
+
+```php
+$value = Cache::pull('key');
+```
+
+### 在缓存中存储条目
+
+你可以在 `Cache` 外观上使用 `put` 方法在缓存中存储条目：
+
+```php
+Cache::put('key', 'value', $seconds);
+```
+
+如果存储时间没有传递到 `put` 方法，条目将被无限期存储：
+
+```php
+Cache::put('key', 'value');
+```
+
+你还可以传递一个表示缓存条目过期时间的 `DateTime` 实例，而不是将秒数作为整数传递：
+
+```php
+Cache::put('key', 'value', now()->addMinutes(10));
+```
+
+#### 存储如果不存在
+
+如果条目在缓存存储中不存在，`add` 方法只会将其添加到缓存中。如果条目实际添加到缓存中，该方法将返回 `true`。否则，方法将返回 `false`：
+
+```php
+Cache::add('key', 'value', $seconds);
+```
+
+#### 永远存储条目
+
+`forever` 方法可用于在缓存中永久存储条目。由于这些项不会过期，因此必须使用 `forget` 方法手动从缓存中删除它们：
+
+```php
+Cache::forever('key', 'value');
+```
+
+{% hint style="info" %}
+
+如果你正在使用 Memcached 驱动程序，当缓存达到其大小限制时，可能会删除『永久』存储的条目。
+
+{% endhint %}
+
+### 从缓存中移除条目
+
 ## 缓存标签
 
 ## 添加自定义缓存驱动
