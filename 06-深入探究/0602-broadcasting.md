@@ -392,11 +392,116 @@ Broadcast::channel('channel', function() {
 
 ### 定义通道类
 
+如果你的应用程序消耗了许多不同的通道，则你的 `routes/channels.php` 文件可能会变得笨重。因此，你可以使用通道类，而不是使用 Closures 来授权通道。要生成通道类，请使用 `make:channel` Artisan 命令。此命令将在 `App/Broadcasting` 目录中放置一个新的通道类。
+
+```bash
+php artisan make:channel OrderChannel
+```
+
+接下来，在你的 `routes/channels.php` 文件中注册你的通道：
+
+```php
+use App\Broadcasting\OrderChannel;
+
+Broadcast::channel('order.{order}', OrderChannel::class);
+```
+
+最后，你可以将通道的授权逻辑放在通道类的 `join` 方法中。此 `join` 方法将包含通常放置在你的通道授权闭包中的相同逻辑。你还可以利用通道模型绑定：
+
+```php
+<?php
+
+namespace App\Broadcasting;
+
+use App\User;
+use App\Order;
+
+class OrderChannel
+{
+    /**
+     * 创建一个新的通道实例。
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * 认证用户对通道的访问权限。
+     *
+     * @param  \App\User  $user
+     * @param  \App\Order  $order
+     * @return array|bool
+     */
+    public function join(User $user, Order $order)
+    {
+        return $user->id === $order->user_id;
+    }
+}
+```
+
+{% hint style="info" %}
+
+与 Laravel 中的许多其他类一样，通道类将由 [服务容器](https://laravel.com/docs/5.8/container) 自动解析。因此，你可以在通道的构造函数中键入提示通道所需的任何依赖项。
+
+{% endhint %}
+
 ## 广播事件
+
+一旦定义了一个事件并使用 `ShouldBroadcast` 接口对其进行了标记，就只需要使用 `event` 函数触发该事件。事件调度程序将注意到事件被标记为 `ShouldBroadcast` 接口，并将事件排队进行广播：
+
+```php
+event(new ShippingStatusUpdated($update));
+```
+
+### 仅给别人
+
+在构建使用事件广播的应用程序时，可以使用 `broadcast` 函数取代 `event` 函数。与 `event` 函数一样，`broadcast` 函数将事件调度给服务器端侦听器：
+
+```php
+broadcast(new ShippingStatusUpdated($update));
+```
+
+不过，`broadcast` 函数还暴露了 `toOthers` 方法，该方法允许你将当前用户从广播的接收方中排除：
+
+```php
+broadcast(new ShippingStatusUpdated($update))->toOthers();
+```
+
+为了更好地了解何时可能需要使用 `toOthers` 方法，让我们设想一个任务列表应用程序，用户可以通过输入任务名称来创建新任务。要创建任务，你的应用程序可能会向 `/task` 端点发出请求，该端点广播任务的创建并返回新任务的 JSON 表示。当你的 JavaScript 应用程序从端点收到响应时，它可能会直接将新任务插入其任务列表中，如下所示：
+
+```php
+axios.post('/task', task)
+    .then((response) => {
+        this.tasks.push(response.data);
+    });
+```
+
+但是，请记住，我们还广播了任务的创建。如果 JavaScript 应用程序正在侦听此事件，以便将任务添加到任务列表中，则列表中会有重复的任务：一个来自端点，一个来自广播。你可以使用 `toOthers` 方法来解决这个问题，该方法指示广播程序不要将事件广播给当前用户。
+
+#### 配置
+
+当你初始化 Laravel Echo 实例时，将套接字 ID 分配给连接。如果你正在使用 [Vue](https://vuejs.org/) 和 [Axios](https://github.com/axios/axios)，套接字 ID 将自动作为 `X-Socket-ID` 头附加到每个传出请求上。然后，当你调用 `toOthers` 方法时，Laravel 将从报头中提取套接字 ID，并指示广播器不要与该套接字 ID 的任何连接广播。
+
+如果不使用 Vue 和 Axios，则需要手动配置 JavaScript 应用程序来发送 `X-Socket-ID` 头。你可以检索套接字 ID 使用 `Echo.socketId` 方法：
+
+```js
+var socketId = Echo.socketId();
+```
 
 ## 接收广播
 
-## 在场通道
+### 安装 Laravel Echo
+
+### 监听事件
+
+### 离开一个通道
+
+### 命名空间
+
+## 存在通道
 
 ## 客户端事件
 
