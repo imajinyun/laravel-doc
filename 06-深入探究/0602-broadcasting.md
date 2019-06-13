@@ -598,10 +598,112 @@ Echo.channel('orders')
 
 ### 认证存在的通道
 
+所有的存在通道也是私有通道；因此，用户必须 [被授权去访问它们](https://laravel.com/docs/5.8/broadcasting#authorizing-channels)。但是，在为存在的通道定义授权回调时，如果用户被授权加入通道，则不会返回 `true`。相反，应该返回关于用户的数据数组。
+
+授权回调返回的数据将将用在你的 JavaScript 应用程序中的存在通道事件侦听器。如果用户未被授权加入到存在通道，则应返回 `false` 或 `null`：
+
+```php
+Broadcast::channel('chat.{roomId}', function ($user, $roomId) {
+    if ($user->canJoinRoom($roomId)) {
+        return ['id' => $user->id, 'name' => $user->name];
+    }
+});
+```
+
 ### 加入存在的通道
+
+要连接存在通道，可以使用 Echo 的 `join` 方法。`join` 方法将返回一个 `PresenceChannel` 实现，该实现与暴露的 `listen` 方法一起允许你订阅 `here`，`join` 和 `leave` 事件。
+
+```js
+Echo.join(`chat.${roomId}`)
+    .here((users) => {
+        //
+    })
+    .joining((user) => {
+        console.log(user.name);
+    })
+    .leaving((user) => {
+        console.log(user.name);
+    });
+```
+
+成功连接通道后，立即执行 `here` 回调，并接收一个数组，其中包含当前订阅通道的所有其他用户的用户信息。`joining` 方法将在新用户加入通道时执行，而 `leaving` 方法将在用户离开通道时执行。
 
 ### 广播到存在的通道
 
+存在通道可以像公共或私有通道一样接收事件。以聊天室为例，我们可能希望将 `NewMessage` 事件广播到聊天室的存在频道。为此，我们将从事件的 `broadcastOn` 方法返回 `PresenceChannel` 的一个实例：
+
+```php
+/**
+ * 获取事件应该广播的通道。
+ *
+ * @return Channel|array
+ */
+public function broadcastOn()
+{
+    return new PresenceChannel('room.'.$this->message->room_id);
+}
+```
+
+与公共事件或私有事件一样，存在通道事件可以使用 `broadcast` 函数进行广播。与其他事件一样，您可以使用 `toOthers` 方法将当前用户排除在接收广播之外：
+
+```php
+broadcast(new NewMessage($message));
+
+broadcast(new NewMessage($message))->toOthers();
+```
+
+你可以通过 Echo 的 `listen` 方法侦听加入事件：
+
+```js
+Echo.join(`chat.${roomId}`)
+    .here(...)
+    .joining(...)
+    .leaving(...)
+    .listen('NewMessage', (e) => {
+        //
+    });
+```
+
 ## 客户端事件
 
+{% hint style="info" %}
+
+使用 [Pusher](https://pusher.com/) 时，你必须在你的 [应用程序仪表板](https://dashboard.pusher.com/) 的『应用程序设置』部分启用『客户端事件』选项，以便发送客户端事件。
+
+{% endhint %}
+
+有时，你可能希望广播一个事件到其他连接的客户端，而根本不需要触及 Laravel 应用程序。这对于诸如『键入』通知之类的事情特别有用，在这些通知中，你希望提醒应用程序的用户，而另一个用户正在在给定屏幕上键入一条消息。
+
+要广播客户端事件，你可以使用 Echo 的 `whisper` 方法：
+
+```js
+Echo.private('chat')
+    .whisper('typing', {
+        name: this.user.name
+    });
+```
+
+要侦听客户端事件，你可以使用 `listenForWhisper` 方法：
+
+```js
+Echo.private('chat')
+    .listenForWhisper('typing', (e) => {
+        console.log(e.name);
+    });
+```
+
 ## 通知
+
+通过将事件广播与 [通知](https://laravel.com/docs/5.8/notifications) 配对，你的 JavaScript 应用程序可以在新通知发生时接收它们，而不需要刷新页面。首先，确保阅读关于使用 [广播通知通道](https://laravel.com/docs/5.8/notifications#broadcast-notifications) 的文档。
+
+一旦你配置好使用广播通道的通知后，可以使用 Echo 的 `notification` 方法侦听广播事件。记住，通道名称应该匹配接收通知的实体的类名：
+
+```js
+Echo.private(`App.User.${userId}`)
+    .notification((notification) => {
+        console.log(notification.type);
+    });
+```
+
+在本例中，通过 `broadcast` 通道发送给 `App\User` 实例的所有通知都将由回调函数接收。用于 `App.User.{id}` 的一个通道授权回调包含在与 Laravel 框架一起发布的默认 `BroadcastServiceProvider` 中。
