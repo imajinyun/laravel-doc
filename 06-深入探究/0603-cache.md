@@ -210,6 +210,110 @@ Cache::forever('key', 'value');
 
 ### 从缓存中移除条目
 
+你可以使用 `forget` 方法从缓存中移除条目：
+
+```php
+Cache::forget('key');
+```
+
+你也可以通过提供一个零或负 TTL 移除条目：
+
+```php
+Cache::put('key', 'value', 0);
+
+Cache::put('key', 'value', -5);
+```
+
+你可以使用 `flush` 方法清除整个缓存：
+
+```php
+Cache::flush();
+```
+
+{% hint style="danger" %}
+
+刷新缓存不会考虑缓存前缀，并将从缓存中删除所有条目。当清除其他应用程序共享的缓存时要仔细考虑。
+
+{% endhint %}
+
+### 原子锁
+
+{% hint style="danger" %}
+
+要使用此特性，应用程序必须使用 `memcached`，`dynamodb` 或 `redis` 缓存驱动程序作为你的应用程序的默认缓存驱动程序。此外，所有服务器必须与相同的中央缓存服务器通信。
+
+{% endhint %}
+
+原子锁允许操作分布式锁，而无需担心竞争条件。例如，[Laravel Forge](https://forge.laravel.com/) 使用原子锁来确保一次只在服务器上执行一个远程任务。你可以使用 `Cache::lock` 方法创建和管理锁：
+
+```php
+use Illuminate\Support\Facades\Cache;
+
+$lock = Cache::lock('foo', 10);
+
+if ($lock->get()) {
+    // Lock acquired for 10 seconds...
+
+    $lock->release();
+}
+```
+
+`get` 方法也接受一个闭包。在执行闭包之后，Laravel 将自动释放锁：
+
+```php
+Cache::lock('foo')->get(function () {
+    // 锁定获得无限期和自动释放...
+});
+```
+
+如果锁在你请求时不可用，你可以指示 Laravel 等待指定的秒数。如果不能在指定的时间限制内获得锁，将抛出一个 `Illuminate\Contracts\Cache\LockTimeoutException` 异常：
+
+```php
+use Illuminate\Contracts\Cache\LockTimeoutException;
+
+$lock = Cache::lock('foo', 10);
+
+try {
+    $lock->block(5);
+
+    // 等待最多 5 秒后获得锁...
+} catch (LockTimeoutException $e) {
+    // 不能获得锁...
+} finally {
+    optional($lock)->release();
+}
+
+Cache::lock('foo', 10)->block(5, function () {
+    // 等待最多 5 秒后获得锁...
+});
+```
+
+#### 跨进程管理锁
+
+有时，你可能希望在一个进程中获得一个锁，然后在另一个进程中释放它。例如，你可能在 Web 请求期间获取锁，并希望在由该请求触发的队列作业的末尾释放锁。在此场景中，你应该将锁的作用域『所有者令牌』传递给排队作业，以便作业可以使用给定的令牌重新实例化锁：
+
+```php
+// 在控制器内...
+$podcast = Podcast::find($id);
+
+$lock = Cache::lock('foo', 120);
+
+if ($result = $lock->get()) {
+    ProcessPodcast::dispatch($podcast, $lock->owner());
+}
+
+// 在 ProcessPodcast 作业内...
+Cache::restoreLock('foo', $this->owner)->release();
+```
+
+如果你想在不尊重其当前所有者的情况下释放锁定，可以使用 `forceRelease` 方法：
+
+```php
+Cache::lock('foo')->forceRelease();
+```
+
+### 缓存助手
+
 ## 缓存标签
 
 ## 添加自定义缓存驱动
