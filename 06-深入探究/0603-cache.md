@@ -314,8 +314,186 @@ Cache::lock('foo')->forceRelease();
 
 ### 缓存助手
 
+除了使用 `Cache` 外观或 [缓存契约](https://laravel.com/docs/5.8/contracts) 外，你还可以使用全局 `cache` 函数来通过缓存检索和存储数据。当使用一个字符串参数调用 `cache` 函数时，它将返回给定键的值：
+
+```php
+$value = cache('key');
+```
+
+如果提供键 / 值对的数组和到期时间到函数，它将在缓存中存储指定持续时间的值：
+
+```php
+cache(['key' => 'value'], $seconds);
+
+cache(['key' => 'value'], now()->addMinutes(10));
+```
+
+当在没有任何参数的情况下调用 `cache` 函数时，它将返回一个 `Illuminate\Contracts\Cache\Factory` 实例的实现，从而允许你调用其他缓存方法：
+
+```php
+cache()->remember('users', $seconds, function () {
+    return DB::table('users')->get();
+});
+```
+
+{% hint style="info" %}
+
+当测试对全局 `cache` 函数的调用时，你可以使用 `Cache::shouldReceive` 方法，就像你 [测试一个外观](https://laravel.com/docs/5.8/mocking#mocking-facades) 一样。
+
+{% endhint %}
+
 ## 缓存标签
+
+{% hint style="danger" %}
+
+使用 `file` 或 `database` 缓存驱动程序时不支持缓存标记。此外，当使用带有『永久』存储的缓存的多个标记时，使用 `memcached` 这样的驱动程序性能最好，因为它会自动清除陈旧的记录。
+
+{% endhint %}
+
+### 存储标记缓存条目
+
+缓存标记允许你标记缓存中的相关条目，然后刷新已分配给给定标记的所有缓存值。你可以通过传入标记名称的有序数组来访问标记缓存。例如，让我们访问带标记的缓存并将值 `put` 到缓存中：
+
+```php
+Cache::tags(['people', 'artists'])->put('John', $john, $seconds);
+
+Cache::tags(['people', 'authors'])->put('Anne', $anne, $seconds);
+```
+
+### 访问标记的缓存条目
+
+要检索带标记的缓存条目，传递相同的有序标记列表到 `tags` 方法，然后使用你希望检索的键调用 `get` 方法：
+
+```php
+$john = Cache::tags(['people', 'artists'])->get('John');
+
+$anne = Cache::tags(['people', 'authors'])->get('Anne');
+```
+
+### 移除标记的缓存条目
+
+您可以刷新分配给标记或标记列表的所有条目。例如，该语句将删除所有标记为 `people`，`authors` 或两者都有的缓存。因此，`Anne` 和 `John` 都将从缓存中删除：
+
+```php
+Cache::tags(['people', 'authors'])->flush();
+```
+
+相反，这个语句只会删除带有 `authors` 标记的缓存，因此将删除 `Anne`，而不会删除 `John`：
+
+```php
+Cache::tags('authors')->flush();
+```
 
 ## 添加自定义缓存驱动
 
+### 编写驱动
+
+要创建自定义缓存驱动程序，首先需要实现 `Illuminate\Contracts\Cache\Store` [契约](https://laravel.com/docs/5.8/contracts)。因此，一个 MongoDB 缓存实现看起来像这样：
+
+```php
+<?php
+
+namespace App\Extensions;
+
+use Illuminate\Contracts\Cache\Store;
+
+class MongoStore implements Store
+{
+    public function get($key) {}
+    public function many(array $keys);
+    public function put($key, $value, $seconds) {}
+    public function putMany(array $values, $seconds);
+    public function increment($key, $value = 1) {}
+    public function decrement($key, $value = 1) {}
+    public function forever($key, $value) {}
+    public function forget($key) {}
+    public function flush() {}
+    public function getPrefix() {}
+}
+```
+
+我们只需要使用 MongoDB 连接来实现这些中的每个方法。要了解如何实现这些中的每个方法的示例，请查看框架源代码中的 `Illuminate\Cache\MemcachedStore`。一旦实现完成，我们就可以完成自定义驱动程序注册。
+
+```php
+Cache::extend('mongo', function ($app) {
+    return Cache::repository(new MongoStore);
+});
+```
+
+{% hint style="info" %}
+
+如果你想知道自定义缓存驱动程序代码放在哪里，可以在你的 `app` 目录中创建一个 `Extensions` 命名空间。但是，记住 Laravel 没有严格的应用程序结构，你可以根据自己的偏好自由组织应用程序。
+
+{% endhint %}
+
+### 注册驱动
+
+要使用 Laravel 注册自定义缓存驱动程序，我们将在 `Cache` 外观上使用 `extend` 方法。对 `Cache::extend` 的调用可以在随新的 Laravel 应用程序一起提供的默认 `App\Providers\AppServiceProvider` 类的 `boot` 方法中完成，或者你可以创建自己的服务提供者来容纳扩展——只是不要忘记在 `config/app.php` 提供者数组中注册自定义的提供者程序：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use App\Extensions\MongoStore;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\ServiceProvider;
+
+class CacheServiceProvider extends ServiceProvider
+{
+    /**
+     * 在容器中注册绑定。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Cache::extend('mongo', function ($app) {
+            return Cache::repository(new MongoStore);
+        });
+    }
+}
+```
+
+传递给 `extend` 方法的第一个参数是驱动程序的名称。这将与 `config/cache.php` 配置文件中的你的 `driver` 选项相对应。第二个参数是一个Closure，它应该返回一个 `Illuminate\Cache\Repository` 实例。 Closure 将传递一个 `$app` 实例，它是 [服务容器](https://laravel.com/docs/5.8/container) 的一个实例。
+
+一旦你的扩展被注册，将你的 `config/cache.php` 配置文件的 `driver` 选项更新为你的扩展名称。
+
 ## 事件
+
+要在每个缓存操作上执行代码，可以侦听缓存触发的 [事件](https://laravel.com/docs/5.8/events)。通常，你应该将这些事件侦听器放置在 `EventServiceProvider` 类中：
+
+```php
+/**
+ * 应用程序的事件监听器映射。
+ *
+ * @var array
+ */
+protected $listen = [
+    'Illuminate\Cache\Events\CacheHit' => [
+        'App\Listeners\LogCacheHit',
+    ],
+
+    'Illuminate\Cache\Events\CacheMissed' => [
+        'App\Listeners\LogCacheMissed',
+    ],
+
+    'Illuminate\Cache\Events\KeyForgotten' => [
+        'App\Listeners\LogKeyForgotten',
+    ],
+
+    'Illuminate\Cache\Events\KeyWritten' => [
+        'App\Listeners\LogKeyWritten',
+    ],
+];
+```
