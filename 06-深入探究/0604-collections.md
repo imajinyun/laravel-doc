@@ -55,10 +55,11 @@ $upper = $collection->toUpper();
 
 对于本文档的其余部分，我们将讨论 `Collection` 类上可用的每个方法。记住，所有这些方法都可以链接起来流畅地操作底层数组。此外，几乎每个方法都返回一个新的 `Collection` 实例，允许你在必要时保留集合的原始副本：
 
-|                                                                    |                                                                          |                                                                  |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------ | ---------------------------------------------------------------- |
-| [all](https://laravel.com/docs/5.8/collections#method-all)         | [isNotEmpty](https://laravel.com/docs/5.8/collections#method-isnotempty) | [sort](https://laravel.com/docs/5.8/collections#method-sort)     |
-| [average](https://laravel.com/docs/5.8/collections#method-average) | [join](https://laravel.com/docs/5.8/collections#method-join)             | [sortBy](https://laravel.com/docs/5.8/collections#method-sortby) |
+|                                                                    |                                                                          |                                                                     |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| [all](https://laravel.com/docs/5.8/collections#method-all)         | [isNotEmpty](https://laravel.com/docs/5.8/collections#method-isnotempty) | [sort](https://laravel.com/docs/5.8/collections#method-sort)        |
+| [average](https://laravel.com/docs/5.8/collections#method-average) | [join](https://laravel.com/docs/5.8/collections#method-join)             | [sortBy](https://laravel.com/docs/5.8/collections#method-sortby)    |
+| [avg](https://laravel.com/docs/5.8/collections#method-avg)         | [keyBy](https://laravel.com/docs/5.8/collections#method-keyby)           | [sortByDesc](https://laravel.com/docs/5.8/collections#method-keyby) |
 
 ### `all()`
 
@@ -88,6 +89,83 @@ $average = collect([1, 1, 2, 4])->avg();
 // 2
 ```
 
+### `has`
+
+`has` 方法确定集合中是否存在给定的键：
+
+```php
+$collection = collect(['account_id' => 1, 'product' => 'Desk', 'amount' => 5]);
+
+$collection->has('product');
+
+// true
+
+$collection->has(['product', 'amount']);
+
+// true
+
+$collection->has(['amount', 'price']);
+
+// false
+```
+
+### `implode()`
+
+`implode` 方法连接集合中的条目。它的参数取决于集合中条目的类型。如果集合包含数组或对象，则应传递你希望连接的属性的键和希望放置在值之间的『粘合』字符串：
+
+```php
+$collection = collect([
+    ['account_id' => 1, 'product' => 'Desk'],
+    ['account_id' => 2, 'product' => 'Chair'],
+]);
+
+$collection->implode('product', ', ');
+
+// Desk, Chair
+```
+
+### `intersect()`
+
+`intersect` 方法从原始集合中删除在给定 `array` 或集合中不存在的任何值。结果集合将保留原始集合的键：
+
+```php
+$collection = collect(['Desk', 'Sofa', 'Chair']);
+
+$intersect = $collection->intersect(['Desk', 'Chair', 'Bookcase']);
+
+$intersect->all();
+
+// [0 => 'Desk', 2 => 'Chair']
+```
+
+### `intersectByKeys()`
+
+`intersectByKeys` 方法从原始集合中删除在给定 `array` 或集合中不存在的任何键：
+
+```php
+$collection = collect([
+    'serial' => 'UX301', 'type' => 'screen', 'year' => 2009
+]);
+
+$intersect = $collection->intersectByKeys([
+    'reference' => 'UX404', 'type' => 'tab', 'year' => 2011
+]);
+
+$intersect->all();
+
+// ['type' => 'screen', 'year' => 2009]
+```
+
+### `isEmpty()`
+
+如果集合为空 `isEmpty` 方法返回 `true`；否则，返回 `false`:
+
+```php
+collect([])->isEmpty();
+
+// true
+```
+
 ### `isNotEmpty()`
 
 如果集合不为空 `isNotEmpty` 方法返回 `true`；否则，返回 `false`：
@@ -97,6 +175,20 @@ collect([])->isNotEmpty();
 
 // false
 ```
+
+### `join()`
+
+`join` 方法用一个字符串连接集合的值：
+
+```php
+collect(['a', 'b', 'c'])->join(', '); // 'a, b, c'
+collect(['a', 'b', 'c'])->join(', ', ', and '); // 'a, b, and c'
+collect(['a', 'b'])->join(', ', ' and '); // 'a and b'
+collect(['a'])->join(', ', ' and '); // 'a'
+collect([])->join(', ', ' and '); // ''
+```
+
+### `keyBy()`
 
 ### `sort()`
 
