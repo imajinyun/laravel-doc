@@ -88,4 +88,36 @@ $average = collect([1, 1, 2, 4])->avg();
 // 2
 ```
 
+### `isNotEmpty()`
+
+如果集合不为空 `isNotEmpty` 方法返回 `true`；否则，返回 `false`：
+
+```php
+collect([])->isNotEmpty();
+
+// false
+```
+
+### `sort()`
+
+`sort` 方法对集合进行排序。排序后的集合保留原始数组键，因此在本例中，我们将使用 `values` 方法将键重置为连续编号的索引：
+
+```php
+$collection = collect([5, 3, 1, 2, 4]);
+
+$sorted = $collection->sort();
+
+$sorted->values()->all();
+
+// [1, 2, 3, 4, 5]
+```
+
+如果你的排序需求更高级，你可以传递一个回调函数来使用你自己的算法进行 `sort`。参考关于 `uasort` 的 PHP 文档，它是集合的 `sort` 方法在底层调用的。
+
+{% hint style="info" %}
+
+如果需要对嵌套数组或对象集合排序，请参阅 `sortBy` 和 `sortByDesc` 方法。
+
+{% endhint %}
+
 ## 高阶消息
