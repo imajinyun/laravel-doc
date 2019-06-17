@@ -55,11 +55,25 @@ $upper = $collection->toUpper();
 
 对于本文档的其余部分，我们将讨论 `Collection` 类上可用的每个方法。记住，所有这些方法都可以链接起来流畅地操作底层数组。此外，几乎每个方法都返回一个新的 `Collection` 实例，允许你在必要时保留集合的原始副本：
 
-|                                                                    |                                                                          |                                                                     |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| [all](https://laravel.com/docs/5.8/collections#method-all)         | [isNotEmpty](https://laravel.com/docs/5.8/collections#method-isnotempty) | [sort](https://laravel.com/docs/5.8/collections#method-sort)        |
-| [average](https://laravel.com/docs/5.8/collections#method-average) | [join](https://laravel.com/docs/5.8/collections#method-join)             | [sortBy](https://laravel.com/docs/5.8/collections#method-sortby)    |
-| [avg](https://laravel.com/docs/5.8/collections#method-avg)         | [keyBy](https://laravel.com/docs/5.8/collections#method-keyby)           | [sortByDesc](https://laravel.com/docs/5.8/collections#method-keyby) |
+|                                                                                  |                                                                            |                                                                              |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [all](https://laravel.com/docs/5.8/collections#method-all)                       | [isNotEmpty](https://laravel.com/docs/5.8/collections#method-isnotempty)   | [sort](https://laravel.com/docs/5.8/collections#method-sort)                 |
+| [average](https://laravel.com/docs/5.8/collections#method-average)               | [join](https://laravel.com/docs/5.8/collections#method-join)               | [sortBy](https://laravel.com/docs/5.8/collections#method-sortby)             |
+| [avg](https://laravel.com/docs/5.8/collections#method-avg)                       | [keyBy](https://laravel.com/docs/5.8/collections#method-keyby)             | [sortByDesc](https://laravel.com/docs/5.8/collections#method-keyby)          |
+| [chunk](https://laravel.com/docs/5.8/collections#method-chunk)                   | [keys](https://laravel.com/docs/5.8/collections#method-keys)               | [sortKeys](https://laravel.com/docs/5.8/collections#method-sortkeys)         |
+| [collapse](https://laravel.com/docs/5.8/collections#method-collapse)             | [last](https://laravel.com/docs/5.8/collections#method-last)               | [sortKeysDesc](https://laravel.com/docs/5.8/collections#method-sortkeysdesc) |
+| [combine](https://laravel.com/docs/5.8/collections#method-combine)               | [macro](https://laravel.com/docs/5.8/collections#method-macro)             | [splice](https://laravel.com/docs/5.8/collections#method-splice)             |
+| [concat](https://laravel.com/docs/5.8/collections#method-concat)                 | [make](https://laravel.com/docs/5.8/collections#method-make)               | [split](https://laravel.com/docs/5.8/collections#method-split)               |
+| [contains](https://laravel.com/docs/5.8/collections#method-contains)             | [map](https://laravel.com/docs/5.8/collections#method-map)                 | [sum](https://laravel.com/docs/5.8/collections#method-sum)                   |
+| [containsStrict](https://laravel.com/docs/5.8/collections#method-containsstrict) | [mapInto](https://laravel.com/docs/5.8/collections#method-mapinto)         | [take](https://laravel.com/docs/5.8/collections#method-take)                 |
+| [count](https://laravel.com/docs/5.8/collections#method-count)                   | [mapSpread](https://laravel.com/docs/5.8/collections#method-mapspread)     | [tap](https://laravel.com/docs/5.8/collections#method-tap)                   |
+| [countBy](https://laravel.com/docs/5.8/collections#method-countBy)               | [mapToGroups](https://laravel.com/docs/5.8/collections#method-maptogroups) | [times](https://laravel.com/docs/5.8/collections#method-times)               |
+| [crossJoin](https://laravel.com/docs/5.8/collections#method-crossjoin)           | [mapWithKeys](https://laravel.com/docs/5.8/collections#method-mapwithkeys) | [toArray](https://laravel.com/docs/5.8/collections#method-toarray)           |
+| [dd](https://laravel.com/docs/5.8/collections#method-dd)                         | [max](https://laravel.com/docs/5.8/collections#method-max)                 | [toJson](https://laravel.com/docs/5.8/collections#method-tojson)             |
+| [diff](https://laravel.com/docs/5.8/collections#method-diff)                     | [median](https://laravel.com/docs/5.8/collections#method-median)           | [transform](https://laravel.com/docs/5.8/collections#method-transform)       |
+| [diffAssoc](https://laravel.com/docs/5.8/collections#method-diffassoc)           | [merge](https://laravel.com/docs/5.8/collections#method-merge)             | [union](https://laravel.com/docs/5.8/collections#method-union)               |
+| [diffKeys](https://laravel.com/docs/5.8/collections#method-diffkeys)             | [min](https://laravel.com/docs/5.8/collections#method-min)                 | [unique](https://laravel.com/docs/5.8/collections#method-unique)             |
+| [dump](https://laravel.com/docs/5.8/collections#method-dump)                     | [mode](https://laravel.com/docs/5.8/collections#method-mode)               | [uniqueStrict](https://laravel.com/docs/5.8/collections#method-uniquestrict) |
 
 ### `all()`
 
