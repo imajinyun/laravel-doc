@@ -103,6 +103,74 @@ $average = collect([1, 1, 2, 4])->avg();
 // 2
 ```
 
+### `chunk()`
+
+`chunk` 方法将集合分解为多个给定大小的更小的集合：
+
+```php
+$collection = collect([1, 2, 3, 4, 5, 6, 7]);
+
+$chunks = $collection->chunk(4);
+
+$chunks->toArray();
+
+// [[1, 2, 3, 4], [5, 6, 7]]
+```
+
+当在工作中使用诸如 [Bootstrap](https://getbootstrap.com/docs/4.1/layout/grid/) 之类的网格系统时，这种方法在 [视图](https://laravel.com/docs/5.8/views) 中特别有用。假设你有一个 [Eloquent](https://laravel.com/docs/5.8/eloquent) 模型的集合，你想在一个网格中显示：
+
+```php
+@foreach ($products->chunk(3) as $chunk)
+    <div class="row">
+        @foreach ($chunk as $product)
+            <div class="col-xs-4">{{ $product->name }}</div>
+        @endforeach
+    </div>
+@endforeach
+```
+
+### `collapse()`
+
+`collapse` 方法将数组集合折叠为单个平面集合：
+
+```php
+$collection = collect([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+
+$collapsed = $collection->collapse();
+
+$collapsed->all();
+
+// [1, 2, 3, 4, 5, 6, 7, 8, 9]
+```
+
+### `combine()`
+
+`combine` 方法将集合的值（作为键）与另一个数组或集合的值合并在一起：
+
+```php
+$collection = collect(['name', 'age']);
+
+$combined = $collection->combine(['George', 29]);
+
+$combined->all();
+
+// ['name' => 'George', 'age' => 29]
+```
+
+### `concat()`
+
+`concat` 方法将给定的 `array` 或集合值附加到集合的末尾：
+
+```php
+$collection = collect(['John Doe']);
+
+$concatenated = $collection->concat(['Jane Doe'])->concat(['name' => 'Johnny Doe']);
+
+$concatenated->all();
+
+// ['John Doe', 'Jane Doe', 'Johnny Doe']
+```
+
 ### `has`
 
 `has` 方法确定集合中是否存在给定的键：
