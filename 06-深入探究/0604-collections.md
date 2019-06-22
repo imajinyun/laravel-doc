@@ -171,6 +171,152 @@ $concatenated->all();
 // ['John Doe', 'Jane Doe', 'Johnny Doe']
 ```
 
+### `contains()`
+
+`contains` 方法确定集合是否包含一个给定的项：
+
+```php
+$collection = collect(['name' => 'Desk', 'price' => 100]);
+
+$collection->contains('Desk');
+
+// true
+
+$collection->contains('New York');
+
+// false
+```
+
+你还可以将键 / 值对传递给 `contains` 方法，该方法将确定集合中是否存在给定的对：
+
+```php
+$collection = collect([
+    ['product' => 'Desk', 'price' => 200],
+    ['product' => 'Chair', 'price' => 100],
+]);
+
+$collection->contains('product', 'Bookcase');
+
+// false
+```
+
+最后，你还可以将回调传递给 `contains` 方法来执行你自己的真正测试：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$collection->contains(function ($value, $key) {
+    return $value > 5;
+});
+
+// false
+```
+
+`contains` 方法在检查条目值时使用『松散』比较，这意味着具有整数值的字符串将被认为等于具有相同值的整数。使用 [containsStrict](https://laravel.com/docs/5.8/collections#method-containsstrict) 方法使用『严格』比较进行过滤。
+
+### `containsStrict()`
+
+该方法具有与 [contains](https://laravel.com/docs/5.8/collections#method-contains) 方法具有相同的签名；但是，所有值都使用『严格』比较进行比较。
+
+### `count()`
+
+`count` 方法返回集合中条目的总数量：
+
+```php
+$collection = collect([1, 2, 3, 4]);
+
+$collection->count();
+
+// 4
+```
+
+### `countBy()`
+
+`countBy` 方法计算集合中值的出现次数。默认情况下，该方法计算每个元素的出现次数：
+
+```php
+$collection = collect([1, 2, 2, 2, 3]);
+
+$counted = $collection->countBy();
+
+$counted->all();
+
+// [1 => 1, 2 => 3, 3 => 1]
+```
+
+但是，你将回调传递给 `countBy` 方法，通过一个自定义值计算所有条目：
+
+```php
+$collection = collect(['alice@gmail.com', 'bob@yahoo.com', 'carlos@gmail.com']);
+
+$counted = $collection->countBy(function ($email) {
+    return substr(strrchr($email, "@"), 1);
+});
+
+$counted->all();
+
+// ['gmail.com' => 2, 'yahoo.com' => 1]
+```
+
+### `crossJoin()`
+
+`crossJoin` 方法在给定的数组或集合之间交叉连接集合的值，返回一个具有所有可能排列的笛卡尔积：
+
+```php
+$collection = collect([1, 2]);
+
+$matrix = $collection->crossJoin(['a', 'b']);
+
+$matrix->all();
+
+/*
+    [
+        [1, 'a'],
+        [1, 'b'],
+        [2, 'a'],
+        [2, 'b'],
+    ]
+*/
+
+$collection = collect([1, 2]);
+
+$matrix = $collection->crossJoin(['a', 'b'], ['I', 'II']);
+
+$matrix->all();
+
+/*
+    [
+        [1, 'a', 'I'],
+        [1, 'a', 'II'],
+        [1, 'b', 'I'],
+        [1, 'b', 'II'],
+        [2, 'a', 'I'],
+        [2, 'a', 'II'],
+        [2, 'b', 'I'],
+        [2, 'b', 'II'],
+    ]
+*/
+```
+
+### `dd()`
+
+`dd` 方法转储集合的条目并结束脚本的执行：
+
+```php
+$collection = collect(['John Doe', 'Jane Doe']);
+
+$collection->dd();
+
+/*
+    Collection {
+        #items: array:2 [
+            0 => "John Doe"
+            1 => "Jane Doe"
+        ]
+    }
+*/
+```
+
 ### `has`
 
 `has` 方法确定集合中是否存在给定的键：
