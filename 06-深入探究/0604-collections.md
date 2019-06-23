@@ -1233,41 +1233,383 @@ $collection->nth(4, 1);
 
 ### `only()`
 
+`only` 方法返回集合中指定键的条目：
+
+```php
+$collection = collect(['product_id' => 1, 'name' => 'Desk', 'price' => 100, 'discount' => false]);
+
+$filtered = $collection->only(['product_id', 'name']);
+
+$filtered->all();
+
+// ['product_id' => 1, 'name' => 'Desk']
+```
+
+`only` 方法的逆方法，查看 [except](https://laravel.com/docs/5.8/collections#method-except) 方法。
+
 ### `pad()`
+
+`pad` 方法将用给定的值填充数组，直到数组达到指定的大小。该方法的行为类似于 `array_pad` PHP 函数。
+
+若要向左填充，应指定负大小。如果给定大小的绝对值小于或等于数组的长度，则不需要填充：
+
+```php
+$collection = collect(['A', 'B', 'C']);
+
+$filtered = $collection->pad(5, 0);
+
+$filtered->all();
+
+// ['A', 'B', 'C', 0, 0]
+
+$filtered = $collection->pad(-5, 0);
+
+$filtered->all();
+
+// [0, 0, 'A', 'B', 'C']
+```
 
 ### `partition()`
 
+`partition` 方法可以与 `list` PHP 函数结合使用，以将通过给定真值测试的元素与不通过真值测试的元素分离开来：
+
+```php
+$collection = collect([1, 2, 3, 4, 5, 6]);
+
+list($underThree, $equalOrAboveThree) = $collection->partition(function ($i) {
+    return $i < 3;
+});
+
+$underThree->all();
+
+// [1, 2]
+
+$equalOrAboveThree->all();
+
+// [3, 4, 5, 6]
+```
+
 ### `pipe()`
+
+`pipe` 方法将集合传递给给定的回调函数并返回结果：
+
+```php
+$collection = collect([1, 2, 3]);
+
+$piped = $collection->pipe(function ($collection) {
+    return $collection->sum();
+});
+
+// 6
+```
 
 ### `pluck()`
 
+`pluck` 方法检索给定键的所有值：
+
+```php
+$collection = collect([
+    ['product_id' => 'prod-100', 'name' => 'Desk'],
+    ['product_id' => 'prod-200', 'name' => 'Chair'],
+]);
+
+$plucked = $collection->pluck('name');
+
+$plucked->all();
+
+// ['Desk', 'Chair']
+```
+
+你还可以指定希望如何键入结果集合：
+
+```php
+$plucked = $collection->pluck('name', 'product_id');
+
+$plucked->all();
+
+// ['prod-100' => 'Desk', 'prod-200' => 'Chair']
+```
+
+如果存在重复键，则最后匹配的元素将插入到弹出的集合中：
+
+```php
+$collection = collect([
+    ['brand' => 'Tesla',  'color' => 'red'],
+    ['brand' => 'Pagani', 'color' => 'white'],
+    ['brand' => 'Tesla',  'color' => 'black'],
+    ['brand' => 'Pagani', 'color' => 'orange'],
+]);
+
+$plucked = $collection->pluck('color', 'brand');
+
+$plucked->all();
+
+// ['Tesla' => 'black', 'Pagani' => 'orange']
+```
+
 ### `pop()`
+
+`pop` 方法从集合中删除并返回最后一项：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$collection->pop();
+
+// 5
+
+$collection->all();
+
+// [1, 2, 3, 4]
+```
 
 ### `prepend()`
 
+`prepend` 方法将一个条目添加到集合的开头：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$collection->prepend(0);
+
+$collection->all();
+
+// [0, 1, 2, 3, 4, 5]
+```
+
+你还可以传递第二个参数来设置添加条目的前缀：
+
+```php
+$collection = collect(['one' => 1, 'two' => 2]);
+
+$collection->prepend(0, 'zero');
+
+$collection->all();
+
+// ['zero' => 0, 'one' => 1, 'two' => 2]
+```
+
 ### `pull()`
+
+`pull` 方法根据条目的键从集合中删除并返回一个条目：
+
+```php
+$collection = collect(['product_id' => 'prod-100', 'name' => 'Desk']);
+
+$collection->pull('name');
+
+// 'Desk'
+
+$collection->all();
+
+// ['product_id' => 'prod-100']
+```
 
 ### `push`
 
+`push` 方法将一个条目追加到集合的末尾：
+
+```php
+$collection = collect([1, 2, 3, 4]);
+
+$collection->push(5);
+
+$collection->all();
+
+// [1, 2, 3, 4, 5]
+```
+
 ### `put()`
+
+`put` 方法设置集合中给定的键和值：
+
+```php
+$collection = collect(['product_id' => 1, 'name' => 'Desk']);
+
+$collection->put('price', 100);
+
+$collection->all();
+
+// ['product_id' => 1, 'name' => 'Desk', 'price' => 100]
+```
 
 ### `random()`
 
+`random` 方法从集合中返回一个随机条目：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$collection->random();
+
+// 4 - (retrieved randomly)
+```
+
+你可以选择将整数传递给 `random`，以指定你希望随机检索多少条目。当显式传递你希望接收的条目数时，始终返回条目集合：
+
+```php
+$random = $collection->random(3);
+
+$random->all();
+
+// [2, 4, 5] - (retrieved randomly)
+```
+
+如果集合的条目比请求的条目少，该方法将抛出 `InvalidArgumentException`。
+
 ### `reduce()`
+
+`reduce` 方法将集合缩减为单个值，将每个迭代的结果传递给后续迭代：
+
+```php
+$collection = collect([1, 2, 3]);
+
+$total = $collection->reduce(function ($carry, $item) {
+    return $carry + $item;
+});
+
+// 6
+```
+
+`$carry` 第一次迭代的值为 `null`；但是，你可以通过传递第二个参数到 `reduce` 来指定它的初始值：
+
+```php
+$collection->reduce(function ($carry, $item) {
+    return $carry + $item;
+}, 4);
+
+// 10
+```
 
 ### `reject()`
 
+`reject` 方法使用给定的回调过滤集合。如果要从结果集合中删除条目，回调函数应该返回 `true`：
+
+```php
+$collection = collect([1, 2, 3, 4]);
+
+$filtered = $collection->reject(function ($value, $key) {
+    return $value > 2;
+});
+
+$filtered->all();
+
+// [1, 2]
+```
+
+`reject` 方法的逆方法，查看 [filter](https://laravel.com/docs/5.8/collections#method-filter) 方法。
+
 ### `reverse()`
+
+`reverse` 方法反转集合条目的顺序，保留原始条目
+
+```php
+$collection = collect(['a', 'b', 'c', 'd', 'e']);
+
+$reversed = $collection->reverse();
+
+$reversed->all();
+
+/*
+    [
+        4 => 'e',
+        3 => 'd',
+        2 => 'c',
+        1 => 'b',
+        0 => 'a',
+    ]
+*/
+```
 
 ### `search()`
 
+`search` 方法搜索集合中给定的值，如果找到，则返回其键。如果没有找到该项，则返回 `false`：
+
+```php
+$collection = collect([2, 4, 6, 8]);
+
+$collection->search(4);
+
+// 1
+```
+
+搜索是使用『松散』比较完成的，这意味着具有整数值的字符串将被认为等于具有相同值的整数。要使用『严格』比较，请将传递 `true` 作为方法的第二个参数：
+
+```php
+$collection->search('4', true);
+
+// false
+```
+
+或者，你可以传递你自己的回调函数来搜索第一个通过你的真值测试的条目：
+
+```php
+$collection->search(function ($item, $key) {
+    return $item > 5;
+});
+
+// 2
+```
+
 ### `shift()`
+
+`shift` 方法从集合中删除并返回第一个条目：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$collection->shift();
+
+// 1
+
+$collection->all();
+
+// [2, 3, 4, 5]
+```
 
 ### `shuffle()`
 
+`shuffl` 方法随机打乱集合中的条目：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$shuffled = $collection->shuffle();
+
+$shuffled->all();
+
+// [3, 2, 5, 1, 4] - (generated randomly)
+```
+
 ### `slice()`
 
+`slice` 方法返回从给定索引开始的集合的一个切片：
+
+```php
+$collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+$slice = $collection->slice(4);
+
+$slice->all();
+
+// [5, 6, 7, 8, 9, 10]
+```
+
+如果你希望限制返回切片的大小，将所需的大小作为第二个参数传递给方法：
+
+```php
+$slice = $collection->slice(4, 2);
+
+$slice->all();
+
+// [5, 6]
+```
+
+默认情况下，返回的切片将保留键。如果不希望保留原始键，你可以使用 [values](https://laravel.com/docs/5.8/collections#method-values) 方法重新索引它们。
+
 ### `some()`
+
+[contains](https://laravel.com/docs/5.8/collections#method-contains) 方法的别名。
 
 ### `sort()`
 
@@ -1293,21 +1635,227 @@ $sorted->values()->all();
 
 ### `sortBy()`
 
+`sortBy` 方法根据给定的键对集合进行排序。排序后的集合保留原始数组键，因此在本例中，我们将使用 [values](https://laravel.com/docs/5.8/collections#method-values) 方法将键重置为连续编号的索引：
+
+```php
+$collection = collect([
+    ['name' => 'Desk', 'price' => 200],
+    ['name' => 'Chair', 'price' => 100],
+    ['name' => 'Bookcase', 'price' => 150],
+]);
+
+$sorted = $collection->sortBy('price');
+
+$sorted->values()->all();
+
+/*
+    [
+        ['name' => 'Chair', 'price' => 100],
+        ['name' => 'Bookcase', 'price' => 150],
+        ['name' => 'Desk', 'price' => 200],
+    ]
+*/
+```
+
+你还可以传递自己的回调函数来确定如何对集合值排序：
+
+```php
+$collection = collect([
+    ['name' => 'Desk', 'colors' => ['Black', 'Mahogany']],
+    ['name' => 'Chair', 'colors' => ['Black']],
+    ['name' => 'Bookcase', 'colors' => ['Red', 'Beige', 'Brown']],
+]);
+
+$sorted = $collection->sortBy(function ($product, $key) {
+    return count($product['colors']);
+});
+
+$sorted->values()->all();
+
+/*
+    [
+        ['name' => 'Chair', 'colors' => ['Black']],
+        ['name' => 'Desk', 'colors' => ['Black', 'Mahogany']],
+        ['name' => 'Bookcase', 'colors' => ['Red', 'Beige', 'Brown']],
+    ]
+*/
+```
+
 ### `sortByDesc()`
+
+此方法具有与 [sortBy](https://laravel.com/docs/5.8/collections#method-sortby) 方法相同的签名，但将按相反的顺序对集合进行排序。
 
 ### `sortKeys()`
 
+`sortKeys` 方法通过基础关联数组的键对集合进行排序：
+
+```php
+$collection = collect([
+    'id' => 22345,
+    'first' => 'John',
+    'last' => 'Doe',
+]);
+
+$sorted = $collection->sortKeys();
+
+$sorted->all();
+
+/*
+    [
+        'first' => 'John',
+        'id' => 22345,
+        'last' => 'Doe',
+    ]
+*/
+```
+
 ### `sortKeysDesc()`
+
+此方法具有与 [sortKeys](https://laravel.com/docs/5.8/collections#method-sortkeys) 方法相同的签名，但将按相反的顺序对集合进行排序。
 
 ### `splice()`
 
+`splice` 方法删除并返回从指定索引处开始的条目切片：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$chunk = $collection->splice(2);
+
+$chunk->all();
+
+// [3, 4, 5]
+
+$collection->all();
+
+// [1, 2]
+```
+
+你可以传递第二个参数来限制结果块的大小：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$chunk = $collection->splice(2, 1);
+
+$chunk->all();
+
+// [3]
+
+$collection->all();
+
+// [1, 2, 4, 5]
+```
+
+此外，你可以传递包含新条目的第三个参数来替换从集合中删除的条目：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$chunk = $collection->splice(2, 1, [10, 11]);
+
+$chunk->all();
+
+// [3]
+
+$collection->all();
+
+// [1, 2, 10, 11, 4, 5]
+```
+
 ### `split()`
+
+`split` 方法将一个集合分解为给定数量的组：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$groups = $collection->split(3);
+
+$groups->toArray();
+
+// [[1, 2], [3, 4], [5]]
+```
 
 ### `sum()`
 
+`sum` 方法返回集合中所有条目的和：
+
+```php
+collect([1, 2, 3, 4, 5])->sum();
+
+// 15
+```
+
+如果集合包含嵌套数组或对象，你应当传递一个键用于确定要求和的值：
+
+```php
+$collection = collect([
+    ['name' => 'JavaScript: The Good Parts', 'pages' => 176],
+    ['name' => 'JavaScript: The Definitive Guide', 'pages' => 1096],
+]);
+
+$collection->sum('pages');
+
+// 1272
+```
+
+此外，你可以传递自己的回调函数来确定要对集合的哪些值求和：
+
+```php
+$collection = collect([
+    ['name' => 'Chair', 'colors' => ['Black']],
+    ['name' => 'Desk', 'colors' => ['Black', 'Mahogany']],
+    ['name' => 'Bookcase', 'colors' => ['Red', 'Beige', 'Brown']],
+]);
+
+$collection->sum(function ($product) {
+    return count($product['colors']);
+});
+
+// 6
+```
+
 ### `take()`
 
+`take` 方法返回一个指定数量条目的新集合：
+
+```php
+$collection = collect([0, 1, 2, 3, 4, 5]);
+
+$chunk = $collection->take(3);
+
+$chunk->all();
+
+// [0, 1, 2]
+```
+
+你还可以传递一个负整数来从集合的末尾获取指定数量的条目：
+
+```php
+$collection = collect([0, 1, 2, 3, 4, 5]);
+
+$chunk = $collection->take(-2);
+
+$chunk->all();
+
+// [4, 5]
+```
+
 ### `tap()`
+
+`tap` 方法将集合传递给给定的回调函数，允许你在一个特定的点去『tap』集合，并在不影响集合本身的情况下对条目做一些操作：
+
+```php
+collect([2, 4, 3, 1, 5])
+    ->sort()
+    ->tap(function ($collection) {
+        Log::debug('Values after sorting', $collection->values()->toArray());
+    })
+    ->shift();
+
+// 1
+```
 
 ### `times()`
 
