@@ -522,6 +522,292 @@ $collection->filter()->all();
 
 有关 `filter` 的逆函数，查看 [reject](https://laravel.com/docs/5.8/collections#method-reject) 函数。
 
+### `first()`
+
+`first` 方法返回集合中传递的一个给定真值测试的第一个元素：
+
+```php
+collect([1, 2, 3, 4])->first(function ($value, $key) {
+    return $value > 2;
+});
+
+// 3
+```
+
+你还可以调用 `first` 方法而没有参数来获取集合中的第一个元素。如果集合为空，则返回 `null`：
+
+```php
+collect([1, 2, 3, 4])->first();
+
+// 1
+```
+
+### `firstWhere()`
+
+`firstWhere` 方法返回具有给定键 / 值对的集合中的第一个元素：
+
+```php
+$collection = collect([
+    ['name' => 'Regena', 'age' => null],
+    ['name' => 'Linda', 'age' => 14],
+    ['name' => 'Diego', 'age' => 23],
+    ['name' => 'Linda', 'age' => 84],
+]);
+
+$collection->firstWhere('name', 'Linda');
+
+// ['name' => 'Linda', 'age' => 14]
+```
+
+你也可以用一个操作符来调用 `firstWhere` 方法：
+
+```php
+$collection->firstWhere('age', '>=', 18);
+
+// ['name' => 'Diego', 'age' => 23]
+```
+
+与 [where](https://laravel.com/docs/5.8/collections#method-where) 方法类似，你可以将一个参数传递给 `firstWhere` 方法。在这个场景中，`firstWhere` 方法将返回给定项键的值为『精确的』第一个条目：
+
+```php
+$collection->firstWhere('age');
+
+// ['name' => 'Linda', 'age' => 14]
+```
+
+### `flatMap()`
+
+`flatMap` 方法遍历集合并将每个值传递给给定的回调函数。回调函数可以自由地修改条目并返回它，从而形成一个修改条目的新集合。然后，将数组平铺成一层：
+
+```php
+$collection = collect([
+    ['name' => 'Sally'],
+    ['school' => 'Arkansas'],
+    ['age' => 28]
+]);
+
+$flattened = $collection->flatMap(function ($values) {
+    return array_map('strtoupper', $values);
+});
+
+$flattened->all();
+
+// ['name' => 'SALLY', 'school' => 'ARKANSAS', 'age' => '28'];
+```
+
+### `flatten()`
+
+`flatten` 方法将多维集合压扁为一维集合：
+
+```php
+$collection = collect(['name' => 'taylor', 'languages' => ['php', 'javascript']]);
+
+$flattened = $collection->flatten();
+
+$flattened->all();
+
+// ['taylor', 'php', 'javascript'];
+```
+
+你可以选择向方法传递一个『深度』参数：
+
+```php
+$collection = collect([
+    'Apple' => [
+        ['name' => 'iPhone 6S', 'brand' => 'Apple'],
+    ],
+    'Samsung' => [
+        ['name' => 'Galaxy S7', 'brand' => 'Samsung']
+    ],
+]);
+
+$products = $collection->flatten(1);
+
+$products->values()->all();
+
+/*
+    [
+        ['name' => 'iPhone 6S', 'brand' => 'Apple'],
+        ['name' => 'Galaxy S7', 'brand' => 'Samsung'],
+    ]
+*/
+```
+
+在这个例子中，调用 `flatten` 而不提供深度也会使嵌套数组变平，结果为 `['iPhone 6S'、'Apple'、'Galaxy S7'、'Samsung']`。提供一个深度允许你限制将被压扁的嵌套数组的层级。
+
+### `flip()`
+
+`flip` 方法将集合的键与其对应的值交换：
+
+```php
+$collection = collect(['name' => 'taylor', 'framework' => 'laravel']);
+
+$flipped = $collection->flip();
+
+$flipped->all();
+
+// ['taylor' => 'name', 'laravel' => 'framework']
+```
+
+### `forget()`
+
+`forget` 方法根据条目的键从集合中删除条目：
+
+```php
+$collection = collect(['name' => 'taylor', 'framework' => 'laravel']);
+
+$collection->forget('name');
+
+$collection->all();
+
+// ['framework' => 'laravel']
+```
+
+{% hint style="danger" %}
+
+与大多数其他集合方法不同，`forget` 不返回一个新的修改后的集合；它修改被调用的集合。
+
+{% endhint %}
+
+### `forPage()`
+
+`forPage` 方法返回一个新集合，其中包含将出现在给定页码上的条目。该方法接受页码作为它的第一个参数，每个页面显示的条目数作为它的第二个参数：
+
+```php
+$collection = collect([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+$chunk = $collection->forPage(2, 3);
+
+$chunk->all();
+
+// [4, 5, 6]
+```
+
+### `get()`
+
+`get` 方法返回给定键上的条目。如果键不存在，则返回 `null`：
+
+```php
+$collection = collect(['name' => 'taylor', 'framework' => 'laravel']);
+
+$value = $collection->get('name');
+
+// taylor
+```
+
+你可以选择传递一个默认值作为其第二个参数：
+
+```php
+$collection = collect(['name' => 'taylor', 'framework' => 'laravel']);
+
+$value = $collection->get('foo', 'default-value');
+
+// default-value
+```
+
+你甚至可以将回调作为默认值传递。如果指定的键不存在，将返回回调的结果：
+
+```php
+$collection->get('email', function () {
+    return 'default-value';
+});
+
+// default-value
+```
+
+### `groupBy()`
+
+`groupBy` 方法根据给定的键对集合的条目进行分组：
+
+```php
+$collection = collect([
+    ['account_id' => 'account-x10', 'product' => 'Chair'],
+    ['account_id' => 'account-x10', 'product' => 'Bookcase'],
+    ['account_id' => 'account-x11', 'product' => 'Desk'],
+]);
+
+$grouped = $collection->groupBy('account_id');
+
+$grouped->toArray();
+
+/*
+    [
+        'account-x10' => [
+            ['account_id' => 'account-x10', 'product' => 'Chair'],
+            ['account_id' => 'account-x10', 'product' => 'Bookcase'],
+        ],
+        'account-x11' => [
+            ['account_id' => 'account-x11', 'product' => 'Desk'],
+        ],
+    ]
+*/
+```
+
+你可以传递回调，而不是传递字符串 `key`。回调方法应该返回你希望键入组的值：
+
+```php
+$grouped = $collection->groupBy(function ($item, $key) {
+    return substr($item['account_id'], -3);
+});
+
+$grouped->toArray();
+
+/*
+    [
+        'x10' => [
+            ['account_id' => 'account-x10', 'product' => 'Chair'],
+            ['account_id' => 'account-x10', 'product' => 'Bookcase'],
+        ],
+        'x11' => [
+            ['account_id' => 'account-x11', 'product' => 'Desk'],
+        ],
+    ]
+*/
+```
+
+多个分组条件可以作为数组传递。每个数组元素将应用于多维数组中的相应级别：
+
+```php
+$data = new Collection([
+    10 => ['user' => 1, 'skill' => 1, 'roles' => ['Role_1', 'Role_3']],
+    20 => ['user' => 2, 'skill' => 1, 'roles' => ['Role_1', 'Role_2']],
+    30 => ['user' => 3, 'skill' => 2, 'roles' => ['Role_1']],
+    40 => ['user' => 4, 'skill' => 2, 'roles' => ['Role_2']],
+]);
+
+$result = $data->groupBy([
+    'skill',
+    function ($item) {
+        return $item['roles'];
+    },
+], $preserveKeys = true);
+
+/*
+[
+    1 => [
+        'Role_1' => [
+            10 => ['user' => 1, 'skill' => 1, 'roles' => ['Role_1', 'Role_3']],
+            20 => ['user' => 2, 'skill' => 1, 'roles' => ['Role_1', 'Role_2']],
+        ],
+        'Role_2' => [
+            20 => ['user' => 2, 'skill' => 1, 'roles' => ['Role_1', 'Role_2']],
+        ],
+        'Role_3' => [
+            10 => ['user' => 1, 'skill' => 1, 'roles' => ['Role_1', 'Role_3']],
+        ],
+    ],
+    2 => [
+        'Role_1' => [
+            30 => ['user' => 3, 'skill' => 2, 'roles' => ['Role_1']],
+        ],
+        'Role_2' => [
+            40 => ['user' => 4, 'skill' => 2, 'roles' => ['Role_2']],
+        ],
+    ],
+];
+*/
+```
+
 ### `has`
 
 `has` 方法确定集合中是否存在给定的键：
@@ -622,6 +908,80 @@ collect([])->join(', ', ' and '); // ''
 ```
 
 ### `keyBy()`
+
+`keyBy` 方法根据给定的键键入到集合中。如果多个条目具有相同的键，则只有最后一个键将出现在新集合中：
+
+```php
+$collection = collect([
+    ['product_id' => 'prod-100', 'name' => 'Desk'],
+    ['product_id' => 'prod-200', 'name' => 'Chair'],
+]);
+
+$keyed = $collection->keyBy('product_id');
+
+$keyed->all();
+
+/*
+    [
+        'prod-100' => ['product_id' => 'prod-100', 'name' => 'Desk'],
+        'prod-200' => ['product_id' => 'prod-200', 'name' => 'Chair'],
+    ]
+*/
+```
+
+你还可以将回调传递到此方法。回调应该返回值通过以下方式键入到集合中：
+
+```php
+$keyed = $collection->keyBy(function ($item) {
+    return strtoupper($item['product_id']);
+});
+
+$keyed->all();
+
+/*
+    [
+        'PROD-100' => ['product_id' => 'prod-100', 'name' => 'Desk'],
+        'PROD-200' => ['product_id' => 'prod-200', 'name' => 'Chair'],
+    ]
+*/
+```
+
+### `keys()`
+
+`keys` 方法返回集合的所有键：
+
+```php
+$collection = collect([
+    'prod-100' => ['product_id' => 'prod-100', 'name' => 'Desk'],
+    'prod-200' => ['product_id' => 'prod-200', 'name' => 'Chair'],
+]);
+
+$keys = $collection->keys();
+
+$keys->all();
+
+// ['prod-100', 'prod-200']
+```
+
+### `last()`
+
+`last` 方法返回集合中通过给定真值测试的最后一个元素：
+
+```php
+collect([1, 2, 3, 4])->last(function ($value, $key) {
+    return $value < 3;
+});
+
+// 2
+```
+
+你还可以调用没有参数的 `last` 方法来获取集合中的最后一个元素。如果集合为空，则返回 `null`：
+
+```php
+collect([1, 2, 3, 4])->last();
+
+// 4
+```
 
 ### `sort()`
 
