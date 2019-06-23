@@ -402,6 +402,126 @@ $collection->dump();
 
 如果你想在转储集合之后停止执行脚本，请使用 [dd](https://laravel.com/docs/5.8/collections#method-dd) 方法。
 
+### `duplicates()`
+
+`duplicates` 方法从集合中检索并返回重复的值：
+
+```php
+$collection = collect(['a', 'b', 'a', 'c', 'b']);
+
+$collection->duplicates();
+
+// [ 2 => 'a', 4 => 'b' ]
+```
+
+### `each()`
+
+`each` 方法遍历集合中的条目，并将每个条目传递给回调函数：
+
+```php
+$collection->each(function ($item, $key) {
+    //
+});
+```
+
+如果你希望停止遍历条目，可以从回调函数返回 `false`：
+
+```php
+$collection->each(function ($item, $key) {
+    if (/* some condition */) {
+        return false;
+    }
+});
+```
+
+### `eachSpread()`
+
+`eachSpread` 方法遍历集合的条目，将每个嵌套的条目值传递到给定的回调函数：
+
+```php
+$collection = collect([['John Doe', 35], ['Jane Doe', 33]]);
+
+$collection->eachSpread(function ($name, $age) {
+    //
+});
+```
+
+你可以通过从回调函数返回 `false` 停止遍历条目：
+
+```php
+$collection->eachSpread(function ($name, $age) {
+    return false;
+});
+```
+
+### `every()`
+
+`every` 方法可用于验证集合的所有元素是否通过给定的真值测试：
+
+```php
+collect([1, 2, 3, 4])->every(function ($value, $key) {
+    return $value > 2;
+});
+
+// false
+```
+
+如果集合为空，`every` 将返回 `true`：
+
+```php
+$collection = collect([]);
+
+$collection->every(function($value, $key) {
+    return $value > 2;
+});
+
+// true
+```
+
+### `except()`
+
+`except` 方法返回集合中的所有条目，那些指定键的条目除外：
+
+```php
+$collection = collect(['product_id' => 1, 'price' => 100, 'discount' => false]);
+
+$filtered = $collection->except(['price', 'discount']);
+
+$filtered->all();
+
+// ['product_id' => 1]
+```
+
+有关 `except` 的逆函数，参看 [only](https://laravel.com/docs/5.8/collections#method-only) 方法。
+
+### `filter()`
+
+`filter` 方法使用给定的回调过滤集合，只保留那些通过给定真值测试的条目：
+
+```php
+$collection = collect([1, 2, 3, 4]);
+
+$filtered = $collection->filter(function ($value, $key) {
+    return $value > 2;
+});
+
+$filtered->all();
+
+// [3, 4]
+```
+
+如果没有提供回调函数，则将删除集合中与 `false` 等价的所有条目：
+
+```php
+$collection = collect([1, 2, 3, null, false, '', 0, []]);
+
+$collection->filter()->all();
+
+// [1, 2, 3]
+```
+
+有关 `filter` 的逆函数，查看 [reject](https://laravel.com/docs/5.8/collections#method-reject) 函数。
+
 ### `has`
 
 `has` 方法确定集合中是否存在给定的键：
