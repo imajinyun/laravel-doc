@@ -317,6 +317,91 @@ $collection->dd();
 */
 ```
 
+如果不想停止执行脚本，可以使用 [dump](https://laravel.com/docs/5.8/collections#method-dump) 方法替代。
+
+### `diff()`
+
+`diff` 方法将集合与另一集合或基于其值的普通 PHP `array` 进行比较。此方法将返回原始集合与给定集合差集的值。
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$diff = $collection->diff([2, 4, 6, 8]);
+
+$diff->all();
+
+// [1, 3, 5]
+```
+
+### `diffAssoc()`
+
+`diffAssoc` 方法将集合与另一个集合或基于其键值的普通 PHP `array` 进行比较。此方法将返回原始集合不存在于给定集合中的键 / 值（相同的键值不同）对：
+
+```php
+$collection = collect([
+    'color' => 'orange',
+    'type' => 'fruit',
+    'remain' => 6
+]);
+
+$diff = $collection->diffAssoc([
+    'color' => 'yellow',
+    'type' => 'fruit',
+    'remain' => 3,
+    'used' => 6
+]);
+
+$diff->all();
+
+// ['color' => 'orange', 'remain' => 6]
+```
+
+### `diffKeys()`
+
+`diffKeys` 方法将集合与另一个集合或基于其键的普通 PHP `array` 进行比较。此方法将返回原始集合中不存在于给定集合中的键 / 值（原始集合与给定集合条目数量不相等时，将原始集合中多余的键值对填充到比较后的结果集中）对：
+
+```php
+$collection = collect([
+    'one' => 10,
+    'two' => 20,
+    'three' => 30,
+    'four' => 40,
+    'five' => 50,
+]);
+
+$diff = $collection->diffKeys([
+    'two' => 2,
+    'four' => 4,
+    'six' => 6,
+    'eight' => 8,
+]);
+
+$diff->all();
+
+// ['one' => 10, 'three' => 30, 'five' => 50]
+```
+
+### `dump()`
+
+`dump` 方法转储集合的条目：
+
+```php
+$collection = collect(['John Doe', 'Jane Doe']);
+
+$collection->dump();
+
+/*
+    Collection {
+        #items: array:2 [
+            0 => "John Doe"
+            1 => "Jane Doe"
+        ]
+    }
+*/
+```
+
+如果你想在转储集合之后停止执行脚本，请使用 [dd](https://laravel.com/docs/5.8/collections#method-dd) 方法。
+
 ### `has`
 
 `has` 方法确定集合中是否存在给定的键：
