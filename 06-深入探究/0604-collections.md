@@ -983,6 +983,292 @@ collect([1, 2, 3, 4])->last();
 // 4
 ```
 
+### `macro()`
+
+静态 `macro` 方法允许你在运行时向 `Collection` 类添加方法。有关更多信息，参见关于 [扩展集合](https://laravel.com/docs/5.8/collections#extending-collections) 的文档。
+
+### `make()`
+
+静态 `make` 方法创建一个新的集合实例。参见 [创建集合](https://laravel.com/docs/5.8/collections#creating-collections) 部分。
+
+### `map()`
+
+`map` 方法遍历集合并将每个值传递给给定的回调。回调可以随意地修改条目并返回它，从而形成一个修改条目的新集合：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$multiplied = $collection->map(function ($item, $key) {
+    return $item * 2;
+});
+
+$multiplied->all();
+
+// [2, 4, 6, 8, 10]
+```
+
+{% hint style="danger" %}
+
+与大多数其他集合方法一样，`map` 返回一个新的集合实例；它不修改调用它的集合。如果要转换原始集合，请使用 `transform` 方法。
+
+{% endhint %}
+
+### `mapInto()`
+
+`mapInto` 方法遍历集合，通过将值传递给构造函数创建给定类的新实例：
+
+```php
+class Currency
+{
+    /**
+     * Create a new currency instance.
+     *
+     * @param  string  $code
+     * @return void
+     */
+    function __construct(string $code)
+    {
+        $this->code = $code;
+    }
+}
+
+$collection = collect(['USD', 'EUR', 'GBP']);
+
+$currencies = $collection->mapInto(Currency::class);
+
+$currencies->all();
+
+// [Currency('USD'), Currency('EUR'), Currency('GBP')]
+```
+
+### `mapSpread()`
+
+`mapSpread` 方法遍历集合的条目，将每个嵌套的条目值传递给给定的回调。回调可以随意地修改条目并返回它，从而形成一个修改条目的新集合：
+
+```php
+$collection = collect([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+$chunks = $collection->chunk(2);
+
+$sequence = $chunks->mapSpread(function ($even, $odd) {
+    return $even + $odd;
+});
+
+$sequence->all();
+
+// [1, 5, 9, 13, 17]
+```
+
+### `mapToGroups()`
+
+`mapToGroups` 方法按给定的回调对集合的条目进行分组。回调应该返回一个包含单个键 / 值对的关联数组，从而形成一个分组的值的新集合：
+
+```php
+$collection = collect([
+    [
+        'name' => 'John Doe',
+        'department' => 'Sales',
+    ],
+    [
+        'name' => 'Jane Doe',
+        'department' => 'Sales',
+    ],
+    [
+        'name' => 'Johnny Doe',
+        'department' => 'Marketing',
+    ]
+]);
+
+$grouped = $collection->mapToGroups(function ($item, $key) {
+    return [$item['department'] => $item['name']];
+});
+
+$grouped->toArray();
+
+/*
+    [
+        'Sales' => ['John Doe', 'Jane Doe'],
+        'Marketing' => ['Johnny Doe'],
+    ]
+*/
+
+$grouped->get('Sales')->all();
+
+// ['John Doe', 'Jane Doe']
+```
+
+### `mapWithKeys()`
+
+`mapWithKeys` 方法遍历集合并将每个值传递给给定的回调。回调应该返回一个包含单个键 / 值对的关联数组：
+
+```php
+$collection = collect([
+    [
+        'name' => 'John',
+        'department' => 'Sales',
+        'email' => 'john@example.com'
+    ],
+    [
+        'name' => 'Jane',
+        'department' => 'Marketing',
+        'email' => 'jane@example.com'
+    ]
+]);
+
+$keyed = $collection->mapWithKeys(function ($item) {
+    return [$item['email'] => $item['name']];
+});
+
+$keyed->all();
+
+/*
+    [
+        'john@example.com' => 'John',
+        'jane@example.com' => 'Jane',
+    ]
+*/
+```
+
+### `max()`
+
+`max` 方法返回给定键的最大值：
+
+```php
+$max = collect([['foo' => 10], ['foo' => 20]])->max('foo');
+
+// 20
+
+$max = collect([1, 2, 3, 4, 5])->max();
+
+// 5
+```
+
+### `median()`
+
+`median` 方法返回给定键的 [中值](https://en.wikipedia.org/wiki/Median)：
+
+```php
+$median = collect([['foo' => 10], ['foo' => 10], ['foo' => 20], ['foo' => 40]])->median('foo');
+
+// 15
+
+$median = collect([1, 1, 2, 4])->median();
+
+// 1.5
+```
+
+### `merge()`
+
+`merge` 方法将给定的数组或集合与原始集合合并。如果给定条目中的字符串键与原始集合中的字符串键匹配，则给定条目的值将覆盖原始集合中的值：
+
+```php
+$collection = collect(['product_id' => 1, 'price' => 100]);
+
+$merged = $collection->merge(['price' => 200, 'discount' => false]);
+
+$merged->all();
+
+// ['product_id' => 1, 'price' => 200, 'discount' => false]
+```
+
+如果给定条目的键是数值的，则值将追加到集合的末尾：
+
+```php
+$collection = collect(['Desk', 'Chair']);
+
+$merged = $collection->merge(['Bookcase', 'Door']);
+
+$merged->all();
+
+// ['Desk', 'Chair', 'Bookcase', 'Door']
+```
+
+### `min()`
+
+`min` 方法返回给定键的最小值：
+
+```php
+$min = collect([['foo' => 10], ['foo' => 20]])->min('foo');
+
+// 10
+
+$min = collect([1, 2, 3, 4, 5])->min();
+
+// 1
+```
+
+### `mode()`
+
+`mode` 方法返回给定键的 [模式值](https://en.wikipedia.org/wiki/Mode_(statistics)) 值：
+
+```php
+$mode = collect([['foo' => 10], ['foo' => 10], ['foo' => 20], ['foo' => 40]])->mode('foo');
+
+// [10]
+
+$mode = collect([1, 1, 2, 4])->mode();
+
+// [1]
+```
+
+### `nth()`
+
+`nth` 方法创建一个由每个第 n 个元素组成的新集合：
+
+```php
+$collection = collect(['a', 'b', 'c', 'd', 'e', 'f']);
+
+$collection->nth(4);
+
+// ['a', 'e']
+```
+
+你可以选择传递一个偏移量作为第二个参数：
+
+```php
+$collection->nth(4, 1);
+
+// ['b', 'f']
+```
+
+### `only()`
+
+### `pad()`
+
+### `partition()`
+
+### `pipe()`
+
+### `pluck()`
+
+### `pop()`
+
+### `prepend()`
+
+### `pull()`
+
+### `push`
+
+### `put()`
+
+### `random()`
+
+### `reduce()`
+
+### `reject()`
+
+### `reverse()`
+
+### `search()`
+
+### `shift()`
+
+### `shuffle()`
+
+### `slice()`
+
+### `some()`
+
 ### `sort()`
 
 `sort` 方法对集合进行排序。排序后的集合保留原始数组键，因此在本例中，我们将使用 `values` 方法将键重置为连续编号的索引：
@@ -1005,4 +1291,104 @@ $sorted->values()->all();
 
 {% endhint %}
 
+### `sortBy()`
+
+### `sortByDesc()`
+
+### `sortKeys()`
+
+### `sortKeysDesc()`
+
+### `splice()`
+
+### `split()`
+
+### `sum()`
+
+### `take()`
+
+### `tap()`
+
+### `times()`
+
+### `toArray()`
+
+### `toJson()`
+
+### `transform()`
+
+### `union()`
+
+### `unique()`
+
+### `uniqueStrict()`
+
+### `unless()`
+
+### `unlessEmpty()`
+
+### `unlessNotEmpty()`
+
+### `unwrap()`
+
+### `values()`
+
+### `when()`
+
+### `whenEmpty()`
+
+### `whenNotEmpty()`
+
+### `where()`
+
+### `whereStrict()`
+
+### `whereBetween()`
+
+### `whereIn()`
+
+### `whereInStrict()`
+
+### `whereInstanceOf()`
+
+### `whereNotBetween()`
+
+### `whereNotIn()`
+
+### `whereNotInStrict()`
+
+### `wrap()`
+
+### `zip()`
+
+`zip` 方法将给定数组的值与对应索引处原始集合的值合并在一起：
+
+```php
+$collection = collect(['Chair', 'Desk']);
+
+$zipped = $collection->zip([100, 200]);
+
+$zipped->all();
+
+// [['Chair', 100], ['Desk', 200]]
+```
+
 ## 高阶消息
+
+集合还提供对『高阶消息』的支持，这是对集合执行常见操作的捷径。提供『高阶消息』的集合方法有：`average`，`avg`，`contains`，`each`，`every`，`filter`，`first`，`flatMap`，`groupBy`，`keyBy`，`map`，`max`，`min`，`partition`，`reject`，`some`，`sortBy`，`sortByDesc`，`sum` 和 `unique`。
+
+每个高阶消息都可以作为集合实例上的动态属性能被访问。例如，让我们使用 `each` 高阶消息来调用一个集合中每个对象的方法：
+
+```php
+$users = User::where('votes', '>', 500)->get();
+
+$users->each->markAsVip();
+```
+
+同样，我们可以使用 `sum` 高阶消息来收集用户集合的『投票』总数：
+
+```php
+$users = User::where('group', 'Development')->get();
+
+return $users->sum->votes;
+```
