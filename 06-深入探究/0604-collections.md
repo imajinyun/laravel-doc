@@ -2021,23 +2021,205 @@ $unique->values()->all();
 
 ### `unless()`
 
+除非方法的第一个参数的值为 `true`，否则 `unless` 方法将执行给定的回调：
+
+```php
+$collection = collect([1, 2, 3]);
+
+$collection->unless(true, function ($collection) {
+    return $collection->push(4);
+});
+
+$collection->unless(false, function ($collection) {
+    return $collection->push(5);
+});
+
+$collection->all();
+
+// [1, 2, 3, 5]
+```
+
+`unless` 方法的逆方法，查看 [when](https://laravel.com/docs/5.8/collections#method-when) 方法。
+
 ### `unlessEmpty()`
+
+[whenNotEmpty](https://laravel.com/docs/5.8/collections#method-whennotempty) 方法的别名。
 
 ### `unlessNotEmpty()`
 
+[whenEmpty](https://laravel.com/docs/5.8/collections#method-whenempty) 方法的别名。
+
 ### `unwrap()`
+
+静态 `unwrap` 方法在适用时从给定值返回集合的基础条目：
+
+```php
+Collection::unwrap(collect('John Doe'));
+
+// ['John Doe']
+
+Collection::unwrap(['John Doe']);
+
+// ['John Doe']
+
+Collection::unwrap('John Doe');
+
+// 'John Doe'
+```
 
 ### `values()`
 
+`values` 方法返回一个新集合，其中键重置为连续整数：
+
+```php
+$collection = collect([
+    10 => ['product' => 'Desk', 'price' => 200],
+    11 => ['product' => 'Desk', 'price' => 200]
+]);
+
+$values = $collection->values();
+
+$values->all();
+
+/*
+    [
+        0 => ['product' => 'Desk', 'price' => 200],
+        1 => ['product' => 'Desk', 'price' => 200],
+    ]
+*/
+```
+
 ### `when()`
+
+当给定到方法的第一个参数的值为 `true` 时，`when` 方法将执行给定的回调：
+
+```php
+$collection = collect([1, 2, 3]);
+
+$collection->when(true, function ($collection) {
+    return $collection->push(4);
+});
+
+$collection->when(false, function ($collection) {
+    return $collection->push(5);
+});
+
+$collection->all();
+
+// [1, 2, 3, 4]
+```
+
+`when` 方法的逆方法，查看 [unless](https://laravel.com/docs/5.8/collections#method-unless) 方法。
 
 ### `whenEmpty()`
 
+当集合为空时，`whenEmpty` 方法将执行给定的回调：
+
+```php
+$collection = collect(['michael', 'tom']);
+
+$collection->whenEmpty(function ($collection) {
+    return $collection->push('adam');
+});
+
+$collection->all();
+
+// ['michael', 'tom']
+
+$collection = collect();
+
+$collection->whenEmpty(function ($collection) {
+    return $collection->push('adam');
+});
+
+$collection->all();
+
+// ['adam']
+
+$collection = collect(['michael', 'tom']);
+
+$collection->whenEmpty(function($collection) {
+    return $collection->push('adam');
+}, function($collection) {
+    return $collection->push('taylor');
+});
+
+$collection->all();
+
+// ['michael', 'tom', 'taylor']
+```
+
+`whenEmpty` 方法的逆方法，查看 [whenNotEmpty](https://laravel.com/docs/5.8/collections#method-whennotempty) 方法。
+
 ### `whenNotEmpty()`
+
+当集合不为空时，`whenNotEmpty` 方法将执行给定的回调：
+
+```php
+$collection = collect(['michael', 'tom']);
+
+$collection->whenNotEmpty(function ($collection) {
+    return $collection->push('adam');
+});
+
+$collection->all();
+
+// ['michael', 'tom', 'adam']
+
+$collection = collect();
+
+$collection->whenNotEmpty(function ($collection) {
+    return $collection->push('adam');
+});
+
+$collection->all();
+
+// []
+
+$collection = collect();
+
+$collection->whenNotEmpty(function($collection) {
+    return $collection->push('adam');
+}, function($collection) {
+    return $collection->push('taylor');
+});
+
+$collection->all();
+
+// ['taylor']
+```
+
+`whenNotEmpty` 方法的逆方法，查看 [whenEmpty](https://laravel.com/docs/5.8/collections#method-whenempty) 方法。
 
 ### `where()`
 
+`where` 方法按给定的键 / 值对过滤集合：
+
+```php
+$collection = collect([
+    ['product' => 'Desk', 'price' => 200],
+    ['product' => 'Chair', 'price' => 100],
+    ['product' => 'Bookcase', 'price' => 150],
+    ['product' => 'Door', 'price' => 100],
+]);
+
+$filtered = $collection->where('price', 100);
+
+$filtered->all();
+
+/*
+    [
+        ['product' => 'Chair', 'price' => 100],
+        ['product' => 'Door', 'price' => 100],
+    ]
+*/
+```
+
+`where` 方法在检查条目值时使用『松散』比较，这意味着具有整数值的字符串将被认为等于具有相同值的整数。使用 [whereStrict](https://laravel.com/docs/5.8/collections#method-wherestrict) 方法使用『严格』比较进行过滤。
+
 ### `whereStrict()`
+
+该方法与 [where](https://laravel.com/docs/5.8/collections#method-where) 方法具有相同的签名；但是，所有值都使用『严格』比较进行比较。
 
 ### `whereBetween()`
 
