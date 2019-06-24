@@ -2223,17 +2223,128 @@ $filtered->all();
 
 ### `whereBetween()`
 
+`whereBetween` 方法过滤一个给定范围内的集合：
+
+```php
+$collection = collect([
+    ['product' => 'Desk', 'price' => 200],
+    ['product' => 'Chair', 'price' => 80],
+    ['product' => 'Bookcase', 'price' => 150],
+    ['product' => 'Pencil', 'price' => 30],
+    ['product' => 'Door', 'price' => 100],
+]);
+
+$filtered = $collection->whereBetween('price', [100, 200]);
+
+$filtered->all();
+
+/*
+    [
+        ['product' => 'Desk', 'price' => 200],
+        ['product' => 'Bookcase', 'price' => 150],
+        ['product' => 'Door', 'price' => 100],
+    ]
+*/
+```
+
 ### `whereIn()`
+
+`whereIn` 方法按给定数组中包含的给定键 / 值过滤集合：
+
+```php
+$collection = collect([
+    ['product' => 'Desk', 'price' => 200],
+    ['product' => 'Chair', 'price' => 100],
+    ['product' => 'Bookcase', 'price' => 150],
+    ['product' => 'Door', 'price' => 100],
+]);
+
+$filtered = $collection->whereIn('price', [150, 200]);
+
+$filtered->all();
+
+/*
+    [
+        ['product' => 'Bookcase', 'price' => 150],
+        ['product' => 'Desk', 'price' => 200],
+    ]
+*/
+```
+
+`whereIn` 方法在检查条目值时使用『松散』比较，这意味着具有整数值的字符串将被认为等于具有相同值的整数。使用 [whereInStrict](https://laravel.com/docs/5.8/collections#method-whereinstrict) 方法使用『严格』比较进行过滤。
 
 ### `whereInStrict()`
 
+该方法与 `whereIn` 方法具有相同的签名；但是，所有值都使用『严格』比较进行比较。
+
 ### `whereInstanceOf()`
+
+`whereInstanceOf` 方法根据给定的类类型过滤集合：
+
+```php
+$collection = collect([
+    new User,
+    new User,
+    new Post,
+]);
+
+return $collection->whereInstanceOf(User::class);
+```
 
 ### `whereNotBetween()`
 
+`whereNotBetween` 方法过滤一个给定范围内的集合：
+
+```php
+$collection = collect([
+    ['product' => 'Desk', 'price' => 200],
+    ['product' => 'Chair', 'price' => 80],
+    ['product' => 'Bookcase', 'price' => 150],
+    ['product' => 'Pencil', 'price' => 30],
+    ['product' => 'Door', 'price' => 100],
+]);
+
+$filtered = $collection->whereNotBetween('price', [100, 200]);
+
+$filtered->all();
+
+/*
+    [
+        ['product' => 'Chair', 'price' => 80],
+        ['product' => 'Pencil', 'price' => 30],
+    ]
+*/
+```
+
 ### `whereNotIn()`
 
+`whereNotIn` 方法在给定数组中未包含给定键 / 值对来过滤集合：
+
+```php
+$collection = collect([
+    ['product' => 'Desk', 'price' => 200],
+    ['product' => 'Chair', 'price' => 100],
+    ['product' => 'Bookcase', 'price' => 150],
+    ['product' => 'Door', 'price' => 100],
+]);
+
+$filtered = $collection->whereNotIn('price', [150, 200]);
+
+$filtered->all();
+
+/*
+    [
+        ['product' => 'Chair', 'price' => 100],
+        ['product' => 'Door', 'price' => 100],
+    ]
+*/
+```
+
+`whereNotIn` 方法在检查条目值时使用『松散』比较，这意味着具有整数值的字符串将被认为等于具有相同值的整数。使用 [whereNotInStrict](https://laravel.com/docs/5.8/collections#method-wherenotinstrict) 方法使用『严格』比较进行过滤。
+
 ### `whereNotInStrict()`
+
+此方法与 [whereNotIn](https://laravel.com/docs/5.8/collections#method-wherenotin) 方法具有相同的签名；但是，所有值都使用『严格』比较进行比较。
 
 ### `wrap()`
 
