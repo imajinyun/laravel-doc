@@ -1859,17 +1859,165 @@ collect([2, 4, 3, 1, 5])
 
 ### `times()`
 
+静态 `times` 方法通过调用给定数量的回调函数创建一个新的集合：
+
+```php
+$collection = Collection::times(10, function ($number) {
+    return $number * 9;
+});
+
+$collection->all();
+```
+
+当与工厂相结合创建 [Eloquent](https://laravel.com/docs/5.8/eloquent) 模型时，此方法非常有用：
+
+```php
+$categories = Collection::times(3, function ($number) {
+    return factory(Category::class)->create(['name' => "Category No. $number"]);
+});
+
+$categories->all();
+
+/*
+    [
+        ['id' => 1, 'name' => 'Category #1'],
+        ['id' => 2, 'name' => 'Category #2'],
+        ['id' => 3, 'name' => 'Category #3'],
+    ]
+*/
+```
+
 ### `toArray()`
+
+`toArray` 方法将集合转换为普通 PHP `array`。如果集合的值是 [Eloquent](https://laravel.com/docs/5.8/eloquent) 模型，那么模型也将被转换为数组：
+
+```php
+$collection = collect(['name' => 'Desk', 'price' => 200]);
+
+$collection->toArray();
+
+/*
+    [
+        ['name' => 'Desk', 'price' => 200],
+    ]
+*/
+```
+
+{% hint style="danger" %}
+
+`toArray` 还将集合中具有 `Arrayable` 实例的所有嵌套对象转换为数组。如果你希望获得原始的底层数组，使用 `all` 方法替代。
+
+{% endhint %}
 
 ### `toJson()`
 
+`toJson` 方法将集合转换为 JSON 序列化字符串：
+
+```php
+$collection = collect(['name' => 'Desk', 'price' => 200]);
+
+$collection->toJson();
+
+// '{"name":"Desk", "price":200}'
+```
+
 ### `transform()`
+
+`transform` 方法遍历集合并使用集合中的每个条目调用给定的回调。集合中的条目将被回调返回的值替换：
+
+```php
+$collection = collect([1, 2, 3, 4, 5]);
+
+$collection->transform(function ($item, $key) {
+    return $item * 2;
+});
+
+$collection->all();
+
+// [2, 4, 6, 8, 10]
+```
+
+{% hint style="danger" %}
+
+与大多数其他集合方法不同，`transform` 修改集合本身。如果你希望创建一个新的集合替代，使用 `map 方法。
+
+{% endhint %}
 
 ### `union()`
 
+`union` 方法将给定的数组添加到集合中。如果给定数组包含已经在原始集合中的键，则首选原始集合的值：
+
+```php
+$collection = collect([1 => ['a'], 2 => ['b']]);
+
+$union = $collection->union([3 => ['c'], 1 => ['b']]);
+
+$union->all();
+
+// [1 => ['a'], 2 => ['b'], 3 => ['c']]
+```
+
 ### `unique()`
 
+`unique` 方法返回集合中所有惟一的项。返回的集合保留原始数组键，因此在本例中，我们将使用 [values](https://laravel.com/docs/5.8/collections#method-values) 方法将键重置为连续编号的索引：
+
+```php
+$collection = collect([1, 1, 2, 2, 3, 4, 2]);
+
+$unique = $collection->unique();
+
+$unique->values()->all();
+
+// [1, 2, 3, 4]
+```
+
+在处理嵌套数组或对象时，可以指定用于确定唯一性的键：
+
+```php
+$collection = collect([
+    ['name' => 'iPhone 6', 'brand' => 'Apple', 'type' => 'phone'],
+    ['name' => 'iPhone 5', 'brand' => 'Apple', 'type' => 'phone'],
+    ['name' => 'Apple Watch', 'brand' => 'Apple', 'type' => 'watch'],
+    ['name' => 'Galaxy S6', 'brand' => 'Samsung', 'type' => 'phone'],
+    ['name' => 'Galaxy Gear', 'brand' => 'Samsung', 'type' => 'watch'],
+]);
+
+$unique = $collection->unique('brand');
+
+$unique->values()->all();
+
+/*
+    [
+        ['name' => 'iPhone 6', 'brand' => 'Apple', 'type' => 'phone'],
+        ['name' => 'Galaxy S6', 'brand' => 'Samsung', 'type' => 'phone'],
+    ]
+*/
+```
+
+你还可以传递自己的回调函数来确定条目的唯一性：
+
+```php
+$unique = $collection->unique(function ($item) {
+    return $item['brand'].$item['type'];
+});
+
+$unique->values()->all();
+
+/*
+    [
+        ['name' => 'iPhone 6', 'brand' => 'Apple', 'type' => 'phone'],
+        ['name' => 'Apple Watch', 'brand' => 'Apple', 'type' => 'watch'],
+        ['name' => 'Galaxy S6', 'brand' => 'Samsung', 'type' => 'phone'],
+        ['name' => 'Galaxy Gear', 'brand' => 'Samsung', 'type' => 'watch'],
+    ]
+*/
+```
+
+`unique` 方法在检查条目值时使用『松散』比较，这意味着具有整数值的字符串将被认为等于具有相同值的整数。使用 [uniqueStrict](https://laravel.com/docs/5.8/collections#method-uniquestrict) 方法去使用『严格』比较进行过滤。
+
 ### `uniqueStrict()`
+
+该方法与 `unique` 方法具有相同的签名；但是，所有值都使用『严格』比较进行比较。
 
 ### `unless()`
 
@@ -1906,6 +2054,28 @@ collect([2, 4, 3, 1, 5])
 ### `whereNotInStrict()`
 
 ### `wrap()`
+
+静态 `wrap` 方法在适合时将给定值包装在集合中：
+
+```php
+$collection = Collection::wrap('John Doe');
+
+$collection->all();
+
+// ['John Doe']
+
+$collection = Collection::wrap(['John Doe']);
+
+$collection->all();
+
+// ['John Doe']
+
+$collection = Collection::wrap(collect('John Doe'));
+
+$collection->all();
+
+// ['John Doe']
+```
 
 ### `zip()`
 
