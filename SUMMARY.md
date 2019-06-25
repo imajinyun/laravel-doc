@@ -44,6 +44,7 @@
   * [广播](./06-深入探究/0602-broadcasting.md)
   * [缓存](./06-深入探究/0603-cache.md)
   * [集合](./06-深入探究/0604-collections.md)
+  * [事件](./06-深入探究/0605-events.md)
 * [数据库](07-数据库/README.md)
 * [映射](08-映射/README.md)
 * [测试](09-测试/README.md)
