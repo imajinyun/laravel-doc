@@ -380,3 +380,77 @@ class OrderController extends Controller
 {% endhint %}
 
 ## 事件订阅
+
+### 编写事件订阅
+
+事件订阅者是可以从类本身订阅多个事件的类，允许你在单个类中定义多个事件处理程序。订阅者应该定义一个 `subscribe` 方法，该方法将传递一个事件调度器实例。你可以在给定的调度上调用 `listen` 方法来注册事件监听器：
+
+```php
+<?php
+
+namespace App\Listeners;
+
+class UserEventSubscriber
+{
+    /**
+     * 处理用户登录事件。
+     */
+    public function handleUserLogin($event) {}
+
+    /**
+     * 处理用户登出事件。
+     */
+    public function handleUserLogout($event) {}
+
+    /**
+     * 为订阅者注册监听器。
+     *
+     * @param  \Illuminate\Events\Dispatcher  $events
+     */
+    public function subscribe($events)
+    {
+        $events->listen(
+            'Illuminate\Auth\Events\Login',
+            'App\Listeners\UserEventSubscriber@handleUserLogin'
+        );
+
+        $events->listen(
+            'Illuminate\Auth\Events\Logout',
+            'App\Listeners\UserEventSubscriber@handleUserLogout'
+        );
+    }
+}
+```
+
+### 注册事件订阅
+
+编写订阅者之后，你就可以向事件调度器注册了。你可以使用 `EventServiceProvider` 类上的 `$subscribe` 属性注册订阅者。例如，让我们将 `UserEventSubscriber` 添加到列表中：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+
+class EventServiceProvider extends ServiceProvider
+{
+    /**
+     * 应用程序的事件监听器映射。
+     *
+     * @var array
+     */
+    protected $listen = [
+        //
+    ];
+
+    /**
+     * 要注册的订阅类。
+     *
+     * @var array
+     */
+    protected $subscribe = [
+        'App\Listeners\UserEventSubscriber',
+    ];
+}
+```
