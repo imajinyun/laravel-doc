@@ -235,8 +235,211 @@ $time = Storage::lastModified('file.jpg');
 
 ## 存储文件
 
+`put` 方法可用于将原始文件内容存储在磁盘上。你还可以将 PHP `resource` 传递给 `put` 方法，该方法将使用 Flysystem 的底层流支持。在处理大文件时，强烈建议使用流：
+
+```php
+use Illuminate\Support\Facades\Storage;
+
+Storage::put('file.jpg', $contents);
+
+Storage::put('file.jpg', $resource);
+```
+
+**自动流**
+
+如果你希望 Laravel 自动管理将一个给定文件流到存储位置的流，可以使用 `putFile` 或 `putFileAs` 方法。此方法接受一个 `Illuminate\Http\File` 或 `Illuminate\Http\UploadedFile` 实例，并自动将文件流到所需位置：
+
+```php
+use Illuminate\Http\File;
+use Illuminate\Support\Facades\Storage;
+
+// 自动生成文件名的一个唯一 ID...
+Storage::putFile('photos', new File('/path/to/photo'));
+
+// 手动指定一个文件名...
+Storage::putFileAs('photos', new File('/path/to/photo'), 'photo.jpg');
+```
+
+关于 `putFile` 方法，有几件重要的事情需要注意。注意，我们只指定了目录名，而没有指定文件名。默认情况下，`putFile` 方法将生成一个惟一的 ID 作为文件名。文件的扩展名将通过检查文件的 MIME 类型来确定。文件的路径将由 `putFile` 方法返回，这样你就可以将路径（包括生成的文件名）存储在数据库中。
+
+`putFile` 和 `putFileAs` 方法还接受一个参数来指定存储文件的『可见性』。如果你将文件存储在诸如 S3 这样的云磁盘上，并且希望该文件可以公开访问，那么这一点特别有用：
+
+```php
+Storage::putFile('photos', new File('/path/to/photo'), 'public');
+```
+
+**添加 & 追加到文件**
+
+`prepend` 和 `append` 方法允许你在文件的开头或结尾写入内容：
+
+```php
+Storage::prepend('file.log', 'Prepended Text');
+
+Storage::append('file.log', 'Appended Text');
+```
+
+**复制 & 移动文件**
+
+`copy` 方法可用于将存在的文件复制到磁盘上的新位置，而 `move` 方法可用于重命名或将存在的文件移动到一个新的位置：
+
+```php
+Storage::copy('old/file.jpg', 'new/file.jpg');
+
+Storage::move('old/file.jpg', 'new/file.jpg');
+```
+
+### 文件上传
+
+在 Web 应用程序中，用于存储文件的最常见用例之一是存储用户上传的文件，例如个人资料图片，照片和文档。Laravel 使用 `store` 方法在上传的文件实例上很容易存储上传的文件。使用你希望存储上传文件的路径上调用 `store` 方法：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+
+class UserAvatarController extends Controller
+{
+    /**
+     * 为用户更新头像。
+     *
+     * @param  Request  $request
+     * @return Response
+     */
+    public function update(Request $request)
+    {
+        $path = $request->file('avatar')->store('avatars');
+
+        return $path;
+    }
+}
+```
+
+关于这个例子，有几件重要的事情需要注意。注意，我们只指定了目录名，而没有指定文件名。默认情况下，`store` 方法将生成一个惟一 ID 作为文件名。文件的扩展名将通过检查文件的 MIME 类型来确定。`store` 方法将返回文件的路径，以便你可以将路径（包括生成的文件名）存储在数据库中。
+
+你可以在 `Storage` 外观上调用 `putFile` 方法去执行与上面示例相同的文件操作：
+
+```php
+$path = Storage::putFile('avatars', $request->file('avatar'));
+```
+
+#### 指定一个文件名称
+
+如果你不希望将文件名自动分配给你的存储文件，你可以使用 `storeAs` 方法，它接收路径、文件名和（可选的）磁盘作为其参数：
+
+```php
+$path = $request->file('avatar')->storeAs(
+    'avatars', $request->user()->id
+);
+```
+
+你还可以使用在 `Storage` 外观上的 `putFileAs` 方法，它将执行与上面示例相同的文件操作：
+
+```php
+$path = Storage::putFileAs(
+    'avatars', $request->file('avatar'), $request->user()->id
+);
+```
+
+#### 指定一个磁盘
+
+默认情况下，此方法将使用你的默认磁盘。如果你希望指定另一个磁盘，将磁盘名称作为第二个参数传递给 `store` 方法：
+
+```php
+$path = $request->file('avatar')->store(
+    'avatars/'.$request->user()->id, 's3'
+);
+```
+
+### 文件可见性
+
+在 Laravel 的 Flysystem 集成中，『可见性』是跨多个平台的文件权限的抽象。文件可以声明为 `public` 或 `private`。当文件被声明为 `public` 时，你指示的该文件通常应该被其他人访问。例如，使用 S3 驱动程序时，你可以检索 `public` 文件的 URL。
+
+你可以通过 `put` 方法设置文件时设置可见性：
+
+```php
+use Illuminate\Support\Facades\Storage;
+
+Storage::put('file.jpg', $contents, 'public');
+```
+
+如果文件已经存储，则可以通过 `getVisibility` 和 `setVisibility` 方法检索和设置文件的可见性：
+
+```php
+$visibility = Storage::getVisibility('file.jpg');
+
+Storage::setVisibility('file.jpg', 'public')
+```
+
 ## 删除文件
+
+`delete` 方法接受要从磁盘中删除的单个文件名或文件数组：
+
+```php
+use Illuminate\Support\Facades\Storage;
+
+Storage::delete('file.jpg');
+
+Storage::delete(['file.jpg', 'file2.jpg']);
+```
+
+如果需要，你可以指定文件应该从哪个磁盘删除：
+
+```php
+use Illuminate\Support\Facades\Storage;
+
+Storage::disk('s3')->delete('folder_path/file_name.jpg');
+```
 
 ## 目录
 
+### 获取目录中的所有文件
+
+`files` 方法返回给定目录中所有文件的数组。如果你希望检索给定目录（包括所有子目录）中的所有文件列表，可以使用 `allFiles` 方法：
+
+```php
+use Illuminate\Support\Facades\Storage;
+
+$files = Storage::files($directory);
+
+$files = Storage::allFiles($directory);
+```
+
+### 获取一个目录中的所有目录
+
+`directories` 方法返回给定目录中所有目录的数组。此外，可以使用 `allDirectory` 方法获得给定目录及其所有子目录中的所有目录的列表：
+
+```php
+$directories = Storage::directories($directory);
+
+// 递归...
+$directories = Storage::allDirectories($directory);
+```
+
+### 创建一个目录
+
+`makeDirectory` 方法将创建给定的目录，包括任何需要的子目录：
+
+```php
+Storage::makeDirectory($directory);
+```
+
+### 删除一个目录
+
+最后，可以使用 `deleteDirectory` 方法删除一个目录及其所有文件：
+
+```php
+Storage::deleteDirectory($directory);
+```
+
 ## 自定义的文件系统
+
+Laravel 的 Flysystem 集成为开箱即用的几个『驱动』提供驱动程序；但是，Flysystem 不仅限于这些，并且具有适用于许多其他存储系统的适配器。如果要在 Laravel 应用程序中使用这些附加适配器之一，则可以创建自定义驱动程序。
+
+为了设置自定义文件系统，你需要一个 Flysystem 适配器。让我们将社区维护的 Dropbox 适配器添加到我们的项目中：
+
+```bash
+composer require spatie/flysystem-dropbox
+```
