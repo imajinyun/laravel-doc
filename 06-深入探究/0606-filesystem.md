@@ -443,3 +443,59 @@ Laravel 的 Flysystem 集成为开箱即用的几个『驱动』提供驱动程�
 ```bash
 composer require spatie/flysystem-dropbox
 ```
+
+接下来，你应该创建一个 [服务提供者](https://laravel.com/docs/5.8/providers)，例如：`DropboxServiceProvider`。在提供程序的 `boot` 方法中，你可以使用 `Storage` 外观的 `extend` 方法来定义自定义驱动程序：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Storage;
+use League\Flysystem\Filesystem;
+use Illuminate\Support\ServiceProvider;
+use Spatie\Dropbox\Client as DropboxClient;
+use Spatie\FlysystemDropbox\DropboxAdapter;
+
+class DropboxServiceProvider extends ServiceProvider
+{
+    /**
+     * 在容器中注册绑定。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Storage::extend('dropbox', function ($app, $config) {
+            $client = new DropboxClient(
+                $config['authorization_token']
+            );
+
+            return new Filesystem(new DropboxAdapter($client));
+        });
+    }
+}
+```
+
+`extend` 方法的第一个参数是驱动程序的名称，第二个参数是接收 `$app` 和 `$config` 变量的 Closure。解析器 Closure 必须返回 `League\Flysystem\Filesystem` 类的一个实例。`$config` 变量包含 `config/filesystems.php` 中为指定磁盘定义的值。
+
+接下来，在你的 `config/app.php` 配置文件中注册服务提供者：
+
+```php
+'providers' => [
+    // ...
+    App\Providers\DropboxServiceProvider::class,
+];
+```
+
+一旦创建并注册扩展的服务提供程序后，你可以在 `config/filesystems.php` 配置文件中使用 `dropbox` 驱动程序。
