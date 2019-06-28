@@ -146,6 +146,93 @@ Storage::disk('s3')->put('avatars/1', $fileContents);
 
 ## 检索文件
 
+`get` 方法可用于检索文件的内容。该方法将返回文件的原始字符串内容。记住，所有文件路径都应当指定为相对于为磁盘配置的『根』位置：
+
+```php
+$contents = Storage::get('file.jpg');
+```
+
+`exists` 方法可以用于确定一个文件是否在磁盘上存在：
+
+```php
+$exists = Storage::disk('s3')->exists('file.jpg');
+```
+
+### 下载文件
+
+`download` 方法可用于生成一个响应，该响应强制用户的浏览器按给定路径下载文件。`download` 方法接受文件名作为其第二个参数，该参数将确定下载文件的用户所看到的文件名。最后，可以将 HTTP 头数组作为第三个参数传递给此方法：
+
+```php
+return Storage::download('file.jpg');
+
+return Storage::download('file.jpg', $name, $headers);
+```
+
+### 文件 URLs
+
+你可以使用 `url` 方法获取给定文件的 URL。如果你使用的是 `local` 驱动程序，则通常只会在给定路径中预先添加 `/storage` 并返回该文件的相对 URL。如果你使用的是 `s3` 或 `rackspace` 驱动程序，则将返回完全限定的远程 URL：
+
+```php
+use Illuminate\Support\Facades\Storage;
+
+$url = Storage::url('file.jpg');
+```
+
+{% hint style="danger" %}
+
+记住，如果你使用 `local` 驱动，所有应当公开访问应放置在 `storage/app/public` 目录中。此外，你应该在 `public/storage` 处创建一个指向 `storage/app/public` 目录的 [符号链接](https://laravel.com/docs/5.8/filesystem#the-public-disk)。
+
+{% endhint %}
+
+#### 临时 URLs
+
+对于使用 `s3` 或 `rackspace` 驱动程序存储的文件，你可以使用 `temporaryUrl` 方法为给定文件创建临时 URL。此方法接受指定 URL 何时到期的一个路径和 `DateTime` 实例：
+
+```php
+$url = Storage::temporaryUrl(
+    'file.jpg', now()->addMinutes(5)
+);
+```
+
+如果你需要去指定额外的 [S3 请求参数](https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html#RESTObjectGET-requests)，你可以在 `temporaryUrl` 方法上传递请求数组作为其第三个参数：
+
+```php
+$url = Storage::temporaryUrl(
+    'file.jpg',
+    now()->addMinutes(5),
+    ['ResponseContentType' => 'application/octet-stream'],
+);
+```
+
+#### 本地 URL 主机定制
+
+如果你希望为使用 `local` 驱动程序存储在磁盘上的文件预先定义主机，你可以向磁盘的配置数组添加 `url` 选项：
+
+```php
+'public' => [
+    'driver' => 'local',
+    'root' => storage_path('app/public'),
+    'url' => env('APP_URL').'/storage',
+    'visibility' => 'public',
+],
+```
+
+### 文件元数据
+
+除了读取和写入文件外，Laravel 还可以提供关于文件本身的信息。例如，`size` 方法可用于以获取文件的字节大小：
+
+```php
+use Illuminate\Support\Facades\Storage;
+
+$size = Storage::size('file.jpg');
+```
+
+`lastModified` 方法返回文件最后一次修改的 UNIX 时间戳：
+
+```php
+$time = Storage::lastModified('file.jpg');
+```
+
 ## 存储文件
 
 ## 删除文件
