@@ -278,6 +278,364 @@ $slice = Arr::only($array, ['name', 'price']);
 // ['name' => 'Desk', 'price' => 100]
 ```
 
+### `Arr::pluck()`
+
+`Arr::pluck` 方法从数组中检索给定键的所有值：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = [
+    ['developer' => ['id' => 1, 'name' => 'Taylor']],
+    ['developer' => ['id' => 2, 'name' => 'Abigail']],
+];
+
+$names = Arr::pluck($array, 'developer.name');
+
+// ['Taylor', 'Abigail']
+```
+
+你还可以指定希望如何键入结果列表：
+
+```php
+use Illuminate\Support\Arr;
+
+$names = Arr::pluck($array, 'developer.name', 'developer.id');
+
+// [1 => 'Taylor', 2 => 'Abigail']
+```
+
+### `Arr::prepend()`
+
+`Arr::prepend` 方法将把一个条目推到数组的开头：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = ['one', 'two', 'three', 'four'];
+
+$array = Arr::prepend($array, 'zero');
+
+// ['zero', 'one', 'two', 'three', 'four']
+```
+
+如果需要，你可以指定值应该使用的键：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = ['price' => 100];
+
+$array = Arr::prepend($array, 'Desk', 'name');
+
+// ['name' => 'Desk', 'price' => 100]
+```
+
+### `Arr::pull()`
+
+`Arr::pull` 方法返回并从数组中删除的键 / 值对：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = ['name' => 'Desk', 'price' => 100];
+
+$name = Arr::pull($array, 'name');
+
+// $name: Desk
+
+// $array: ['price' => 100]
+```
+
+可以将默认值作为第三个参数传递给方法。如果键不存在，则返回此值：
+
+```php
+use Illuminate\Support\Arr;
+
+$value = Arr::pull($array, $key, $default);
+```
+
+### `Arr::random()`
+
+`Arr::random` 方法从数组中返回一个随机值：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = [1, 2, 3, 4, 5];
+
+$random = Arr::random($array);
+
+// 4 - (retrieved randomly)
+```
+
+你还可以指定要返回的条目数作为可选的第二个参数。注意，提供这个参数将返回一个数组，即使只期望一个条目：
+
+```php
+use Illuminate\Support\Arr;
+
+$items = Arr::random($array, 2);
+
+// [2, 5] - (retrieved randomly)
+```
+
+### `Arr::set()`
+
+`Arr::set` 方法使用『点』符号在深度嵌套数组中设置值：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = ['products' => ['desk' => ['price' => 100]]];
+
+Arr::set($array, 'products.desk.price', 200);
+
+// ['products' => ['desk' => ['price' => 200]]]
+```
+
+### `Arr::sort()`
+
+`Arr::sort` 方法按其值对数组进行排序：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = ['Desk', 'Table', 'Chair'];
+
+$sorted = Arr::sort($array);
+
+// ['Chair', 'Desk', 'Table']
+```
+
+你还可以根据给定闭包的结果对数组进行排序：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = [
+    ['name' => 'Desk'],
+    ['name' => 'Table'],
+    ['name' => 'Chair'],
+];
+
+$sorted = array_values(Arr::sort($array, function ($value) {
+    return $value['name'];
+}));
+
+/*
+    [
+        ['name' => 'Chair'],
+        ['name' => 'Desk'],
+        ['name' => 'Table'],
+    ]
+*/
+```
+
+### `Arr::sortRecursive()`
+
+`Arr::sortRecursive` 方法使用 `sort` 函数对数值子数组进行递归排序，并对关联子数组使用 `ksort` 函数排序：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = [
+    ['Roman', 'Taylor', 'Li'],
+    ['PHP', 'Ruby', 'JavaScript'],
+    ['one' => 1, 'two' => 2, 'three' => 3],
+];
+
+$sorted = Arr::sortRecursive($array);
+
+/*
+    [
+        ['JavaScript', 'PHP', 'Ruby'],
+        ['one' => 1, 'three' => 3, 'two' => 2],
+        ['Li', 'Roman', 'Taylor'],
+    ]
+*/
+```
+
+### `Arr::where()`
+
+`Arr::where` 方法使用给定的闭包过滤数组：
+
+```php
+use Illuminate\Support\Arr;
+
+$array = [100, '200', 300, '400', 500];
+
+$filtered = Arr::where($array, function ($value, $key) {
+    return is_string($value);
+});
+
+// [1 => '200', 3 => '400']
+```
+
+### `Arr::wrap()`
+
+`Arr::wrap` 方法将给定的值包装在数组中。如果给定值已经是数组，则不会更改它：
+
+```php
+use Illuminate\Support\Arr;
+
+$string = 'Laravel';
+
+$array = Arr::wrap($string);
+
+// ['Laravel']
+```
+
+如果给定值为空，则返回一个空数组：
+
+```php
+use Illuminate\Support\Arr;
+
+$nothing = null;
+
+$array = Arr::wrap($nothing);
+
+// []
+```
+
+### `data_fill()`
+
+`data_fill` 数据填充函数使用『点』符号在嵌套数组或对象中设置缺失的值：
+
+```php
+$data = ['products' => ['desk' => ['price' => 100]]];
+
+data_fill($data, 'products.desk.price', 200);
+
+// ['products' => ['desk' => ['price' => 100]]]
+
+data_fill($data, 'products.desk.discount', 10);
+
+// ['products' => ['desk' => ['price' => 100, 'discount' => 10]]]
+```
+
+该函数还接受星号作为通配符，并将相应地填充目标：
+
+```php
+$data = [
+    'products' => [
+        ['name' => 'Desk 1', 'price' => 100],
+        ['name' => 'Desk 2'],
+    ],
+];
+
+data_fill($data, 'products.*.price', 200);
+
+/*
+    [
+        'products' => [
+            ['name' => 'Desk 1', 'price' => 100],
+            ['name' => 'Desk 2', 'price' => 200],
+        ],
+    ]
+*/
+```
+
+### `data_get()`
+
+`data_get` 函数使用『点』符号从嵌套数组或对象中检索值：
+
+```php
+$data = ['products' => ['desk' => ['price' => 100]]];
+
+$price = data_get($data, 'products.desk.price');
+
+// 100
+```
+
+`data_get` 函数还接受一个默认值，如果没有找到指定的键，则返回该值：
+
+```php
+$discount = data_get($data, 'products.desk.discount', 0);
+
+// 0
+```
+
+该函数还使用星号接受通配符，星号可以针对数组或对象的任何键：
+
+```php
+$data = [
+    'product-one' => ['name' => 'Desk 1', 'price' => 100],
+    'product-two' => ['name' => 'Desk 2', 'price' => 150],
+];
+
+data_get($data, '*.name');
+
+// ['Desk 1', 'Desk 2'];
+```
+
+### `data_set`
+
+`data_set` 函数使用『点』符号在嵌套数组或对象中设置值：
+
+```php
+$data = ['products' => ['desk' => ['price' => 100]]];
+
+data_set($data, 'products.desk.price', 200);
+
+// ['products' => ['desk' => ['price' => 200]]]
+```
+
+该函数还接受通配符，并将相应地在目标上设置值：
+
+```php
+$data = [
+    'products' => [
+        ['name' => 'Desk 1', 'price' => 100],
+        ['name' => 'Desk 2', 'price' => 150],
+    ],
+];
+
+data_set($data, 'products.*.price', 200);
+
+/*
+    [
+        'products' => [
+            ['name' => 'Desk 1', 'price' => 200],
+            ['name' => 'Desk 2', 'price' => 200],
+        ],
+    ]
+*/
+```
+
+默认情况下，将覆盖任何存在的值。如果你只想设置一个值，如果它不存在，你可以传递 `false` 作为第四个参数：
+
+```php
+$data = ['products' => ['desk' => ['price' => 100]]];
+
+data_set($data, 'products.desk.price', 200, false);
+
+// ['products' => ['desk' => ['price' => 100]]]
+```
+
+### `head()`
+
+`head` 函数返回给定数组中的第一个元素：
+
+```php
+$array = [100, 200, 300];
+
+$first = head($array);
+
+// 100
+```
+
+### `last()`
+
+`last` 函数返回给定数组中的最后一个元素：
+
+```php
+$array = [100, 200, 300];
+
+$last = last($array);
+
+// 300
+```
+
 ## 路径
 
 ## 字符串
