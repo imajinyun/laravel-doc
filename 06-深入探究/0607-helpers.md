@@ -759,7 +759,7 @@ $string = 'The event will take place between :start and :end';
 
 $replaced = preg_replace_array('/:[a-z_]+/', ['8:30', '9:00'], $string);
 
-// 活动将在 8:30 到 9:00 之间举行
+// The event will take place between 8:30 and 9:00
 ```
 
 ### `Str::after()`
@@ -797,6 +797,328 @@ $converted = Str::camel('foo_bar');
 
 // fooBar
 ```
+
+### `Str::contains()`
+
+`Str::contains` 方法确定给定字符串是否包含给定值（区分大小写）：
+
+```php
+use Illuminate\Support\Str;
+
+$contains = Str::contains('This is my name', 'my');
+
+// true
+```
+
+你还可以传递一个值数组，以确定给定字符串是否包含任何值：
+
+```php
+use Illuminate\Support\Str;
+
+$contains = Str::contains('This is my name', ['my', 'foo']);
+
+// true
+```
+
+### `Str::containsAll()`
+
+`Str::containsAll` 方法确定给定字符串是否包含所有数组值：
+
+```php
+use Illuminate\Support\Str;
+
+$containsAll = Str::containsAll('This is my name', ['my', 'name']);
+
+// true
+```
+
+### `Str::endsWith()`
+
+`Str::endsWith` 方法确定给定字符串是否以给定值结束：
+
+```php
+use Illuminate\Support\Str;
+
+$result = Str::endsWith('This is my name', 'name');
+
+// true
+```
+
+### `Str::finish()`
+
+`Str::finish` 方法将给定值的一个实例添加到一个字符串中，如果它还没有以该值结束：
+
+```php
+use Illuminate\Support\Str;
+
+$adjusted = Str::finish('this/string', '/');
+
+// this/string/
+
+$adjusted = Str::finish('this/string/', '/');
+
+// this/string/
+```
+
+### `Str::is()`
+
+`Str::is` 方法确定给定字符串是否与给定模式匹配。星号可以用来表示通配符：
+
+```php
+use Illuminate\Support\Str;
+
+$matches = Str::is('foo*', 'foobar');
+
+// true
+
+$matches = Str::is('baz*', 'foobar');
+
+// false
+```
+
+### `Str::kebab()`
+
+`Str::kebab` 转换给定的字符串为 `kebab-case`：
+
+```php
+use Illuminate\Support\Str;
+
+$converted = Str::kebab('fooBar');
+
+// foo-bar
+```
+
+### Str::limit()
+
+`Str::limit` 方法以指定的长度截断给定的字符串：
+
+```php
+use Illuminate\Support\Str;
+
+$truncated = Str::limit('The quick brown fox jumps over the lazy dog', 20);
+
+// The quick brown fox...
+```
+
+你还可以传递第三个参数来更改将附加到末尾的字符串：
+
+```php
+use Illuminate\Support\Str;
+
+$truncated = Str::limit('The quick brown fox jumps over the lazy dog', 20, ' (...)');
+
+// The quick brown fox (...)
+```
+
+### `Str::orderedUuid()`
+
+`Str::orderedUuid` 方法生成一个『时间戳优先的』UUID，它可以有效地存储在索引数据库列中：
+
+```php
+use Illuminate\Support\Str;
+
+return (string) Str::orderedUuid();
+```
+
+### `Str::plural()`
+
+`Str::plural` 方法将字符串转换为其复数形式。这个函数目前只支持英语：
+
+```php
+use Illuminate\Support\Str;
+
+$plural = Str::plural('car');
+
+// cars
+
+$plural = Str::plural('child');
+
+// children
+```
+
+你可以提供一个整数作为函数的第二个参数来检索字符串的单数或复数形式：
+
+```php
+use Illuminate\Support\Str;
+
+$plural = Str::plural('child', 2);
+
+// children
+
+$plural = Str::plural('child', 1);
+
+// child
+```
+
+### `Str::random()`
+
+`Str::random` 方法生成指定长度的随机字符串。这个函数使用 PHP 的 `random_bytes` 函数：
+
+```php
+use Illuminate\Support\Str;
+
+$random = Str::random(40);
+```
+
+### `Str::replaceArray()`
+
+`Str::replaceArray` 方法使用数组顺序替换字符串中的给定值：
+
+```php
+use Illuminate\Support\Str;
+
+$string = 'The event will take place between ? and ?';
+
+$replaced = Str::replaceArray('?', ['8:30', '9:00'], $string);
+
+// The event will take place between 8:30 and 9:00
+```
+
+### `Str::replaceFirst()`
+
+`Str::replaceFirst` 方法替换字符串中给定值的第一次出现：
+
+```php
+use Illuminate\Support\Str;
+
+$replaced = Str::replaceFirst('the', 'a', 'the quick brown fox jumps over the lazy dog');
+
+// a quick brown fox jumps over the lazy dog
+```
+
+### `Str::replaceLast()`
+
+`Str::replaceLast` 方法替换字符串中给定值的最后一次出现：
+
+```php
+use Illuminate\Support\Str;
+
+$replaced = Str::replaceLast('the', 'a', 'the quick brown fox jumps over the lazy dog');
+
+// the quick brown fox jumps over a lazy dog
+```
+
+### `Str::singular()`
+
+`Str::singular` 方法将字符串转换为它的单数形式。这个函数目前只支持英语：
+
+```php
+use Illuminate\Support\Str;
+
+$singular = Str::singular('cars');
+
+// car
+
+$singular = Str::singular('children');
+
+// child
+```
+
+### `Str::slug()`
+
+`Str::slug` 方法从给定的字符串生成一个 URL 友好的 `slug`：
+
+```php
+use Illuminate\Support\Str;
+
+$slug = Str::slug('Laravel 5 Framework', '-');
+
+// laravel-5-framework
+```
+
+### `Str::snake()`
+
+`Str::snake` 方法将给定的字符串转换为 `snake_case`：
+
+```php
+use Illuminate\Support\Str;
+
+$converted = Str::snake('fooBar');
+
+// foo_bar
+```
+
+### `Str::start()`
+
+`Str::start` 方法将给定值的单个实例添加到字符串中，如果字符串还没有以该值开始：
+
+```php
+use Illuminate\Support\Str;
+
+$adjusted = Str::start('this/string', '/');
+
+// /this/string
+
+$adjusted = Str::start('/this/string', '/');
+
+// /this/string
+```
+
+### `Str::startsWith()`
+
+`Str::startsWith` 方法确定给定字符串是否以给定值开头：
+
+```php
+use Illuminate\Support\Str;
+
+$result = Str::startsWith('This is my name', 'This');
+
+// true
+```
+
+### `Str::studly()`
+
+`Str::studly` 方法将给定的字符串转换为 `StudlyCase`：
+
+```php
+use Illuminate\Support\Str;
+
+$converted = Str::studly('foo_bar');
+
+// FooBar
+```
+
+### `Str::title()`
+
+`Str::title` 方法将给定的字符串转换为 `Title Case`：
+
+```php
+use Illuminate\Support\Str;
+
+$converted = Str::title('a nice title uses the correct case');
+
+// A Nice Title Uses The Correct Case
+```
+
+### `Str::uuid()`
+
+`Str::uuid` 方法生成一个 UUID（版本 4）：
+
+```php
+use Illuminate\Support\Str;
+
+return (string) Str::uuid();
+```
+
+### `trans()`
+
+`trans` 函数使用 [本地化文件](https://laravel.com/docs/5.8/localization) 翻译给定的翻译键：
+
+```php
+echo trans('messages.welcome');
+```
+
+如果指定的转换键不存在，则 `trans` 函数将返回给定的键。因此，使用上面的示例，如果转换键不存在，`trans` 函数将返回 `messages.welcome`。
+
+### `trans_choice()`
+
+`trans_choice` 函数用词形转换给定的翻译键：
+
+```php
+echo trans_choice('messages.notifications', $unreadCount);
+```
+
+如果指定的翻译键不存在，`trans_choice` 函数将返回给定的键。因此，使用上面的示例，如果翻译键不存在，则 `trans_choice` 函数将返回 `messages.notifications`。
 
 ## URL
 
