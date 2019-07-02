@@ -638,7 +638,165 @@ $last = last($array);
 
 ## 路径
 
+### `app_path()`
+
+`app_path` 函数返回 `app` 目录的完全限定路径。你还可以使用 `app_path` 函数生成相对于应用程序目录的文件的完全限定路径：
+
+```php
+$path = app_path();
+
+$path = app_path('Http/Controllers/Controller.php');
+```
+
+### `base_path()`
+
+`base_path` 函数返回到项目根的完全限定路径。你还可以使用 `base_path` 函数生成相对于项目根目录的给定文件的完全限定路径：
+
+```php
+$path = base_path();
+
+$path = base_path('vendor/bin');
+```
+
+### `config_path()`
+
+`config_path` 函数返回 `config` 目录的完全限定路径。你还可以使用 `config_path` 函数生成应用程序配置目录中给定文件的完全限定路径：
+
+```php
+$path = config_path();
+
+$path = config_path('app.php');
+```
+
+### `database_path()`
+
+`database_path` 函数返回 `database` 目录的完全限定路径。你还可以使用 `database_path` 函数生成数据库目录中给定文件的完全限定路径：
+
+```php
+$path = database_path();
+
+$path = database_path('factories/UserFactory.php');
+```
+
+### `mix()`
+
+`mix` 函数返回 [版本化的 Mix 文件](https://laravel.com/docs/5.8/mix) 的路径：
+
+```php
+$path = mix('css/app.css');
+```
+
+### `public_path()`
+
+`public_path` 函数返回 `public` 目录的完全限定路径。你还可以使用 `public_path` 函数生成公共目录中给定文件的完全限定路径：
+
+```php
+$path = public_path();
+
+$path = public_path('css/app.css');
+```
+
+### `resource_path()`
+
+`resource_path` 函数返回 `resources` 目录的完全限定路径。你还可以使用 `resource_path` 函数生成资源目录中给定文件的完全限定路径：
+
+```php
+$path = resource_path();
+
+$path = resource_path('sass/app.scss');
+```
+
+### `storage_path()`
+
+`storage_path` 函数返回 `storage` 目录的完全限定路径。你还可以使用 `storage_path` 函数生成存储目录中给定文件的完全限定路径：
+
+```php
+$path = storage_path();
+
+$path = storage_path('app/file.txt');
+```
+
 ## 字符串
+
+### `__()`
+
+`__` 函数使用你的 [本地化文件](https://laravel.com/docs/5.8/localization) 翻译给定的翻译字符串或翻译键：
+
+```php
+echo __('Welcome to our application');
+
+echo __('messages.welcome');
+```
+
+如果指定的翻译字符串或键不存在，`__` 函数将返回给定的值。因此，使用上面的示例，如果翻译键不存在，`__` 函数将返回 `messages.welcome`。
+
+### `class_basename()`
+
+`class_basename` 函数返回给定类的类名，其中类的命名空间已被移除：
+
+```php
+$class = class_basename('Foo\Bar\Baz');
+
+// Baz
+```
+
+### `e()`
+
+`e` 函数运行 PHP 的 `htmlspecialchars` 函数，默认情况下，`double_encode` 选项设置为 `true`：
+
+```php
+echo e('<html>foo</html>');
+
+// &lt;html&gt;foo&lt;/html&gt;
+```
+
+### `preg_replace_array()`
+
+`preg_replace_array` 函数使用数组依次替换字符串中的给定模式：
+
+```php
+$string = 'The event will take place between :start and :end';
+
+$replaced = preg_replace_array('/:[a-z_]+/', ['8:30', '9:00'], $string);
+
+// 活动将在 8:30 到 9:00 之间举行
+```
+
+### `Str::after()`
+
+`Str::after` 方法返回字符串中给定值之后的所有内容：
+
+```php
+use Illuminate\Support\Str;
+
+$slice = Str::after('This is my name', 'This is');
+
+// ' my name'
+```
+
+### `Str::before()`
+
+`Str::before` 方法方法返回在字符串给定值之前的所有内容：
+
+```php
+use Illuminate\Support\Str;
+
+$slice = Str::before('This is my name', 'my name');
+
+// 'This is '
+```
+
+### `Str::camel()`
+
+`Str::camel` 方法转换给定的字符串到 `camelCase`：
+
+```php
+use Illuminate\Support\Str;
+
+$converted = Str::camel('foo_bar');
+
+// fooBar
+```
 
 ## URL
 
