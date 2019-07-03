@@ -1262,6 +1262,152 @@ $container = app();
 $api = app('HelpSpot\API');
 ```
 
+### `auth()`
+
+`auth` 函数返回一个 [认证者](https://laravel.com/docs/5.8/authentication) 实例。为了方便，你可以使用它代替 `Auth` 外观：
+
+```php
+$user = auth()->user();
+```
+
+如果需要，可以指定要访问哪个守卫实例：
+
+```php
+$user = auth('admin')->user();
+```
+
+### `back()`
+
+`back` 函数生成一个 [重定向 HTTP 响应](https://laravel.com/docs/5.8/responses#redirects) 到用户之前的位置：
+
+```php
+return back($status = 302, $headers = [], $fallback = false);
+
+return back();
+```
+
+### `bcrypt()`
+
+`bcrypt` 函数使用 Bcrypt [散列](https://laravel.com/docs/5.8/hashing) 给定的值。你可以使用它作为 `Hash` 外观的替代：
+
+```php
+$password = bcrypt('my-secret-password');
+```
+
+### `blank()`
+
+`blank` 函数返回给定值是否为『空』：
+
+```phpblank('');
+blank('   ');
+blank(null);
+blank(collect());
+
+// true
+
+blank(0);
+blank(true);
+blank(false);
+
+// false
+```
+
+有关 `blank` 的逆函数，请参阅 [填充](https://laravel.com/docs/5.8/helpers#method-filled) 方法。
+
+### `broadcast()`
+
+`broadcast` 函数 [广播](https://laravel.com/docs/5.8/broadcasting) 给定的 [事件](https://laravel.com/docs/5.8/events) 给它的侦听器：
+
+```php
+broadcast(new UserRegistered($user));
+```
+
+### `cache()`
+
+`cache` 函数可用于从 [缓存](https://laravel.com/docs/5.8/cache) 中获取值。如果给定的键在缓存中不存在，将返回一个可选的默认值：
+
+```php
+$value = cache('key');
+
+$value = cache('key', 'default');
+```
+
+你可以通过将键 / 值对数组传递给函数来将条目添加到缓存中。你还应当传递缓存值应被视为有效的秒数或持续时间：
+
+```php
+cache(['key' => 'value'], 300);
+
+cache(['key' => 'value'], now()->addSeconds(10));
+```
+
+### `class_uses_recursive()`
+
+`class_uses_recursive` 函数返回一个类使用的所有特征，包括其所有父类使用的特征：
+
+```php
+$traits = class_uses_recursive(App\User::class);
+```
+
+### `collect()`
+
+`collect` 函数从给定值创建一个 [集合](https://laravel.com/docs/5.8/collections) 实例：
+
+```php
+$collection = collect(['taylor', 'abigail']);
+```
+
+### `config()`
+
+`config` 获取 [配置](https://laravel.com/docs/5.8/configuration) 变量的值。可以使用『点』语法访问配置值，其中包括文件的名称和希望访问的选项。可以指定默认值，如果不存在配置选项，则返回默认值：
+
+```php
+$value = config('app.timezone');
+
+$value = config('app.timezone', $default);
+```
+
+你可以通过传递键 / 值对数组在运行时设置配置变量：
+
+```php
+config(['app.debug' => true]);
+```
+
+### `cookie()`
+
+`cookie` 函数创建一个新的 [Cookie](https://laravel.com/docs/5.8/requests#cookies) 实例：
+
+```php
+$cookie = cookie('name', 'value', $minutes);
+```
+
+### `csrf_field()`
+
+`csrf_field` 函数生成一个包含 CSRF 令牌值的 HTML `hidden` 输入字段。例如，使用 [Blade 语法](https://laravel.com/docs/5.8/blade)：
+
+```php
+{{ csrf_field() }}
+```
+
+### `csrf_token()`
+
+`csrf_token` 函数检索当前 CSRF 令牌的值：
+
+```php
+$token = csrf_token();
+```
+
+### `dd()`
+
+`dd` 函数转储给定的变量并结束脚本的执行：
+
+```php
+dd($value);
+
+dd($value1, $value2, $value3, ...);
+```
+
+如果不想停止脚本的执行，可以使用 [dump](https://laravel.com/docs/5.8/helpers#method-dump) 函数。
+
 ### `session()`
 
 `session` 函数可用于获取或设置 [会话](https://laravel.com/docs/5.8/session) 值：
@@ -1282,20 +1428,6 @@ session(['chairs' => 7, 'instruments' => 3]);
 $value = session()->get('key');
 
 session()->put('key', $value);
-```
-
-### `auth()`
-
-`auth` 函数返回一个 [认证者](https://laravel.com/docs/5.8/authentication) 实例。为了方便，你可以使用它代替 `Auth` 外观：
-
-```php
-$user = auth()->user();
-```
-
-如果需要，可以指定要访问哪个守卫实例：
-
-```php
-$user = auth('admin')->user();
 ```
 
 ### `tap()`
