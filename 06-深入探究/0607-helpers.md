@@ -1122,4 +1122,327 @@ echo trans_choice('messages.notifications', $unreadCount);
 
 ## URL
 
+### `action()`
+
+`action` 函数为给定的控制器动作生成一个 URL。你不需要传递控制器的完整名称空间。相反，传递相对于 `App\Http\Controllers` 命名空间的控制器类名：
+
+```php
+$url = action('HomeController@index');
+
+$url = action([HomeController::class, 'index']);
+```
+
+如果方法接受路由参数，可以将它们作为第二个参数传递给方法：
+
+```php
+$url = action('UserController@profile', ['id' => 1]);
+```
+
+### `asset()`
+
+`asset` 函数使用请求的当前模式（HTTP 或 HTTPS）为资产生成 URL：
+
+```php
+$url = asset('img/photo.jpg');
+```
+
+你可以通过在 `.env` 文件中设置 `ASSET_URL` 变量来配置资产 URL 主机。如果你将资产托管在 Amazon S3 这样的外部服务上，这将非常有用：
+
+```php
+// ASSET_URL=http://example.com/assets
+
+$url = asset('img/photo.jpg'); // http://example.com/assets/img/photo.jpg
+```
+
+### `route()`
+
+`route` 函数为给定的命名路由生成 URL：
+
+```php
+$url = route('routeName');
+```
+
+如果路由接受参数，可以将它们作为第二个参数传递给方法：
+
+```php
+$url = route('routeName', ['id' => 1]);
+```
+
+默认情况下，`route` 函数生成一个绝对 URL。如果你希望生成相对 URL，可以将 `false` 作为第三个参数传递：
+
+```php
+$url = route('routeName', ['id' => 1], false);
+```
+
+### `secure_asset()`
+
+`secure_asset` 函数使用 HTTPS 为资产生成 URL：
+
+```php
+$url = secure_asset('img/photo.jpg');
+```
+
+### `secure_url()`
+
+`secure_url` 函数为给定路径生成完全限定的 HTTPS URL：
+
+```php
+$url = secure_url('user/profile');
+
+$url = secure_url('user/profile', [1]);
+```
+
+### `url()`
+
+`url` 函数为给定路径生成一个完全限定的 URL：
+
+```php
+$url = url('user/profile');
+
+$url = url('user/profile', [1]);
+```
+
+如果路径没有提供，将返回一个 `Illuminate\Routing\UrlGenerator` 实例：
+
+```php
+$current = url()->current();
+
+$full = url()->full();
+
+$previous = url()->previous();
+```
+
 ## 杂项
+
+### `abort()`
+
+`abort` 函数抛出 [一个 HTTP 异常](https://laravel.com/docs/5.8/errors#http-exceptions)，该异常将由 [异常处理程序](https://laravel.com/docs/5.8/errors#the-exception-handler) 渲染：
+
+```php
+abort(403);
+```
+
+你还可以提供异常的响应文本和自定义响应头：
+
+```php
+abort(403, 'Unauthorized.', $headers);
+```
+
+### `abort_if()`
+
+如果给定的布尔表达式计算结果为 `true`，`abort_if` 函数将抛出 HTTP 异常：
+
+```php
+abort_if(! Auth::user()->isAdmin(), 403);
+```
+
+与 `abort` 方法类似，你还可以将异常的响应文本作为第三个参数，并将自定义响应头数组作为第四个参数。
+
+### `abort_unless()`
+
+如果给定的布尔表达式计算结果为 `false`，`abort_unless` 函数抛出 HTTP 异常：
+
+```php
+abort_unless(Auth::user()->isAdmin(), 403);
+```
+
+与 `abort` 方法类似，你还可以将异常的响应文本作为第三个参数，并将自定义响应头数组作为第四个参数。
+
+### `app()`
+
+`app` 函数返回 [服务容器](https://laravel.com/docs/5.8/container) 实例：
+
+```php
+$container = app();
+```
+
+你可以传递一个类名或接口名来从容器中解析它：
+
+```php
+$api = app('HelpSpot\API');
+```
+
+### `session()`
+
+`session` 函数可用于获取或设置 [会话](https://laravel.com/docs/5.8/session) 值：
+
+```php
+$value = session('key');
+```
+
+你可以通过将键 / 值对数组传递给函数来设置值：
+
+```php
+session(['chairs' => 7, 'instruments' => 3]);
+```
+
+如果没有值传递给函数，则会返回会话存储：
+
+```php
+$value = session()->get('key');
+
+session()->put('key', $value);
+```
+
+### `auth()`
+
+`auth` 函数返回一个 [认证者](https://laravel.com/docs/5.8/authentication) 实例。为了方便，你可以使用它代替 `Auth` 外观：
+
+```php
+$user = auth()->user();
+```
+
+如果需要，可以指定要访问哪个守卫实例：
+
+```php
+$user = auth('admin')->user();
+```
+
+### `tap()`
+
+`tap` 函数接受两个参数：一个任意的 `$value` 和一个闭包。`$value` 将传递给闭包，然后由 `tap` 函数返回。闭包的返回值无关紧要：
+
+```php
+$user = tap(User::first(), function ($user) {
+    $user->name = 'taylor';
+
+    $user->save();
+});
+```
+
+如果没有传递闭包给 `tap` 函数，你可以调用给定 `$value` 上的任何方法。你调用的方法的返回值总是 `$value`，而不管方法在其定义中实际返回什么。例如，Eloquent 的 `update` 方法通常返回一个整数。但是，我们可以通过 `tap` 函数链接 `update` 方法调用来强制方法返回模型本身：
+
+```php
+$user = tap($user)->update([
+    'name' => $name,
+    'email' => $email,
+]);
+```
+
+要向类添加 `tap` 方法，你可以在类中添加 `Illuminate\Support\Traits\Tappable` 特性。此特性的 `tap` 方法接受闭包作为其惟一参数。对象实例本身将传递给闭包，然后通过 `tap` 方法返回：
+
+```php
+return $user->tap(function ($user) {
+    //
+});
+```
+
+### throw_if()
+
+如果给定布尔表达式的计算结果为 `true`，`throw_if` 函数抛出给定的异常：
+
+```php
+throw_if(! Auth::user()->isAdmin(), AuthorizationException::class);
+
+throw_if(
+    ! Auth::user()->isAdmin(),
+    AuthorizationException::class,
+    'You are not allowed to access this page'
+);
+```
+
+### `throw_unless()`
+
+如果给定布尔表达式的计算结果为 `false`，`throw_unless` 函数抛出给定的异常：
+
+```php
+throw_unless(Auth::user()->isAdmin(), AuthorizationException::class);
+
+throw_unless(
+    Auth::user()->isAdmin(),
+    AuthorizationException::class,
+    'You are not allowed to access this page'
+);
+```
+
+### `today()`
+
+`today` 函数为当前日期创建一个新的 `Illuminate\Support\Carbon` 实例：
+
+```php
+$today = today();
+```
+
+### `trait_uses_recursive()`
+
+`trait_uses_recursive` 函数返回一个 Trait 使用的所有 Trait：
+
+```php
+$traits = trait_uses_recursive(\Illuminate\Notifications\Notifiable::class);
+```
+
+### `transform()`
+
+`transform` 在给定值上执行一个 `Closure`，如果值不是 [空的](https://laravel.com/docs/5.8/helpers#method-blank) 并返回 `Closure` 的结果：
+
+```php
+$callback = function ($value) {
+    return $value * 2;
+};
+
+$result = transform(5, $callback);
+
+// 10
+```
+
+默认值或 `Closure` 也可以作为第三个参数传递给方法。如果给定值为空，则返回此值：
+
+```php
+$result = transform(null, $callback, 'The value is blank');
+
+// The value is blank
+```
+
+### `validator()`
+
+`validator` 函数使用给定的参数创建新的 [验证器](https://laravel.com/docs/5.8/validation) 实例。为方便起见，你可以使用它而不是 `Validator` 外观：
+
+```php
+$validator = validator($data, $rules, $messages);
+```
+
+### `value()`
+
+`value` 函数返回给定的值。但是，如果将 `Closure` 传递给函数，则将执行 `Closure`，然后返回其结果：
+
+```php
+$result = value(true);
+
+// true
+
+$result = value(function () {
+    return false;
+});
+
+// false
+```
+
+### `view()`
+
+`view` 函数将返回一个 [视图](https://laravel.com/docs/5.8/views) 实例：
+
+```php
+return view('auth.login');
+```
+
+### `with()`
+
+`with` 函数返回给定的值。如果将 `Closure` 作为函数的第二个参数传递，则将执行 `Closure` 并返回其结果：
+
+```php
+$callback = function ($value) {
+    return (is_numeric($value)) ? $value * 2 : 0;
+};
+
+$result = with(5, $callback);
+
+// 10
+
+$result = with(null, $callback);
+
+// 0
+
+$result = with(5, null);
+
+// 5
+```
