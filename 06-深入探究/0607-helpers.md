@@ -1600,6 +1600,88 @@ return optional(User::find($id), function ($user) {
 $policy = policy(App\User::class);
 ```
 
+### `redirect()`
+
+`redirect` 函数返回一个 [重定向 HTTP 响应](https://laravel.com/docs/5.8/responses#redirects)，或者在没有参数的情况下调用时返回重定向器实例：
+
+```php
+return redirect($to = null, $status = 302, $headers = [], $secure = null);
+
+return redirect('/home');
+
+return redirect()->route('route.name');
+```
+
+### `report()`
+
+`report` 函数将使用一个 [异常处理器](https://laravel.com/docs/5.8/errors#the-exception-handler) 的 `report` 方法报告异常：
+
+```php
+report($e);
+```
+
+### `request()`
+
+`request` 函数返回当前 [请求](https://laravel.com/docs/5.8/requests) 实例或获取一个输入条目：
+
+```php
+$request = request();
+
+$value = request('key', $default);
+```
+
+### `rescue()`
+
+`rescue` 函数执行给定的闭包并捕获在执行过程中发生的任何异常。所有捕获到的异常将发送到 [异常处理器](https://laravel.com/docs/5.8/errors#the-exception-handler) 的 `report` 方法；但是，请求将继续处理：
+
+```php
+return rescue(function () {
+    return $this->method();
+});
+```
+
+你还可以向 `rescue` 函数传递第二个参数。这个参数将是『默认』值，如果在执行闭包时发生异常，应该返回该值：
+
+```php
+return rescue(function () {
+    return $this->method();
+}, false);
+
+return rescue(function () {
+    return $this->method();
+}, function () {
+    return $this->failure();
+});
+```
+
+### `resolve()`
+
+`resolve` 函数使用 [服务容器](https://laravel.com/docs/5.8/container) 将给定的类或接口名称解析为其实例：
+
+```php
+$api = resolve('HelpSpot\API');
+```
+
+### `response()`
+
+`response` 函数创建 [响应](https://laravel.com/docs/5.8/responses) 实例或获取响应工厂的实例：
+
+```php
+return response('Hello World', 200, $headers);
+
+return response()->json(['foo' => 'bar'], 200, $headers);
+```
+
+### `retry()`
+
+`restry` 函数尝试执行给定的回调，直到满足给定的最大尝试阈值。如果回调函数没有抛出异常，它的返回值将被返回。如果回调引发异常，则会自动重试。如果超过最大尝试计数，将抛出异常：
+
+```php
+return retry(5, function () {
+    // 尝试 5 次，在两次尝试之间休息 100 毫秒...
+}, 100);
+```
+
 ### `session()`
 
 `session` 函数可用于获取或设置 [会话](https://laravel.com/docs/5.8/session) 值：
