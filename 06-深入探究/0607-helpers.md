@@ -1408,6 +1408,198 @@ dd($value1, $value2, $value3, ...);
 
 如果不想停止脚本的执行，可以使用 [dump](https://laravel.com/docs/5.8/helpers#method-dump) 函数。
 
+### `decrypt()`
+
+`decrypt` 函数使用 Laravel 的 [加密器](https://laravel.com/docs/5.8/encryption) 解密给定值：
+
+```php
+$decrypted = decrypt($encrypted_value);
+```
+
+### `dispatch()`
+
+`dispatch` 函数将给定的 [作业](https://laravel.com/docs/5.8/queues#creating-jobs) 推到 Laravel [作业队列](https://laravel.com/docs/5.8/queues)：
+
+```php
+dispatch(new App\Jobs\SendEmails);
+```
+
+### `dispatch_now()`
+
+`dispatch_now` 函数立即运行给定的 [作业](https://laravel.com/docs/5.8/queues#creating-jobs)，并从其 `handle` 方法返回值：
+
+```php
+$result = dispatch_now(new App\Jobs\SendEmails);
+```
+
+### `dump()`
+
+`dump` 函数转储给定的变量：
+
+```php
+dump($value);
+
+dump($value1, $value2, $value3, ...);
+```
+
+如果你想在转储变量之后停止执行脚本，请使用 [dd](https://laravel.com/docs/5.8/helpers#method-dd) 函数替代。
+
+{% hint style="info" %}
+
+你可以使用 Artisan 的 `dump-server` 命令拦截所有 `dump` 调用，并将它们显示在控制台窗口而不是浏览器中。
+
+{% endhint %}
+
+### `encrypt()`
+
+`encrypt` 函数使用 Laravel 的 [加密器](https://laravel.com/docs/5.8/encryption) 加密给定的值：
+
+```php
+$encrypted = encrypt($unencrypted_value);
+```
+
+### `env()`
+
+`env` 函数检索 [环境变量](https://laravel.com/docs/5.8/configuration#environment-configuration) 的值或返回默认值：
+
+```php
+$env = env('APP_ENV');
+
+// 如果 APP_ENV 没有设置，返回 'production'...
+$env = env('APP_ENV', 'production');
+```
+
+{% hint style="dagner" %}
+
+如果在部署过程中执行 `config:cache` 命令，应该确保只从配置文件中调用 `env` 函数。一旦配置被缓存，`.env` 文件将不会被加载，所有对 `env` 函数的调用都将返回 `null`。
+
+{% endhint %}
+
+### `event()`
+
+`event` 函数将给定的事件调度给它的 [侦听器](https://laravel.com/docs/5.8/events)：
+
+```php
+event(new UserRegistered($user));
+```
+
+### `factory()`
+
+`factory` 函数为给定的类、名称和数量创建模型工厂生成器。它可以在 [测试](https://laravel.com/docs/5.8/database-testing#writing-factories) 或 [播种](https://laravel.com/docs/5.8/seeding#using-model-factories) 时使用：
+
+```php
+$user = factory(App\User::class)->make();
+```
+
+### `filled()`
+
+`filled` 函数返回给定值是否为不『空』：
+
+```php
+filled(0);
+filled(true);
+filled(false);
+
+// true
+
+filled('');
+filled('   ');
+filled(null);
+filled(collect());
+
+// false
+```
+
+有关 `filled` 的逆函数，请参 [空](https://laravel.com/docs/5.8/helpers#method-blank) 函数。
+
+### `info()`
+
+`info` 函数将把信息写入日志：
+
+```php
+info('Some helpful information!');
+```
+
+上下文数据数组也可以传递给函数：
+
+```php
+info('User login attempt failed.', ['id' => $user->id]);
+```
+
+### `logger()`
+
+`logger` 函数可用于向 [日志](https://laravel.com/docs/5.8/logging) 写入 `debug` 级别的消息：
+
+```php
+logger('Debug message');
+```
+
+上下文数据数组也可以传递给函数：
+
+```php
+logger('User has logged in.', ['id' => $user->id]);
+```
+
+如果没有向函数传递任何值，则返回一个 [logger](https://laravel.com/docs/5.8/errors#logging) 实例：
+
+```php
+logger()->error('You are not allowed here.');
+```
+
+### `method_field()`
+
+`method_field` 函数生成一个 HTML `hidden` 输入字段，其中包含表单的 HTTP 动词欺骗值。例如，使用 [Blade 语法](https://laravel.com/docs/5.8/blade)：
+
+```php
+<form method="POST">
+    {{ method_field('DELETE') }}
+</form>
+```
+
+### `now()`
+
+`now` 函数为当前时间创建一个新的 `Illuminate\Support\Carbon` 实例：
+
+```php
+$now = now();
+```
+
+### `old()`
+
+`old` 函数 [检索](https://laravel.com/docs/5.8/requests#retrieving-input) 闪存到会话的 [旧输入值](https://laravel.com/docs/5.8/requests#old-input)：
+
+```php
+$value = old('value');
+
+$value = old('value', 'default');
+```
+
+### `optional()`
+
+`optional` 函数接受任何参数，并允许你访问该对象上的属性或调用方法。如果给定对象为 `null`，属性和方法将返回 `null`，而不是导致错误：
+
+```php
+return optional($user->address)->street;
+
+{!! old('name', optional($user)->name) !!}
+```
+
+`optional` 函数也接受闭包作为它的第二个参数。如果作为第一个参数提供的值不为空，则将调用闭包：
+
+```php
+return optional(User::find($id), function ($user) {
+    return new DummyUser;
+});
+```
+
+### `policy()`
+
+`policy` 函数检索给定类的 [策略](https://laravel.com/docs/5.8/authorization#creating-policies) 实例：
+
+```php
+$policy = policy(App\User::class);
+```
+
 ### `session()`
 
 `session` 函数可用于获取或设置 [会话](https://laravel.com/docs/5.8/session) 值：
