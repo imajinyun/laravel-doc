@@ -608,26 +608,447 @@ class User extends Authenticatable
 
 ### 先决条件
 
+在 Laravel 中发送短信通知由 [Nexmo](https://www.nexmo.com/) 提供支持。在通过 Nexmo 发送通知之前，你需要安装 `laravel/nexmo-notification-channel` Composer 软件包：
+
+```bash
+composer require laravel/nexmo-notification-channel
+```
+
+接下来，你需要为 `config/services.php` 配置文件添加一些配置选项。你可以复制以下示例配置以开始：
+
+```php
+'nexmo' => [
+    'key' => env('NEXMO_KEY'),
+    'secret' => env('NEXMO_SECRET'),
+    'sms_from' => '15556666666',
+],
+```
+
+`sms_from` 选项是发送 SMS 消息的电话号码。你应该在 Nexmo 控制面板中为你的应用程序生成一个电话号码。
+
 ### 格式化 SMS 通知
+
+如果通知支持以 SMS 形式发送，则应该在通知类上定义一个 `toNexmo` 方法。该方法将接收一个 `$notifiable` 实体，并返回一个 `Illuminate\Notifications\Messages\NexmoMessage` 实例：
+
+```php
+/**
+ * 获取通知的 Nexmo / SMS 表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return NexmoMessage
+ */
+public function toNexmo($notifiable)
+{
+    return (new NexmoMessage)
+                ->content('Your SMS message content');
+}
+```
+
+#### Unicode 内容
+
+如果您的 SMS 消息包含 Unicode 字符，那么在构造 `NexmoMessage` 实例时应该调用 `unicode` 方法：
+
+```php
+/**
+ * 获取通知的 Nexmo / SMS 表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return NexmoMessage
+ */
+public function toNexmo($notifiable)
+{
+    return (new NexmoMessage)
+                ->content('Your unicode message')
+                ->unicode();
+}
+```
 
 ### 自定义『发送者』号码
 
+如果你希望从与 `config/services.php` 文件中指定的电话号码不同的电话号码发送一些通知，则可以在 `NexmoMessage` 实例上使用 `from` 方法：
+
+```php
+/**
+ * 获取通知的 Nexmo / SMS 表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return NexmoMessage
+ */
+public function toNexmo($notifiable)
+{
+    return (new NexmoMessage)
+                ->content('Your SMS message content')
+                ->from('15554443333');
+}
+```
+
 ### 路由 SMS 通知
+
+当通过 `nexmo` 通道发送通知时，通知系统将自动查找被通知实体的 `phone_number` 属性。如果你想自定义发送通知的电话号码，在实体上定义 `routeNotificationForNexmo` 方法：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class User extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * Nexmo 通道的路由通知。
+     *
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return string
+     */
+    public function routeNotificationForNexmo($notification)
+    {
+        return $this->phone;
+    }
+}
+```
 
 ## Slack 通知
 
 ### 先决条件
 
+在通过 Slack 发送通知之前，必须通过 Composer 安装通知通道：
+
+```bash
+composer require laravel/slack-notification-channel
+```
+
+你还需要为你的 Slack 团队配置一个『[传入的 Webhook](https://api.slack.com/incoming-webhooks)』集成。这个集成将为你提供一个 URL，你可以在 [路由 Slack 通知](https://laravel.com/docs/5.8/notifications#routing-slack-notifications) 时使用它：
+
 ### 格式化 Slack 通知
+
+如果通知支持以 Slack 消息的形式发送，则应该在通知类上定义一个 `toSlack` 方法。该方法将接收一个 `$notifiable` 实体，并返回一个 `Illuminate\Notifications\Messages\SlackMessage` 实例。Slack 消息可能包含文本内容以及一个『附件』，用于格式化附加文本或字段数组。让我们来看一个基本的 `toSlack` 示例：
+
+```php
+/**
+ * 获取通知的 Slack 表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return SlackMessage
+ */
+public function toSlack($notifiable)
+{
+    return (new SlackMessage)
+                ->content('One of your invoices has been paid!');
+}
+```
+
+在本例中，我们只是向 Slack 发送了一行文本，这将创建一条如下所示的消息：
+
+![basic-slack-notification.png](https://entities.oss-cn-beijing.aliyuncs.com/laravel/docs/5.8/basic-slack-notification.png)
+
+#### 自定义发送者 & 接收者
+
+你可以使用 `from` 和 `to` 方法来定制发送方和接收方。`from` 方法接受用户名和表情符标识符，而 `to` 方法接受通道或用户名：
+
+```php
+/**
+ * 获取通知的 Slack 表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return SlackMessage
+ */
+public function toSlack($notifiable)
+{
+    return (new SlackMessage)
+                ->from('Ghost', ':ghost:')
+                ->to('#other')
+                ->content('This will be sent to #other');
+}
+```
+
+你也可以用图片来代替表情符号：
+
+```php
+/**
+ * 获取通知的 Slack 表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return SlackMessage
+ */
+public function toSlack($notifiable)
+{
+    return (new SlackMessage)
+                ->from('Laravel')
+                ->image('https://laravel.com/favicon.png')
+                ->content('This will display the Laravel logo next to the message');
+}
+```
 
 ### Slack 附件
 
+你还可以向 Slack 消息添加『附件』。附件提供了比简单文本消息更丰富的格式化选项。在本例中，我们将发送一个关于应用程序中发生的异常的错误通知，其中包括一个链接，以查看关于异常的更多详情：
+
+```php
+/**
+ * 获取通知的 Slack 表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return SlackMessage
+ */
+public function toSlack($notifiable)
+{
+    $url = url('/exceptions/'.$this->exception->id);
+
+    return (new SlackMessage)
+                ->error()
+                ->content('Whoops! Something went wrong.')
+                ->attachment(function ($attachment) use ($url) {
+                    $attachment->title('Exception: File Not Found', $url)
+                               ->content('File [background.jpg] was not found.');
+                });
+}
+```
+
+上面的示例将生成一个如下所示的 Slack 消息：
+
+![basic-slack-attachment.png](https://entities.oss-cn-beijing.aliyuncs.com/laravel/docs/5.8/basic-slack-attachment.png)
+
+附件还允许你指定应该呈现给用户的数据数组。给定的数据将以表格格式显示，以便于阅读：
+
+```php
+/**
+ * 获取通知的 Slack 表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return SlackMessage
+ */
+public function toSlack($notifiable)
+{
+    $url = url('/invoices/'.$this->invoice->id);
+
+    return (new SlackMessage)
+                ->success()
+                ->content('One of your invoices has been paid!')
+                ->attachment(function ($attachment) use ($url) {
+                    $attachment->title('Invoice 1322', $url)
+                               ->fields([
+                                    'Title' => 'Server Expenses',
+                                    'Amount' => '$1,234',
+                                    'Via' => 'American Express',
+                                    'Was Overdue' => ':-1:',
+                                ]);
+                });
+}
+```
+
+上面的示例将创建一个如下所示的 Slack 消息：
+
+![slack-fields-attachment.png](https://entities.oss-cn-beijing.aliyuncs.com/laravel/docs/5.8/slack-fields-attachment.png)
+
+#### Markdown 附件内容
+
+如果你的某些附件字段包含 Markdown，则可以使用 `markdown` 方法指示 Slack 解析并将给定的附件字段显示为 Markdown 格式的文本。此方法接受的值为：`pretext`、`text` 和 / 或 `fields`。有关 Slack 附件格式的更多信息，请查看 [Slack API 文档](https://api.slack.com/docs/message-formatting#message_formatting)：
+
+```php
+/**
+ * 获取通知的 Slack 表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return SlackMessage
+ */
+public function toSlack($notifiable)
+{
+    $url = url('/exceptions/'.$this->exception->id);
+
+    return (new SlackMessage)
+                ->error()
+                ->content('Whoops! Something went wrong.')
+                ->attachment(function ($attachment) use ($url) {
+                    $attachment->title('Exception: File Not Found', $url)
+                               ->content('File [background.jpg] was *not found*.')
+                               ->markdown(['text']);
+                });
+}
+```
+
 ### 路由 Slack 通知
+
+要将 Slack 通知路由到适当的位置，在你的可通知实体上定义 `routeNotificationForSlack` 方法。此方法应该返回通知应该发送到的勾子 URL。勾子 URL 可以通过向你的 Slack 团队添加『传入的 Webhook』服务来生成：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class User extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * Slack 通道的路由通知。
+     *
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return string
+     */
+    public function routeNotificationForSlack($notification)
+    {
+        return 'https://hooks.slack.com/services/...';
+    }
+}
+```
 
 ## 本地化通知
 
+Laravel 允许你在当前语言之外的语言环境中发送通知，甚至在通知排队时还会记住该语言环境。
+
+为了实现这一点，`Illuminate\Notifications\Notification` 类提供了一个 `locale` 方法来设置期望的语言。在格式化通知时，应用程序将更改为此区域设置，然后在格式化完成后恢复到以前的区域设置：
+
+```php
+$user->notify((new InvoicePaid($invoice))->locale('es'));
+```
+
+多个可通知条目的本地化也可以通过 `Notification` 外观实现：
+
+```php
+Notification::locale('es')->send($users, new InvoicePaid($invoice));
+```
+
 ### 用户首选区域设置
+
+有时，应用程序存储每个用户的首选区域环境。通过在你的可通知模型上实现 `HasLocalePreference` 契约，你可以指示 Laravel 在发送通知时使用这个存储的区域设置：
+
+```php
+use Illuminate\Contracts\Translation\HasLocalePreference;
+
+class User extends Model implements HasLocalePreference
+{
+    /**
+     * 获取用户首选的区域设置。
+     *
+     * @return string
+     */
+    public function preferredLocale()
+    {
+        return $this->locale;
+    }
+}
+```
+
+一旦你实现了该接口，Laravel 将在向模型发送通知和可邮件时自动使用首选区域设置。因此，在使用这个接口时不需要调用 `locale` 方法：
+
+```php
+$user->notify(new InvoicePaid($invoice));
+```
 
 ## 通知事件
 
+当发送通知时，`Illuminate\Notifications\Events\NotificationSent` 事件由通知系统触发。它包含『可通知』实体和通知实例本身。你可以在 `EventServiceProvider` 中为该事件注册监听器：
+
+```php
+/**
+ * 应用程序的事件监听器映射。
+ *
+ * @var array
+ */
+protected $listen = [
+    'Illuminate\Notifications\Events\NotificationSent' => [
+        'App\Listeners\LogNotification',
+    ],
+];
+```
+
+{% hint style="info" %}
+
+在 `EventServiceProvider` 中注册监听器之后，使用 `event:generate` Artisan 命令快速生成监听器类。
+
+{% endhint %}
+
+在事件监听器中，你可以访问事件的 `notifiable`、`notification` 和 `channel` 属性，以了解关于通知接收者或通知本身的更多信息：
+
+```php
+/**
+ * 处理事件。
+ *
+ * @param  NotificationSent  $event
+ * @return void
+ */
+public function handle(NotificationSent $event)
+{
+    // $event->channel
+    // $event->notifiable
+    // $event->notification
+    // $event->response
+}
+```
+
 ## 自定义通道
+
+Laravel 附带几个通知通道，但是你可能希望编写自己的驱动来通过其他通道传递通知。Laravel 让事情变得简单。首先，定义一个包含 `send` 方法的类。该方法应该接收两个参数：一个 `$notifiable` 和一个 `$notification`：
+
+```php
+<?php
+
+namespace App\Channels;
+
+use Illuminate\Notifications\Notification;
+
+class VoiceChannel
+{
+    /**
+     * 发送指定的通知。
+     *
+     * @param  mixed  $notifiable
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return void
+     */
+    public function send($notifiable, Notification $notification)
+    {
+        $message = $notification->toVoice($notifiable);
+
+        // Send notification to the $notifiable instance...
+    }
+}
+```
+
+一旦定义了通知通道类，就可以从任何你的通知的 `via` 方法返回类名：
+
+```php
+<?php
+
+namespace App\Notifications;
+
+use Illuminate\Bus\Queueable;
+use App\Channels\VoiceChannel;
+use App\Channels\Messages\VoiceMessage;
+use Illuminate\Notifications\Notification;
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class InvoicePaid extends Notification
+{
+    use Queueable;
+
+    /**
+     * 获取通知的通道。
+     *
+     * @param  mixed  $notifiable
+     * @return array|string
+     */
+    public function via($notifiable)
+    {
+        return [VoiceChannel::class];
+    }
+
+    /**
+     * 获取通知的语言表示形式。
+     *
+     * @param  mixed  $notifiable
+     * @return VoiceMessage
+     */
+    public function toVoice($notifiable)
+    {
+        // ...
+    }
+}
+```
