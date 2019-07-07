@@ -526,11 +526,107 @@ $user->notifications()->delete();
 
 在广播通知之前，你应该配置并熟悉 Laravel 的 [事件广播](https://laravel.com/docs/5.8/broadcasting) 服务。事件广播提供了一种方法来响应来自 JavaScript 客户端的服务器端触发的 Laravel 事件。
 
+### 格式化广播通知
+
+`broadcast` 频道使用 Laravel 的 [事件广播](https://laravel.com/docs/5.8/broadcasting) 服务广播通知，允许 JavaScript 客户端实时捕获通知。如果通知支持广播，则可以在通知类上定义 `toBroadcast` 方法。此方法将接收一个 `$notifiable` 实体，并应返回 `BroadcastMessage` 实例。如果 `toBroadcast` 方法不存在，那么 `toArray` 方法将用于收集应该广播的数据。返回的数据将被编码为 JSON 并广播到 JavaScript 客户端。让我们看一个 `toBroadca` 的例子：
+
+```php
+use Illuminate\Notifications\Messages\BroadcastMessage;
+
+/**
+ * 获取通知的可广播表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return BroadcastMessage
+ */
+public function toBroadcast($notifiable)
+{
+    return new BroadcastMessage([
+        'invoice_id' => $this->invoice->id,
+        'amount' => $this->invoice->amount,
+    ]);
+}
+```
+
+#### 广播队列配置
+
+所有广播通知都排队等待广播。如果你希望配置用于对广播操作排队的队列连接或队列名称，可以使用 `BroadcastMessage` 类的 `onConnection` 和 `onQueue` 方法：
+
+```php
+return (new BroadcastMessage($data))
+                ->onConnection('sqs')
+                ->onQueue('broadcasts');
+```
+
+{% hint style="info" %}
+
+除了指定的数据外，广播通知还将包含一个 `type` 字段，其中包含通知的类名。
+
+{% endhint %}
+
+### 监听通知
+
+通知将在使用一个 `{notifiable}.{id}` 约定格式化的私有频道上广播。因此，如果要向 ID 为 `1` 的 `App\User` 实例发送通知，则通知将在 `App.User.1` 私有通道上广播。使用 [Laravel Echo](https://laravel.com/docs/5.8/broadcasting) 时，你可以使用 `notification` 帮助程序方法轻松地在通道上收听通知：
+
+```js
+Echo.private('App.User.' + userId)
+    .notification((notification) => {
+        console.log(notification.type);
+    });
+```
+
+#### 自定义通知通道
+
+如果你想自定义一个应通知实体在哪个频道接收其广播通知，你可以在该应通知实体上定义 `receivesBroadcastNotificationsOn` 方法：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class User extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * 用户收到通知广播的频道。
+     *
+     * @return string
+     */
+    public function receivesBroadcastNotificationsOn()
+    {
+        return 'users.'.$this->id;
+    }
+}
+```
+
 ## SMS 通知
+
+### 先决条件
+
+### 格式化 SMS 通知
+
+### 自定义『发送者』号码
+
+### 路由 SMS 通知
 
 ## Slack 通知
 
+### 先决条件
+
+### 格式化 Slack 通知
+
+### Slack 附件
+
+### 路由 Slack 通知
+
 ## 本地化通知
+
+### 用户首选区域设置
 
 ## 通知事件
 
