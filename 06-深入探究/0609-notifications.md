@@ -175,21 +175,356 @@ public function toMail($notifiable)
 
 {% endhint %}
 
+#### 其他通知的格式选项
+
+你可以使用 `view` 方法指定一个自定义模板，而不是在通知类中定义文本的『行』，该模板应当用于渲染通知的电子邮件：
+
+```php
+/**
+ * 获取通知的邮件表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return \Illuminate\Notifications\Messages\MailMessage
+ */
+public function toMail($notifiable)
+{
+    return (new MailMessage)->view(
+        'emails.name', ['invoice' => $this->invoice]
+    );
+}
+```
+
+此外，你可以从 `toMail` 方法返回一个 [可邮件对象](https://laravel.com/docs/5.8/mail)：
+
+```php
+use App\Mail\InvoicePaid as Mailable;
+
+/**
+ * 获取通知的邮件表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return Mailable
+ */
+public function toMail($notifiable)
+{
+    return (new Mailable($this->invoice))->to($this->user->email);
+}
+```
+
+#### 错误消息
+
+有些通知会通知用户错误，比如发票付款失败。你可以通过在构建你的消息时调用 `error` 方法来指示邮件消息与错误有关。当对邮件消息使用 `error` 方法时，对操作的调用按钮将是红色而不是蓝色：
+
+```php
+/**
+ * 获取通知的邮件表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return \Illuminate\Notifications\Message
+ */
+public function toMail($notifiable)
+{
+    return (new MailMessage)
+                ->error()
+                ->subject('Notification Subject')
+                ->line('...');
+}
+```
+
 ### 自定义发送者
+
+默认情况下，电子邮件的发件人 / 发件人地址在 `config/mail.php` 配置文件中定义。但是，你可以使用 `from` 方法指定特定通知的发件人地址：
+
+```php
+/**
+ * 获取通知的邮件表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return \Illuminate\Notifications\Messages\MailMessage
+ */
+public function toMail($notifiable)
+{
+    return (new MailMessage)
+                ->from('test@example.com', 'Example')
+                ->line('...');
+}
+```
 
 ### 自定义接收者
 
+当通过 `mail` 通道发送通知时，通知系统将自动查找你的应通知实体上的 `email` 属性。你可以通过在实体上定义一个 `routeNotificationForMail` 方法自定义用于投递通知的电子邮件地址：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class User extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * 路由邮件通道的通知。
+     *
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return string
+     */
+    public function routeNotificationForMail($notification)
+    {
+        return $this->email_address;
+    }
+}
+```
+
 ### 自定义主题
+
+默认情况下，电子邮件的主题是格式化为『标题大写』的通知类名。因此，如果你的通知类名为 `InvoicePaid`，电子邮件的主题将是 `Invoice Paid`。如果希望为消息指定一个显式主题，可以在构建消息时调用 `subject` 方法：
+
+```php
+/**
+ * 获取通知的邮件表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return \Illuminate\Notifications\Messages\MailMessage
+ */
+public function toMail($notifiable)
+{
+    return (new MailMessage)
+                ->subject('Notification Subject')
+                ->line('...');
+}
+```
 
 ### 自定义模板
 
+你可以通过发布通知包的资源来修改邮件通知使用的 HTML 和纯文本模板。运行此命令后，邮件通知模板将位于 `resources/views/vendor/notifications` 目录中：
+
+```php
+php artisan vendor:publish --tag=laravel-notifications
+```
+
 ### 预览邮件通知
+
+在设计邮件通知模板时，可以方便地像典型的 Blade 模板一样在浏览器中快速预览渲染的邮件消息。因此，Laravel 允许你直接从路由闭包或控制器返回由邮件通知生成的任何邮件消息。当返回 `MailMessage` 时，它将在浏览器中渲染和显示，允许你快速预览其设计，而不需要将其发送到实际的电子邮件地址：
+
+```php
+Route::get('mail', function () {
+    $invoice = App\Invoice::find(1);
+
+    return (new App\Notifications\InvoicePaid($invoice))
+                ->toMail($invoice->user);
+});
+```
 
 ## Markdown 邮件通知
 
+Markdown 邮件通知允许你利用预先构建的邮件通知模板，同时允许你更自由地编写更长的自定义消息。由于消息是用 Markdown 编写的，所以 Laravel 能够为消息呈现漂亮的、响应性强的 HTML 模板，同时还能自动生成纯文本副本。
+
+### 生成消息
+
+要生成具有相应 Markdown 模板的通知，可以使用 `make:notification` Artisan 命令的 `——markdown` 选项：
+
+```bash
+php artisan make:notification InvoicePaid --markdown=mail.invoice.paid
+```
+
+与所有其他邮件通知一样，使用 Markdown 模板的通知应该在其通知类上定义一个 `toMail` 方法。但是，不要使用 `line` 和 `action` 方法来构造通知，而是使用 `markdown` 方法来指定应该使用的 Markdown 模板的名称：
+
+```php
+/**
+ * 获取通知的邮件表现形式。
+ *
+ * @param  mixed  $notifiable
+ * @return \Illuminate\Notifications\Messages\MailMessage
+ */
+public function toMail($notifiable)
+{
+    $url = url('/invoice/'.$this->invoice->id);
+
+    return (new MailMessage)
+                ->subject('Invoice Paid')
+                ->markdown('mail.invoice.paid', ['url' => $url]);
+}
+```
+
+### 编写消息
+
+Markdown 邮件通知使用 Blade 组件和 Markdown 语法的组合，允许你在利用 Laravel 预先设计的通知组件的同时轻松构造通知：
+
+```php
+@component('mail::message')
+# Invoice Paid
+
+Your invoice has been paid!
+
+@component('mail::button', ['url' => $url])
+View Invoice
+@endcomponent
+
+Thanks,<br>
+{{ config('app.name') }}
+@endcomponent
+```
+
+#### 按钮组件
+
+按钮组件渲染一个居中按钮链接。组件接受两个参数，一个 `url` 和一个可选 `color`。支持的颜色是 `blue`、`green` 和 `red`。你可以向通知添加任意数量的按钮组件：
+
+```html
+@component('mail::button', ['url' => $url, 'color' => 'green'])
+View Invoice
+@endcomponent
+```
+
+#### 面板组件
+
+面板组件在一个背景颜色与通知的其余部分略有不同的面板中渲染给定的文本块。这允许你将注意力吸引到给定的文本块上：
+
+```html
+@component('mail::panel')
+This is the panel content.
+@endcomponent
+```
+
+#### 表格组件
+
+表格组件允许你将 Markdown 表转换为 HTML 表格。组件接受 Markdown 表格作为其内容。使用默认的 Markdown 表对齐语法支持表格列对齐：
+
+```html
+@component('mail::table')
+| Laravel  | Table         | Example |
+| -------- | ------------- | ------- |
+| Col 2 is | Centered      | $10     |
+| Col 3 is | Right-Aligned | $20     |
+@endcomponent
+```
+
+### 自定义组件
+
+你可以将所有 Markdown 通知组件导出到你自己的应用程序进行定制。要导出组件，使用 `vendor:publish` Artisan 命令发布 `laravel-mail` 资产标记：
+
+```bash
+php artisan vendor:publish --tag=laravel-mail
+```
+
+此命令将 Markdown 邮件组件发布到 `resources/views/vendor/mail` 目录。`mail` 目录将包含一个 `html` 和一个 `text` 目录，每个目录包含它们各自可用组件的相应表示。你可以随意自定义这些组件。
+
+#### 自定义 CSS
+
+导出组件后，`resources/views/vendor/mail/html/themes` 目录将包含 `default.css` 文件。你可以在此文件中自定义 CSS，并且你的样式将自动在 Markdown 通知的 HTML 表示中内联。
+
+{% hint style="info" %}
+
+如果你想为 Markdown 组件构建一个全新的主题，请在 `html/themes` 目录中编写一个新的 CSS 文件，并更改 `mail` 配置文件的 `theme` 选项。
+
+{% endhint %}
+
 ## 数据库通知
 
+### 先决条件
+
+`database` 通知通道将通知信息存储在数据库表中。该表将包含通知类型等信息以及描述通知的自定义 JSON 数据。
+
+你可以查询该表以在应用程序的用户界面中显示通知。但是，在此之前，你需要创建一个数据库表来保存你的通知。你可以使用 `notification:table` 命令生成具有合适表模式的迁移：
+
+```bash
+php artisan notifications:table
+
+php artisan migrate
+```
+
+### 格式化数据库通知
+
+如果通知支持存储在数据库表中，则应在通知类上定义 `toDatabase` 或 `toArray` 方法。该方法将接收一个 `$notifiable` 实体，并返回一个普通的 PHP 数组。返回的数组将被编码为 JSON 并存储在 `notifications` 表的 `data` 列中。让我们看一个 `toArray` 方法的例子：
+
+```php
+/**
+ * 获取通知的数组表示形式。
+ *
+ * @param  mixed  $notifiable
+ * @return array
+ */
+public function toArray($notifiable)
+{
+    return [
+        'invoice_id' => $this->invoice->id,
+        'amount' => $this->invoice->amount,
+    ];
+}
+```
+
+#### `toDatabase` VS `toArray`
+
+`broadcast` 通道还使用 `toArray` 方法来确定要向 JavaScript 客户端广播哪些数据。如果希望 `database` 和 `broadcast` 频道有两种不同的数组表示，应该定义 `toDatabase` 方法，而不是 `toArray` 方法。
+
+### 访问通知
+
+一旦通知存储在数据库中，你就需要一种方便的方法来从你的通知实体上访问它们。在 Laravel 的默认 `App\User` 模型中包含了一个 `Illuminate\Notifications\Notifiable` 特性，它包含一个 `notifications` Eloquent 关系，可以为实体返回通知。要获取通知，你可以像访问其他任何 Eloquent 关系一样访问此方法。默认情况下，通知将根据 `created_at` 的时间戳进行排序：
+
+```php
+$user = App\User::find(1);
+
+foreach ($user->notifications as $notification) {
+    echo $notification->type;
+}
+```
+
+如果只想检索『未读』通知，你可以使用 `unreadNotifications` 关系。同样，这些通知将根据 `created_at` 的时间戳进行排序：
+
+```php
+$user = App\User::find(1);
+
+foreach ($user->unreadNotifications as $notification) {
+    echo $notification->type;
+}
+```
+
+{% hint style="info" %}
+
+要从 JavaScript 客户端访问通知，你应该为应用程序定义一个通知控制器，该控制器返回可通知实体（如当前用户）的通知。然后，你可以从 JavaScript 客户端向该控制器的 URI 发出一个 HTTP 请求。
+
+{% endhint %}
+
+### 通知标记为已读
+
+通常，你希望在用户查看通知时将其标记为『已读』。`Illuminate\Notifications\Notifiable` 特性提供了一个 `markAsRead` 方法，该方法更新通知数据库记录上的 `read_at` 列：
+
+```php
+$user = App\User::find(1);
+
+foreach ($user->unreadNotifications as $notification) {
+    $notification->markAsRead();
+}
+```
+
+但是，你可以直接在通知集合上使用 `markAsRead` 方法，而不是遍历每个通知：
+
+```php
+$user->unreadNotifications->markAsRead();
+```
+
+你还可以使用大量更新将查询的所有通知标记为已读，而不从数据库中检索它们：
+
+```php
+$user = App\User::find(1);
+
+$user->unreadNotifications()->update(['read_at' => now()]);
+```
+
+你可以 `delete` 通知以将它们从表中完全删除：
+
+```php
+$user->notifications()->delete();
+```
+
 ## 广播通知
+
+### 先决条件
+
+在广播通知之前，你应该配置并熟悉 Laravel 的 [事件广播](https://laravel.com/docs/5.8/broadcasting) 服务。事件广播提供了一种方法来响应来自 JavaScript 客户端的服务器端触发的 Laravel 事件。
 
 ## SMS 通知
 
