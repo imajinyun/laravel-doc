@@ -24,7 +24,7 @@ Facades 有很多好处。它们提供简洁，令人难忘的语法，允许你
 
 {% hint style="info" %}
 
-在构建与 Laravel 进行交互的第三方包时，最好选择是注入 [Laravel 契约](https://laravel.com/docs/5.8/contracts) 而不使用 facades。因为第三方包是在 Laravel 自身之外构建的，你将无法访问 Laravel 的 facades 测试辅助函数。
+在构建与 Laravel 进行交互的第三方包时，最好选择是注入 [Laravel 合约](https://laravel.com/docs/5.8/contracts) 而不使用 facades。因为第三方包是在 Laravel 自身之外构建的，你将无法访问 Laravel 的 facades 测试辅助函数。
 
 {% endhint %}
 

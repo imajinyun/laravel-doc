@@ -6,7 +6,7 @@
 
 ### 模型准备
 
-首先，验证你的 `App\User` 模型实现了 `Illuminate\Contracts\Auth\MustVerifyEmail` 契约：
+首先，验证你的 `App\User` 模型实现了 `Illuminate\Contracts\Auth\MustVerifyEmail` 合约：
 
 ```php
 <?php

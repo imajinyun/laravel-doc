@@ -486,11 +486,11 @@ class AuthServiceProvider extends ServiceProvider
 ],
 ```
 
-### 用户提供者契约
+### 用户提供者合约
 
 `Illuminate\Contracts\Auth\UserProvider` 实现仅负责从持久存储系统（如：MySQL，Riak 等）中获取一个 `Illuminate\Contracts\Auth\Authenticatable` 实现。这两个接口允许 Laravel 认证机制继续起作用，而不管用户数据是如何存储的，或者使用什么类型的类来表示它。
 
-让我们来看一下 `Illuminate\Contracts\Auth\UserProvider` 契约：
+让我们来看一下 `Illuminate\Contracts\Auth\UserProvider` 合约：
 
 ```php
 <?php
@@ -518,9 +518,9 @@ interface UserProvider {
 
 `validateCredentials` 方法应该将给定的 `$user` 与 `$credentials` 进行比较以对用户进行认证。例如，该方法可能应该使用 `Hash::check` 来比较 `$user->getAuthPassword()` 和 `$credentials['password']` 的值。此方法应返回 `true` 或 `false` 以表明密码是否有效。
 
-### 认证契约
+### 认证合约
 
-现在，我们已经研究了 `UserProvider` 上的每个方法，让我们来看看 `Authenticatable` 契约。请记住，提供者应该从 `retrieveById`，`retrieveByToken` 和 `retrieveByCredentials` 方法返回此接口的实现：
+现在，我们已经研究了 `UserProvider` 上的每个方法，让我们来看看 `Authenticatable` 合约。请记住，提供者应该从 `retrieveById`，`retrieveByToken` 和 `retrieveByCredentials` 方法返回此接口的实现：
 
 ```php
 <?php

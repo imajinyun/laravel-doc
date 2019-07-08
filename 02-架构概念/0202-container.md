@@ -145,7 +145,7 @@ public function __construct(EventPusher $pusher)
 
 ### 上下文绑定
 
-有时你可能有两个利用相同接口的类，但你希望在每个类中注入不同的实现。例如，两个控制器可能依赖 `Illuminate\Contracts\Filesystem\Filesystem` [契约](https://laravel.com/docs/5.8/contracts) 的不同实现。Laravel 提供了一个简单，流畅的来定义此行为：
+有时你可能有两个利用相同接口的类，但你希望在每个类中注入不同的实现。例如，两个控制器可能依赖 `Illuminate\Contracts\Filesystem\Filesystem` [合约](https://laravel.com/docs/5.8/contracts) 的不同实现。Laravel 提供了一个简单，流畅的来定义此行为：
 
 ```php
 use Illuminate\Support\Facades\Storage;

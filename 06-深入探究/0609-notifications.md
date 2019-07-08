@@ -917,7 +917,7 @@ Notification::locale('es')->send($users, new InvoicePaid($invoice));
 
 ### 用户首选区域设置
 
-有时，应用程序存储每个用户的首选区域环境。通过在你的可通知模型上实现 `HasLocalePreference` 契约，你可以指示 Laravel 在发送通知时使用这个存储的区域设置：
+有时，应用程序存储每个用户的首选区域环境。通过在你的可通知模型上实现 `HasLocalePreference` 合约，你可以指示 Laravel 在发送通知时使用这个存储的区域设置：
 
 ```php
 use Illuminate\Contracts\Translation\HasLocalePreference;

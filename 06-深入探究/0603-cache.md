@@ -62,9 +62,9 @@ Schema::create('cache', function ($table) {
 
 ### 获取一个缓存实例
 
-`Illuminate\Contracts\Cache\Factory` 和 `Illuminate\Contracts\Cache\Repository contracts` 提供了对 Laravel 缓存服务的访问。`Factory` 契约提供为你的应用程序定义的所有缓存驱动程序的访问。`Repository` 契约通常是你的应用程序的默认缓存驱动程序的实现，通过你的 `cache` 配置文件指定。
+`Illuminate\Contracts\Cache\Factory` 和 `Illuminate\Contracts\Cache\Repository contracts` 提供了对 Laravel 缓存服务的访问。`Factory` 合约提供为你的应用程序定义的所有缓存驱动程序的访问。`Repository` 合约通常是你的应用程序的默认缓存驱动程序的实现，通过你的 `cache` 配置文件指定。
 
-不过，你也可以使用 `Cache` 外观，我们将在整个文档中使用缓存外观。`Cache` 外观提供了对 Laravel 缓存契约底层实现的方便、简洁的访问：
+不过，你也可以使用 `Cache` 外观，我们将在整个文档中使用缓存外观。`Cache` 外观提供了对 Laravel 缓存合约底层实现的方便、简洁的访问：
 
 ```php
 <?php
@@ -314,7 +314,7 @@ Cache::lock('foo')->forceRelease();
 
 ### 缓存助手
 
-除了使用 `Cache` 外观或 [缓存契约](https://laravel.com/docs/5.8/contracts) 外，你还可以使用全局 `cache` 函数来通过缓存检索和存储数据。当使用一个字符串参数调用 `cache` 函数时，它将返回给定键的值：
+除了使用 `Cache` 外观或 [缓存合约](https://laravel.com/docs/5.8/contracts) 外，你还可以使用全局 `cache` 函数来通过缓存检索和存储数据。当使用一个字符串参数调用 `cache` 函数时，它将返回给定键的值：
 
 ```php
 $value = cache('key');
@@ -388,7 +388,7 @@ Cache::tags('authors')->flush();
 
 ### 编写驱动
 
-要创建自定义缓存驱动程序，首先需要实现 `Illuminate\Contracts\Cache\Store` [契约](https://laravel.com/docs/5.8/contracts)。因此，一个 MongoDB 缓存实现看起来像这样：
+要创建自定义缓存驱动程序，首先需要实现 `Illuminate\Contracts\Cache\Store` [合约](https://laravel.com/docs/5.8/contracts)。因此，一个 MongoDB 缓存实现看起来像这样：
 
 ```php
 <?php

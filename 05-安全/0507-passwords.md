@@ -18,7 +18,7 @@
 
 ## 数据库注意事项
 
-首先，验证你的 `App\User` 模型实现 `Illuminate\Contracts\Auth\CanResetPassword` 契约。框架中包含的 `App\User` 模型已经实现了此接口，并使用 `Illuminate\Auth\Passwords\CanResetPassword` 特性来包含实现该接口所需的方法。
+首先，验证你的 `App\User` 模型实现 `Illuminate\Contracts\Auth\CanResetPassword` 合约。框架中包含的 `App\User` 模型已经实现了此接口，并使用 `Illuminate\Auth\Passwords\CanResetPassword` 特性来包含实现该接口所需的方法。
 
 ### 生成重置令牌表迁移
 
