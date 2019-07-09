@@ -175,7 +175,98 @@ public function boot()
 echo trans('courier::messages.welcome');
 ```
 
+#### 发布翻译
+
+如果你想将你的包的翻译发布到应用程序的 `resources/lang/vendor` 目录，你可以使用服务提供者的 `publishes` 方法。`publishes` 方法接受一个包数组路径及其所需的发布位置。例如，要发布 `courier` 包的翻译文件，你可以执行以下操作：
+
+```php
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    $this->loadTranslationsFrom(__DIR__.'/path/to/translations', 'courier');
+
+    $this->publishes([
+        __DIR__.'/path/to/translations' => resource_path('lang/vendor/courier'),
+    ]);
+}
+```
+
+现在，当你的包的用户执行 Laravel 的 `vendor:publish` Artisan 命令时，你的包的翻译将被发布到指定的发布位置。
+
+### 视图
+
+要将你的包的 [视图](https://laravel.com/docs/5.8/views) 注册到 Laravel，你需要告诉 Laravel 视图的位置。你可以使用服务提供者的 `loadViewsFrom` 方法来实现这一点。`loadViewsFrom` 方法接受两个参数：你的视图模板的路径和你的包的名称。例如，如果你的包的名称是 `courier`，你可以将以下内容添加到你的服务提供者的 `boot` 方法中：
+
+```php
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    $this->loadViewsFrom(__DIR__.'/path/to/views', 'courier');
+}
+```
+
+使用 `package::view` 语法约定引用包视图。因此，一旦在服务提供者中注册了视图路径，就可以像这样从 `courier` 包中加载 `admin` 视图：
+
+```php
+Route::get('admin', function () {
+    return view('courier::admin');
+});
+```
+
+#### 覆盖包视图
+
+当你使用 `loadViewsFrom` 方法时，Laravel 实际上为你的视图注册了两个位置：应用程序的 `resources/views/vendor` 目录和你指定的目录。因此，使用 `courier` 示例，Laravel 将首先检查开发人员是否在 `resources/views/vendor/courier` 中提供了自定义版本的视图。然后，如果视图尚未自定义，Laravel 将搜索你在调用 `loadViewsFrom` 时指定的包视图目录。这使包的用户可以轻松自定义 / 覆盖你的包的视图。
+
+#### 发布视图
+
+如果你希望将视图发布到应用程序的 `resources/views/vendor` 目录，则可以使用服务提供者的 `publishes` 方法。`publishes` 方法接受一个包视图路径数组及其期望的发布位置：
+
+```php
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    $this->loadViewsFrom(__DIR__.'/path/to/views', 'courier');
+
+    $this->publishes([
+        __DIR__.'/path/to/views' => resource_path('views/vendor/courier'),
+    ]);
+}
+```
+
+现在，当你的包的用户执行 Laravel 的 `vendor:publish` Artisan 命令时，你的包的视图将被复制到指定的发布位置。
+
 ## 命令
+
+要将你包的 Artisan 命令注册到 Laravel，你可以使用 `commands` 方法。这个方法期望一个命令类名数组。一旦注册了这些命令，你就可以使用 [Artisan CLI](https://laravel.com/docs/5.8/artisan) 执行它们：
+
+```php
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    if ($this->app->runningInConsole()) {
+        $this->commands([
+            FooCommand::class,
+            BarCommand::class,
+        ]);
+    }
+}
+```
 
 ## 公共资产
 
