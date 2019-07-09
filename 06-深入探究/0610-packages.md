@@ -270,4 +270,52 @@ public function boot()
 
 ## 公共资产
 
+你的包可能具有 JavaScript、CSS 和图像等资产。要将这些资产发布到应用程序的 `public` 目录，使用服务提供者的 `publishes` 方法。在本例中，我们还将添加一个 `public` 资产组标记，它可能用于发布相关资产组：
+
+```php
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    $this->publishes([
+        __DIR__.'/path/to/assets' => public_path('vendor/courier'),
+    ], 'public');
+}
+```
+
+现在，当你的包的用户执行 `vendor:publish` 命令时，你的资产将被复制到指定的发布位置。由于每次更新包时通常都需要覆盖资产，所以可以使用 `——force` 标志：
+
+```bash
+php artisan vendor:publish --tag=public --force
+```
+
 ## 发布文件组
+
+你可能希望单独发布包资产和资源组。例如，你可能希望允许你的用户发布你的包的配置文件，而不必强制发布你的包的资产。你可以通过在从包的服务提供者调用 `publishes` 方法时『标记』它们来实现这一点。例如，让我们使用标记在包服务提供者的 `boot` 方法中定义两个发布组：
+
+```php
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    $this->publishes([
+        __DIR__.'/../config/package.php' => config_path('package.php')
+    ], 'config');
+
+    $this->publishes([
+        __DIR__.'/../database/migrations/' => database_path('migrations')
+    ], 'migrations');
+}
+```
+
+现在，你的用户可以通过在执行 `vendor:publish` 命令时引用他们的标记来单独发布这些组：
+
+```bash
+php artisan vendor:publish --tag=config
+```
