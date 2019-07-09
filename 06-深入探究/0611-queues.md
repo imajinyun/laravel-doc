@@ -233,6 +233,242 @@ Amazon SQS 队列服务的最大延迟时间为 15 分钟。
 
 ### 同步调度
 
+如果希望立即（同步地）调度作业，你可以使用 `dispatchNow` 方法。当使用此方法时，作业不会排队，并将立即在当前进程中处理：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Jobs\ProcessPodcast;
+use App\Http\Controllers\Controller;
+
+class PodcastController extends Controller
+{
+    /**
+     * 存储一个新的播客。
+     *
+     * @param  Request  $request
+     * @return Response
+     */
+    public function store(Request $request)
+    {
+        // 创建播客...
+
+        ProcessPodcast::dispatchNow($podcast);
+    }
+}
+```
+
+### 作业链
+
+作业链允许你指定应该按顺序运行的排队作业列表。如果序列中的一个作业失败，其他作业将不会运行。要执行排队作业链，你可以对任何你的可调度的作业使用 `withChain` 方法：
+
+```php
+ProcessPodcast::withChain([
+    new OptimizePodcast,
+    new ReleasePodcast
+])->dispatch();
+```
+
+{% hint style="danger" %}
+
+使用 `$this->delete()` 方法删除作业将不会阻止正在处理的链式作业。只有当链中的作业失败时，链才会停止执行。
+
+{% endhint %}
+
+#### 链连接 & 队列
+
+如果你要指定应用于链作业的默认连接和队列，可以使用 `allOnConnection` 和 `allOnQueue` 方法。除非为排队作业显式分配了不同的连接 / 队列，否则这些方法指定应使用的队列连接和队列名称：
+
+```php
+ProcessPodcast::withChain([
+    new OptimizePodcast,
+    new ReleasePodcast
+])->dispatch()->allOnConnection('redis')->allOnQueue('podcasts');
+```
+
+### 自定义队列 & 连接
+
+#### 调度到特定队列
+
+通过将作业推入不同的队列，你可以对排队的作业进行『分类』，甚至可以为分配给不同队列的作业确定优先级。记住，这并不会将作业推到你的队列配置文件中定义的不同队列『连接』，而是只推到单个连接中的特定队列。要指定队列，请在调度作业时使用 `onQueue` 方法：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Jobs\ProcessPodcast;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+
+class PodcastController extends Controller
+{
+    /**
+     * 存储一个新的播客。
+     *
+     * @param  Request  $request
+     * @return Response
+     */
+    public function store(Request $request)
+    {
+        // 创建播客...
+
+        ProcessPodcast::dispatch($podcast)->onQueue('processing');
+    }
+}
+```
+
+#### 调度到特定的连接
+
+如果正在处理多个队列连接，你可以指定要将作业推送到哪个连接。要指定连接，在调度作业时使用 `onConnection` 方法：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Jobs\ProcessPodcast;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+
+class PodcastController extends Controller
+{
+    /**
+     * 存储一个新的播客。
+     *
+     * @param  Request  $request
+     * @return Response
+     */
+    public function store(Request $request)
+    {
+        // 创建播客...
+
+        ProcessPodcast::dispatch($podcast)->onConnection('sqs');
+    }
+}
+```
+
+你可以链接 `onConnection` 和 `onQueue` 方法来指定作业的连接和队列：
+
+```php
+ProcessPodcast::dispatch($podcast)
+              ->onConnection('sqs')
+              ->onQueue('processing');
+```
+
+或者，你可以将 `connection` 指定为作业类上的一个属性：
+
+```php
+<?php
+
+namespace App\Jobs;
+
+class ProcessPodcast implements ShouldQueue
+{
+    /**
+     * 应该处理作业的队列连接。
+     *
+     * @var string
+     */
+    public $connection = 'sqs';
+}
+```
+
+### 指定最大作业尝试次次数 / 超时值
+
+#### 最大尝试次数
+
+指定作业可能尝试的最大次数的一种方法是通过 Artisan 命令行上的 `——tries` 开关：
+
+```bash
+php artisan queue:work --tries=3
+```
+
+但是，你可以采用更细粒度的方法，定义作业类本身的最大尝试次数。如果在作业上指定了最大尝试次数，那么它将优先于命令行上提供的值：
+
+```php
+<?php
+
+namespace App\Jobs;
+
+class ProcessPodcast implements ShouldQueue
+{
+    /**
+     * 作业可能尝试的次数。
+     *
+     * @var int
+     */
+    public $tries = 5;
+}
+```
+
+#### 基于时间的尝试
+
+除了定义作业失败前可能尝试的多少次之外，你还可以定义作业应该超时的时间。这允许在给定的时间范围内尝试任意次数的作业。要定义作业超时的时间，在作业类中添加 `retryUntil` 方法：
+
+```php
+/**
+ * 确定作业应当超时的时间。
+ *
+ * @return \DateTime
+ */
+public function retryUntil()
+{
+    return now()->addSeconds(5);
+}
+```
+
+{% hint style="info" %}
+
+你还可以在队事件监听器上定义 `retryUntil` 方法。
+
+{% endhint %}
+
+#### 超时
+
+{% hint style="danger" %}
+
+`timeout` 特性针对 PHP 7.1+ 和 `pcntl` PHP 扩展进行了优化。
+
+{% endhint %}
+
+同样，作业可以运行的最大秒数可以使用 Artisan 命令行上的 `——timeout` 开关指定：
+
+```php
+php artisan queue:work --timeout=30
+```
+
+不过，你还可以定义作业应该允许在作业类本身上运行的最大秒数。如果在作业上指定了超时，它将优先于命令行上指定的任何超时：
+
+```php
+<?php
+
+namespace App\Jobs;
+
+class ProcessPodcast implements ShouldQueue
+{
+    /**
+     * 超时前作业可以运行的秒数。
+     *
+     * @var int
+     */
+    public $timeout = 120;
+}
+```
+
+### 速率限制
+
+{% hint style="danger" %}
+
+该特性要求你的应用程序能够与 [Redis 服务器](https://laravel.com/docs/5.8/redis) 交互。
+
+{% endhint %}
+
+### 错误处理
+
 ## 排队闭包
 
 ## 运行队列工作者
