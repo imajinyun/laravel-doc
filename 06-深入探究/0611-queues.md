@@ -579,7 +579,101 @@ php artisan queue:work --stop-when-empty
 
 ### 队列优化级
 
+有时你可能希望去优先如何处理你的队列。例如，在 `config/queue.php` 中，你可以将你的 `redis` 连接的默认 `queue` 设置为 `low`。但是，有时你可能希望将作业推送到 `high` 优先级队列，如下所示：
+
+```php
+dispatch((new Job)->onQueue('high'));
+```
+
+要启动一个工作者，该工作者在继续处理 `low` 队列上的任何作业之前，验证所有的 `high` 队列作业都被处理了，请将一个逗号分隔的队列名称列表传递给 `work` 命令：
+
+```bash
+php artisan queue:work --queue=high,low
+```
+
+### 队列工作者 & 部署
+
+由于队列工作程序是长生命周期的进程，因此它们在不重新启动的情况下不会接受对你的代码的更改。因此，使用队列工作者部署应用程序的最简单方法是在部署过程中重启工作者。你可以通过发出 `queue:restart` 命令优雅地重新启动所有工作者：
+
+```bash
+php artisan queue:restart
+```
+
+此命令将指示所有队列工作者在处理完当前作业后优雅地『死亡』，这样就不存在作业丢失。由于队列工作者将在执行 `queue:restart` 命令时死亡，因此你应该运行一个进程管理器（如：[Supervisor](https://laravel.com/docs/5.8/queues#supervisor-configuration)）来自动重新启动队列工作者。
+
+{% hint style="info" %}
+
+队列使用 [缓存](https://laravel.com/docs/5.8/cache) 存储重启信号，因此在使用此特性之前，你应该验证缓存驱动程序是否已为应用程序正确配置。
+
+{% endhint %}
+
+### 作业过期 & 超时
+
+#### 作业过期
+
+在你的 `config/queue.php` 配置文件中，每个队列连接都定义了一个 `retry_after` 选项。此选项指定在重试正在处理的作业之前队列连接应等待多少秒。例如，如果 `retry_after` 的值设置为 `90`，则如果作业处理了 90 秒而未被删除，则作业将被释放回队列。通常，你应将 `retry_after` 值设置为作业合理完成处理所需的最大秒数。
+
+{% hint style="danger" %}
+
+惟一不包含 `retry_after` 值的队列连接是 Amazon SQS。SQS 将根据 AWS 控制台中管理的 [默认可见性超时](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/AboutVT.html) 重试作业。
+
+{% endhint %}
+
+#### 工作者超时
+
+`queue:work` Artisan 命令暴露一个 `——timeout` 选项。`--timeout` 选项指定 Laravel 队列主进程将等待多长时间，然后终止正在处理作业的子队列工作者。有时，由于各种原因，子队列进程可能会『冻结』，例如：没有响应的外部 HTTP 调用。`--timeout` 选项删除已超过指定时间限制的冻结进程：
+
+```bash
+php artisan queue:work --timeout=60
+```
+
+`retry_after` 配置选项和 `——timeout` CLI 选项是不同的，但它们共同确保不会丢失作业，并且只成功处理一次作业。
+
+{% hint style="danger" %}
+
+`--timeout` 值应该总是比你的 `retry_after` 配置值至少短几秒。这将确保处理给定作业的工作者总是在重试作业之前被杀死。如果你的 `——timeout` 选项比你的 `retry_after` 配置值长，你的作业可能会被处理两次。
+
+{% endhint %}
+
+### 工作者休眠时间
+
+当作业在队列中可用时，工作者将继续处理作业，而不会在它们之间有任何延迟。然而，`sleep` 选项决定了如果没有新作业可用，工作者将『休眠』多长时间（以秒为单位）。在休眠时，工作者不会处理任何新作业——这些作业将在工作者再次唤醒后处理。
+
+```bash
+php artisan queue:work --sleep=3
+```
+
 ## Supervisor 配置
+
+### 安装 Supervisor
+
+Supervisor 是 Linux 操作系统的进程监视器，如果队列工作进程失败，它将自动重新启动你的 `queue:work`。要在 Ubuntu 上安装 Supervisor，你可以使用下面的命令：
+
+```bash
+sudo apt-get install supervisor
+```
+
+{% hint style="info" %}
+
+如果你自己配置 Supervisor 听起来很困难，请考虑使用 [Laravel Forge](https://forge.laravel.com/)，它将自动为你的 Laravel 项目安装和配置 Supervisor。
+
+{% endhint %}
+
+### 配置 Supervisor
+
+Supervisor 配置文件通常存储在 `/etc/supervisor/conf.d` 目录中。在此目录中，你可以创建任意数量的配置文件，指示 Supervisor 如何监视你的进程。例如，让我们创建一个 `laravel-worker.conf` 文件来启动和监视 `queue:work` 进程：
+
+```conf
+[program:laravel-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /home/forge/app.com/artisan queue:work sqs --sleep=3 --tries=3
+autostart=true
+autorestart=true
+user=forge
+numprocs=8
+redirect_stderr=true
+stdout_logfile=/home/forge/app.com/worker.log
+```
 
 ## 处理失败的作业
 
