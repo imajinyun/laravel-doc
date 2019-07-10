@@ -467,11 +467,117 @@ class ProcessPodcast implements ShouldQueue
 
 {% endhint %}
 
+如果你的应用程序与 Redis 交互，你可能会按时间或并发性限制排队作业。当你排队的作业与同样速率受限的 API 交互时，此特性可以提供帮助。
+
+例如，使用 `throttle` 方法，你可以将给定类型的作业节流到每 60 秒只运行 10 次。如果无法获得锁，通常你应该将作业释放回队列，以便稍后重试：
+
+```php
+Redis::throttle('key')->allow(10)->every(60)->then(function () {
+    // 作业逻辑...
+}, function () {
+    // 不能获得锁...
+
+    return $this->release(10);
+});
+```
+
+{% hint style="info" %}
+
+在上面的示例中，`key` 可以是惟一标识的你要对其进行速率限制的作业类型的任何字符串。例如，你可能希望基于作业的类名和它所操作的 Eloquent 模型的 ID 来构造密钥。
+
+{% endhint %}
+
+{% hint style="danger" %}
+
+将节流作业释放回队列仍然会增加该作业的总 `attempts` 次数。
+
+{% endhint %}
+
+或者，你可以指定可以同时处理给定作业的工作者的最大数量。当队列作业正在修改一个每次只能由一个作业修改的资源时，这是很有帮助的。例如，使用 `funnel` 方法，你可以将给定类型的作业限制为一次只能由一个工作者处理：
+
+```php
+Redis::funnel('key')->limit(1)->then(function () {
+    // 作业逻辑...
+}, function () {
+    // 不能获取锁...
+
+    return $this->release(10);
+});
+```
+
+{% hint style="info" %}
+
+当使用速率限制时，很难确定作业成功运行所需的尝试次数。因此，将速率限制与 [基于时间的尝试](https://laravel.com/docs/5.8/queues#time-based-attempts) 相结合是有用的。
+
 ### 错误处理
+
+如果作业被处理时抛出异常，作业将自动释放回队列，以便于它可能会再次尝试。此作业将继续被释放，直到你的应用程序允许的最大尝试次数。尝试的最大次数由 `queue:work` Artisan 命令上使用的 `——tries` 开关定义。或者，可以在作业类本身上定义最大尝试次数。有关运行队列工作者的更多信息 [可以在下面找到](https://laravel.com/docs/5.8/queues#running-the-queue-worker)。
 
 ## 排队闭包
 
+你还可以调度闭包，而不是将作业类调度到队列。这对于需要在当前请求周期之外执行的快速、简单的任务非常有用：
+
+```php
+$podcast = App\Podcast::find(1);
+
+dispatch(function () use ($podcast) {
+    $podcast->publish();
+});
+```
+
+当调度闭包到队列时，闭包的代码内容是加密签名的，因此不能在传输过程中修改。
+
 ## 运行队列工作者
+
+Laravel 包含一个新作业被推入队列时处理它们的队列工作者。你可以使用 `queue:work` Artisan 命令运行工作者。注意，一旦 `queue:work` 命令启动，它将继续运行，直到手动停止或关闭终端：
+
+```php
+php artisan queue:work
+```
+
+{% hint style="info" %}
+
+要保持 `queue:work` 进程在后台永久运行，你应该使用进程监视器（如：[Supervisor](https://laravel.com/docs/5.8/queues#supervisor-configuration)）来确保队列工作者不会停止运行。
+
+{% endhint %}
+
+记住，队列工作者是长生命周期的进程，并将引导的应用程序状态存储在内存中。因此，队列工作者在启动之后，不会注意到你的代码库中的更改。因此，在你的部署过程中，确保 [重新启动你的队列工作者](https://laravel.com/docs/5.8/queues#queue-workers-and-deployment)。
+
+**指定连接 & 队列**
+
+你还可以指定工作者应使用的队列连接。传递给 `work` 命令的连接名称应对应于你的 `config/queue.php` 配置文件中定义的连接之一：
+
+```php
+php artisan queue:work redis
+```
+
+你可以通过只处理给定连接的特定队列来进一步定制你的队列工作者。例如，如果所有电子邮件都在你的 `redis` 队列连接上的 `emails` 队列中处理，则你可以发出以下命令来启动只处理该队列的工作者：
+
+```bash
+php artisan queue:work redis --queue=emails
+```
+
+**处理单个作业**
+
+`--once` 选项可以被用来指示工作者仅处理来自队列中的单个作业：
+
+```bash
+php artisan queue:work --once
+```
+
+**处理所有排队的作业 & 然后退出**
+
+`--stop-when-empty` 选项可用于指示工作者处理所有作业，然后优雅地退出。当在一个 Docker 容器中处理 Laravel 队列时，如果希望在队列为空后关闭容器，此选项非常有用：
+
+```bash
+php artisan queue:work --stop-when-empty
+```
+
+**资源考虑因素**
+
+守护进程队列工作者在处理每个作业之前不会『重启』框架。因此，你应该在每个作业完成后释放任何繁重的资源。例如，如果你正在使用 GD 库进行图像操作，那么在完成之后，你应该使用 `imagedestroy` 释放内存。
+
+### 队列优化级
 
 ## Supervisor 配置
 
