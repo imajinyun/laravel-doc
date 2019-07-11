@@ -701,4 +701,160 @@ php artisan queue:failed-table
 php artisan migrate
 ```
 
+然后，在运行 [队列工作者](https://laravel.com/docs/5.8/queues#running-the-queue-worker) 时，你应该使用 `queue:work` 命令上的 `——tries` 开关指定尝试一个任务的最大次数。如果你没有为 `——tries` 选项指定一个值，将会无限期地尝试作业：
+
+```bash
+php artisan queue:work redis --tries=3
+```
+
+此外，可以使用 `——delay` 选项指定 Laravel 在重试失败的作业之前应该等待多少秒。默认情况下，作业会立即重试：
+
+```bash
+php artisan queue:work redis --tries=3 --delay=3
+```
+
+如果你希望在每个作业的基础上配置失败的作业重试延迟，你可以在你的排队的作业类上定义 `retryAfter` 属性来这样做：
+
+```php
+/**
+ * 重试前等待的秒数。
+ *
+ * @var int
+ */
+public $retryAfter = 3;
+```
+
+### 作业失败后的清理工作
+
+你可以直接在你的作业类上定义一个 `failed` 的方法，当发生失败时允许你去执行特定于作业的清理。这是向你的用户发送警告或还原作业执行的任何操作的最佳位置。导致作业失败的 `Exception` 将传递给 `failed` 方法：
+
+```php
+<?php
+
+namespace App\Jobs;
+
+use Exception;
+use App\Podcast;
+use App\AudioProcessor;
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class ProcessPodcast implements ShouldQueue
+{
+    use InteractsWithQueue, Queueable, SerializesModels;
+
+    protected $podcast;
+
+    /**
+     * 创建一个新的作业实例。
+     *
+     * @param  Podcast  $podcast
+     * @return void
+     */
+    public function __construct(Podcast $podcast)
+    {
+        $this->podcast = $podcast;
+    }
+
+    /**
+     * 执行作业。
+     *
+     * @param  AudioProcessor  $processor
+     * @return void
+     */
+    public function handle(AudioProcessor $processor)
+    {
+        // 处理上传的播客...
+    }
+
+    /**
+     * 失败的作业处理。
+     *
+     * @param  Exception  $exception
+     * @return void
+     */
+    public function failed(Exception $exception)
+    {
+        // 发送用户失败的通知等等...
+    }
+}
+```
+
+### 失败作业事件
+
+如果你希望注册当作业失败时调用的事件，你可以使用 `Queue::failed` 方法。这是一个通过电子邮件或 [Slack](https://www.slack.com/) 通知你的团队的好机会。例如，我们可以从包含在 Laravel 中的 `AppServiceProvider` 中将回调附加到此事件上：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 注册任何应用程序服务。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Queue::failing(function (JobFailed $event) {
+            // $event->connectionName
+            // $event->job
+            // $event->exception
+        });
+    }
+}
+```
+
+### 重试失败的作业
+
+要查看已插入到你的 `failed_jobs` 数据库表中的你的所有失败作业，你可以使用 `queue:failed` Artisan 命令：
+
+```bash
+php artisan queue:failed
+```
+
+`queue:failed` 命令将列出作业 ID、连接、队列和失败时间。作业 ID 可用于重试失败的作业。例如，要重试 ID 为 `5` 的失败作业，请发出以下命令：
+
+```bash
+php artisan queue:retry 5
+```
+
+要重试你的所有失败作业，执行 `queue:retry` 命令并传递 `all` 作为其 ID：
+
+```bash
+php artisan queue:retry all
+```
+
+如果你想删除一个失败的作业，你可以使用 `queue:forget` 命令：
+
+```bash
+php artisan queue:forget 5
+```
+
+要删除你的所有失败的作业，你可以使用 `queue:flush` 命令：
+
+```bash
+php artisan queue:flush
+```
+
+### 忽略丢失的模型
+
 ## 作业事件
