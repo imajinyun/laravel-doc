@@ -663,7 +663,7 @@ sudo apt-get install supervisor
 
 Supervisor 配置文件通常存储在 `/etc/supervisor/conf.d` 目录中。在此目录中，你可以创建任意数量的配置文件，指示 Supervisor 如何监视你的进程。例如，让我们创建一个 `laravel-worker.conf` 文件来启动和监视 `queue:work` 进程：
 
-```conf
+```ini
 [program:laravel-worker]
 process_name=%(program_name)s_%(process_num)02d
 command=php /home/forge/app.com/artisan queue:work sqs --sleep=3 --tries=3
@@ -675,6 +675,30 @@ redirect_stderr=true
 stdout_logfile=/home/forge/app.com/worker.log
 ```
 
+在本例中，`numprocs` 指令将指示 Supervisor 运行 8 个 `queue:work` 进程并监视它们，如果它们失败，则自动重新启动它们。你应该更改 `command` 指令的 `queue:work sqs` 部分，以反映所需的队列连接。
+
+### 启动 Supervisor
+
+一旦创建了配置文件，你就可以使用以下命令更新 Supervisor 配置并启动进程：
+
+```bash
+sudo supervisorctl reread
+
+sudo supervisorctl update
+
+sudo supervisorctl start laravel-worker:*
+```
+
+有关 Supervisor 的更多信息，参阅 [Supervisor 文档](http://supervisord.org/index.html)。
+
 ## 处理失败的作业
+
+有时候你的排队的作业会失败。别担心，事情并不总是按计划进行！Laravel 包含一种方便的方法来指定作业应该尝试的最大次数。作业超过此尝试次数后，它将被插入到 `failed_jobs` 数据库表中。要为 `failed_jobs` 表创建迁移，你可以使用 `queue:failed-table` 命令：
+
+```bash
+php artisan queue:failed-table
+
+php artisan migrate
+```
 
 ## 作业事件
