@@ -857,4 +857,73 @@ php artisan queue:flush
 
 ### 忽略丢失的模型
 
+当向作业注入一个 Eloquent 模型时，它会在被放入队列之前自动序列化，并在处理作业时恢复。但是，如果在作业等待工作者处理时删除了模型，那么你的作业可能会失败，出现 `ModelNotFoundException` 异常。
+
+为了方便起见，你可以选择通过设置你的作业的 `deleteWhenMissingModels` 属性为 `true` 来自动删除缺失模型的作业：
+
+```php
+/**
+ * 如果该作业的模型不再存在，则删除该作业。
+ *
+ * @var bool
+ */
+public $deleteWhenMissingModels = true;
+```
+
 ## 作业事件
+
+使用 `Queue` [外观](https://laravel.com/docs/5.8/facades) 上的 `before` 和 `after` 方法，你可以指定要在处理队列作业之前或之后执行的回调。这些回调是为仪表板执行额外日志记录或增量统计的好机会。通常，你应该从 [服务提供者](https://laravel.com/docs/5.8/providers) 调用这些方法。例如，我们可以使用 Laravel 中包含的 `AppServiceProvider`：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 注册任何应用程序服务。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Queue::before(function (JobProcessing $event) {
+            // $event->connectionName
+            // $event->job
+            // $event->job->payload()
+        });
+
+        Queue::after(function (JobProcessed $event) {
+            // $event->connectionName
+            // $event->job
+            // $event->job->payload()
+        });
+    }
+}
+```
+
+使用 `Queue` [外观](https://laravel.com/docs/5.8/facades) 上的 `looping` 方法，你可以指定在工作者尝试从队列获取作业之前执行的回调。例如，你可以注册一个闭包来回滚之前失败作业未关闭的任何事务：
+
+```php
+Queue::looping(function () {
+    while (DB::transactionLevel() > 0) {
+        DB::rollBack();
+    }
+});
+```
