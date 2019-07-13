@@ -149,15 +149,116 @@ $schedule->command('foo')
 
 #### 在时间约束之间
 
+`between` 方法可用于基于一天的时间限制任务的执行：
+
+```php
+$schedule->command('reminders:send')
+                    ->hourly()
+                    ->between('7:00', '22:00');
+```
+
+类似地，`unlessBetween` 方法可用于在一段时间内排除任务的执行：
+
+```php
+$schedule->command('reminders:send')
+                    ->hourly()
+                    ->unlessBetween('23:00', '4:00');
+```
+
 #### 真值测试约束
+
+`when` 方法可用于基于给定的真值测试结果限制任务的执行。换句话说，如果给定的 `Closure` 返回 `true`，那么只要没有其他约束条件阻止的话任务就会执行：
+
+```php
+$schedule->command('emails:send')->daily()->when(function () {
+    return true;
+});
+```
+
+`skip` 方法可以看作是 `when` 的反转。如果 `skip` 方法返回 `true`，则不会执行计划的任务：
+
+```php
+$schedule->command('emails:send')->daily()->skip(function () {
+    return true;
+});
+```
+
+当使用链式 `when` 方法时，只有所有的 `when` 条件返回 `true` 时，计划命令才会执行。
 
 #### 环境约束
 
+`environments` 方法只能用于在给定的环境上执行任务：
+
+```php
+$schedule->command('emails:send')
+            ->daily()
+            ->environments(['staging', 'production']);
+```
+
 ### 时区
+
+使用 `timezone` 方法，你可以指定计划任务的时间应该在给定的时区内解释：
+
+```php
+$schedule->command('report:generate')
+         ->timezone('America/New_York')
+         ->at('02:00')
+```
+
+如果要为你的所有计划任务分配相同的时区，你可能希望在你的 `app/Console/Kernel.php` 文件中定义 `scheduleTimezone` 方法。此方法应返回应分配给所有计划任务的默认时区：
+
+```php
+/**
+ * 获取默认情况下用于计划事件的时区。
+ *
+ * @return \DateTimeZone|string|null
+ */
+protected function scheduleTimezone()
+{
+    return 'America/Chicago';
+}
+```
+
+{% hint style="danger" %}
+
+记住，有些时区使用夏令时。当夏令时发生更改时，你的计划的任务可能运行两次或者甚至根本不运行。因此，我们建议尽可能避免时区计划。
+
+{% endhint %}
 
 ### 防止任务重叠
 
+默认情况下，即使任务的前一个实例仍在运行，也会运行计划的任务。为了防止这种情况发生，你可以使用 `withoutOverlapping` 方法：
+
+```php
+$schedule->command('emails:send')->withoutOverlapping();
+```
+
+在本例中，如果尚未运行 `email:send` [Artisan 命令](https://laravel.com/docs/5.8/artisan)，那么它将每分钟运行一次。如果你的任务在执行时间上有很大差异，那么 `withoutOverlapping` 方法尤其有用，它阻止你准确地预测给定任务将花费多长时间。
+
+如果需要，你可以指定在『无重叠』锁过期之前必须经过多少分钟。默认情况下，锁将在 24 小时后过期：
+
+```php
+$schedule->command('emails:send')->withoutOverlapping(10);
+```
+
 ### 一台服务器上运行任务
+
+{% hint style="danger" %}
+
+要使用此功能，你的应用程序必须使用 `memcached` 或 `redis` 缓存驱动程序作为你的应用程序的默认缓存驱动程序。此外，所有服务器必须与相同的中央缓存服务器通信。
+
+{% endhint %}
+
+如果你的应用程序运行在多个服务器上，你可以将计划的作业限制为仅在一台服务器上执行。例如，假设你有一个计划好的任务，该任务将在每个星期五晚上生成一个新的报告。如果任务计划程序运行在三个工作服务器上，则计划的任务将运行在所有三个服务器上，并生成三次报告。这样不好！
+
+要指示任务应该只在一台服务器上运行，在定义计划任务时使用 `onOneServer` 方法。第一个获得该任务的服务器将保护作业上的原子锁，以防止其他服务器同时运行相同的任务：
+
+```php
+$schedule->command('report:generate')
+                ->fridays()
+                ->at('17:00')
+                ->onOneServer();
+```
 
 ### 后台任务
 
