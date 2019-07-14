@@ -137,6 +137,140 @@ class UserController extends Controller
 
 传递给 `select` 方法的第一个参数是原始 SQL 查询，第二个参数是需要绑定到查询的任何参数绑定。通常，这些是 `where` 子句约束的值。参数绑定提供了对 SQL 注入的保护。
 
+`select` 方法总是返回一个结果 `array`。数组中的每个结果都是一个 PHP `stdClass` 对象，允许你访问结果的值：
+
+```php
+foreach ($users as $user) {
+    echo $user->name;
+}
+```
+
+### 使用命名绑定
+
+使用 `?` 替代去表示你的参数绑定，你可以使用命名绑定执行一个查询：
+
+```php
+$results = DB::select('select * from users where id = :id', ['id' => 1]);
+```
+
+### 运行 Insert 语句
+
+要执行 `insert` 语句，你可以在 `DB` 外观上使用 `insert` 方法。与 `select` 一样，该方法将原始 SQL 查询作为第一个参数，并将绑定作为第二个参数：
+
+```php
+DB::insert('insert into users (id, name) values (?, ?)', [1, 'Dayle']);
+```
+
+### 运行 Update 语句
+
+应该使用 `update` 方法更新数据库中存在的记录。该语句将返回受语句影响的行数：
+
+```php
+$affected = DB::update('update users set votes = 100 where name = ?', ['John']);
+```
+
+### 运行 Delete 语句
+
+应该使用 `delete` 方法从数据库中删除记录。与 `update` 类似，将返回受影响的行数：
+
+```php
+$deleted = DB::delete('delete from users');
+```
+
+### 运行一般语句
+
+一些数据库语句不返回任何值。对于这些类型的操作，可以在 `DB` 外观上使用 `statement` 方法：
+
+```php
+DB::statement('drop table users');
+```
+
 ## 监听查询事件
 
+如果你希望接收你的应用程序执行的每个 SQL 查询，可以使用 `listen` 方法。此方法对于记录查询或调试非常有用。你可以在 [服务提供者](https://laravel.com/docs/5.8/providers) 中注册你的查询监听器：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 注册任何应用程序服务。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        DB::listen(function ($query) {
+            // $query->sql
+            // $query->bindings
+            // $query->time
+        });
+    }
+}
+```
+
 ## 数据库事务
+
+你可以使用 `DB` 外观上的 `transaction` 方法在数据库事务中运行一组操作。如果在事务 `Closure` 中抛出异常，事务将自动回滚。如果 `Closure` 成功执行，事务将自动提交。你不需要担心在使用 `transaction` 方法时手动回滚或提交：
+
+```php
+DB::transaction(function () {
+    DB::table('users')->update(['votes' => 1]);
+
+    DB::table('posts')->delete();
+});
+```
+
+### 处理死锁
+
+`transaction` 方法接受一个可选的第二个参数，该参数定义死锁发生时应该重新尝试事务的次数。一旦这些尝试被用尽，一个异常就会抛出：
+
+```php
+DB::transaction(function () {
+    DB::table('users')->update(['votes' => 1]);
+
+    DB::table('posts')->delete();
+}, 5);
+```
+
+### 手动使用事务
+
+如果你想手动开启事务，并对回滚和提交有完全的控制，你可以在 `DB` 外观上使用 `beginTransaction` 方法：
+
+```php
+DB::beginTransaction();
+```
+
+你可以通过 `rollback` 方法回滚事务：
+
+```php
+DB::rollBack();
+```
+
+最后，你可以通过 `commit` 方法提交事务：
+
+```php
+DB::commit();
+```
+
+{% hint style="info" %}
+
+`DB` 外观的事务方法控制 [查询生成器](https://laravel.com/docs/5.8/queries) 和 [Eloquent ORM](https://laravel.com/docs/5.8/eloquent) 事务。
+
+{% endhint %}
