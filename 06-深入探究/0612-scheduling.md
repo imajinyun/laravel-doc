@@ -262,8 +262,128 @@ $schedule->command('report:generate')
 
 ### 后台任务
 
+默认情况下，同时计划的多个命令将按顺序执行。如果你有长时间运行的命令，这可能会导致后续命令启动的时间比预期的要晚得多。如果你希望在后台运行命令，以便它们可以同时运行，你可以使用 `runInBackground` 方法：
+
+```php
+$schedule->command('analytics:report')
+         ->daily()
+         ->runInBackground();
+```
+
+{% hint style="danger" %}
+
+`runInBackground` 方法仅能通过 `command` 和 `exec` 方法计划任务时使用。
+
+{% endhint %}
+
 ### 维护模式
+
+当 Laravel 处于 [维护模式](https://laravel.com/docs/5.8/configuration#maintenance-mode) 时，计划的任务将不会运行，因为我们不希望你的任务干扰你在服务器上执行的任何未完成的维护。但是，如果你想强制任务在维护模式下运行，你可以使用 `evenInMaintenanceMode` 方法：
+
+```php
+$schedule->command('emails:send')->evenInMaintenanceMode();
+```
 
 ## 任务输出
 
+Laravel 计划器提供了几种方便的方法来处理由计划任务生成的输出。首先，使用 `sendOutputTo` 方法，你可以将输出发送到一个文件中，以便稍后进行检查：
+
+```php
+$schedule->command('emails:send')
+         ->daily()
+         ->sendOutputTo($filePath);
+```
+
+如果你希望将输出附加到给定文件，你可以使用 `appendOutputTo` 方法：
+
+```php
+$schedule->command('emails:send')
+         ->daily()
+         ->appendOutputTo($filePath);
+```
+
+使用 `emailOutputTo` 方法，你可以将输出通过电子邮件发送到你选择的电子邮件地址。在电子邮件发送任务的输出之前，你应该配置 Laravel 的 [电子邮件服务](https://laravel.com/docs/5.8/mail)：
+
+```php
+$schedule->command('foo')
+         ->daily()
+         ->sendOutputTo($filePath)
+         ->emailOutputTo('foo@example.com');
+```
+
+如果你只希望在命令失败时通过电子邮件发送输出，使用 `emailOutputOnFailure` 方法：
+
+```php
+$schedule->command('foo')
+         ->daily()
+         ->emailOutputOnFailure('foo@example.com');
+```
+
+{% hint style="danger" %}
+
+`emailOutputTo`、`emailOutputOnFailure`、`sendOutputTo` 和 `appendOutputTo` 方法是 `command` 和 `exec` 方法所独有的。
+
+{% endhint %}
+
 ## 任务钩子
+
+使用 `before` 和 `after` 方法，你可以指定要在计划的任务完成之前和之后执行的代码：
+
+```php
+$schedule->command('emails:send')
+         ->daily()
+         ->before(function () {
+             // 任务即将开始...
+         })
+         ->after(function () {
+             // 任务完成...
+         });
+```
+
+`onSuccess` 和 `onFailure` 方法允许你指定计划任务成功或失败时要执行的代码：
+
+```php
+$schedule->command('emails:send')
+         ->daily()
+         ->onSuccess(function () {
+             // 任务成功...
+         })
+         ->onFailure(function () {
+             // 任务失败...
+         });
+```
+
+### Ping URL
+
+使用 `pingBefore` 和 `thenPing` 方法，计划器可以在任务完成之前或之后自动 Ping 给定的 URL。此方法对于通知外部服务（如：[Laravel Envoyer](https://envoyer.io/)），对你计划的任务正在启动或已经执行完毕非常有用：
+
+```php
+$schedule->command('emails:send')
+         ->daily()
+         ->pingBefore($url)
+         ->thenPing($url);
+```
+
+只有在给定条件为 `true` 时，才能使用 `pingbefore` 和 `thenPingIf` 方法 Ping 给定的 URL：
+
+```php
+$schedule->command('emails:send')
+         ->daily()
+         ->pingBeforeIf($condition, $url)
+         ->thenPingIf($condition, $url);
+```
+
+只有当任务成功或失败时，才能使用 `pingOnSuccess` 和 `pingOnFailure` 方法 Ping 给定的 URL：
+
+```php
+$schedule->command('emails:send')
+         ->daily()
+         ->pingOnSuccess($successUrl)
+         ->pingOnFailure($failureUrl);
+```
+
+所有 Ping 方法都需要 Guzzle HTTP 库。你可以使用 Composer 包管理器将 Guzzle 添加到你的项目中：
+
+```bash
+composer require guzzlehttp/guzzle
+```
