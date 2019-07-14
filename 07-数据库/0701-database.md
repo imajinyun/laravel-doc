@@ -81,11 +81,61 @@ driver://username:password@host:port/database?options
 ],
 ```
 
+注意，已经向配置数组添加了三个键：`read`、`write` 和 `sticky`。`read` 和 `write` 键的数组值包含一个键：`host`。`read` 和 `write` 连接的其他数据库选项将从主 `mysql` 数组中合并。
+
+如果你希望从主数组中覆盖值，仅需要你将条目放在 `read` 和 `write` 数组中。因此，在本例中，`192.168.1.1` 将用作『读』连接的主机，而 `192.168.1.3` 将用作『写』连接。主 `mysql` 数组中的数据库凭据、前缀、字符集和所有其他选项将在两个连接之间共享。
+
 #### `sticky` 选项
+
+`sticky` 选项是一个可选值，可用于允许立即读取在当前请求周期中写入数据库的记录。如果启用了 `sticky` 选项，并且在当前请求周期中对数据库执行了『写』操作，那么任何进一步的『读』操作都将使用『写』连接。这可以确保在请求周期中编写的任何数据都可以在相同的请求期间立即从数据库中读取出来。你可以决定这是否是你的应用程序期望的行为。
 
 ### 使用多个数据库连接
 
+使用多个连接时，你可以通过 `DB` 外观上的 `connection` 方法访问每个连接。传递给 `connection` 方法的 `name` 应该对应于在你的 `config/database.php` 配置文件中列出的连接之一：
+
+```php
+$users = DB::connection('foo')->select(...);
+```
+
+你还可以使用连接实例上的 `getPdo` 方法访问原始的底层 PDO 实例：
+
+```php
+$pdo = DB::connection()->getPdo();
+```
+
 ## 运行原始 SQL 查询
+
+一旦你配置了你的数据库连接，你就可以使用 `DB` 外观运行查询。`DB` 外观为每种查询类型提供了方法：`select`、`update`、`insert`、`delete` 和 `statement`。
+
+### 运行 Select 查询
+
+要运行基本查询，你可以在 `DB` 外观上使用 `select` 方法：
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+
+class UserController extends Controller
+{
+    /**
+     * 显示应用程序所有用户的列表。
+     *
+     * @return Response
+     */
+    public function index()
+    {
+        $users = DB::select('select * from users where active = ?', [1]);
+
+        return view('user.index', ['users' => $users]);
+    }
+}
+```
+
+传递给 `select` 方法的第一个参数是原始 SQL 查询，第二个参数是需要绑定到查询的任何参数绑定。通常，这些是 `where` 子句约束的值。参数绑定提供了对 SQL 注入的保护。
 
 ## 监听查询事件
 
