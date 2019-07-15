@@ -153,9 +153,69 @@ $price = DB::table('orders')
                 ->avg('price');
 ```
 
+### 确定是否存在记录
+
+你可以使用 `exists` 和 `doesntExist` 方法，而不是使用 `count` 方法来确定是否存在匹配你的查询约束的记录：
+
+```php
+return DB::table('orders')->where('finalized', 1)->exists();
+
+return DB::table('orders')->where('finalized', 1)->doesntExist();
+```
+
 ## Selects
 
+### 指定 Select 子句
+
+你可能不总是希望从数据库表中选择所有列。使用 `select` 方法，你可以为查询指定一个自定义 `select` 子句：
+
+```php
+$users = DB::table('users')->select('name', 'email as user_email')->get();
+```
+
+`distinct 方法允许你强制查询返回不同的结果：
+
+```php
+$users = DB::table('users')->distinct()->get();
+```
+
+如果你已经有一个查询生成器实例，并且你希望向其现有的 Select 子句中添加一个列，你可以使用 `addSelect` 方法：
+
+```php
+$query = DB::table('users')->select('name');
+
+$users = $query->addSelect('age')->get();
+```
+
 ## 原始表达式
+
+有时你可能需要在查询中使用原始表达式。要创建原始表达式，你可以使用 `DB::raw` 方法：
+
+```php
+$users = DB::table('users')
+                     ->select(DB::raw('count(*) as user_count, status'))
+                     ->where('status', '<>', 1)
+                     ->groupBy('status')
+                     ->get();
+```
+
+{% hint style="danger" %}
+
+原始语句将作为字符串注入到查询中，因此你应该非常小心，不要创建 SQL 注入漏洞。
+
+{% endhint %}
+
+### 原始方法
+
+你还可以使用以下方法将原始表达式插入查询的各个部分，而不是使用 `DB::raw`。
+
+#### `selectRaw`
+
+#### `whereRaw / orWhereRaw`
+
+#### `havingRaw / orHavingRaw`
+
+#### `orderByRaw`
 
 ## Joins
 
