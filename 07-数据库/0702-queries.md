@@ -330,7 +330,93 @@ $users = DB::table('users')
 
 ## Unions
 
+查询生成器还提供了将两个查询『联合』在一起的快速方法。例如，你可以创建一个初始查询，并使用 `union` 方法将其与第二个查询进行联合：
+
+```php
+$first = DB::table('users')
+            ->whereNull('first_name');
+
+$users = DB::table('users')
+            ->whereNull('last_name')
+            ->union($first)
+            ->get();
+```
+
+{% hint style="info" %}
+
+`unionAll` 方法也可用，并且具有与 `union` 相同的方法签名。
+
+{% endhint %}
+
 ## Where 子句
+
+### 简单 Where 子句
+
+你可以在查询生成器实例上使用 `where` 方法向查询添加 `where` 子句。最基本的 `where` 调用需要三个参数。第一个参数是列的名称。第二个参数是操作符，它可以是数据库支持的任何操作符。最后，第三个参数是根据列计算的值。
+
+例如，下面的查询验证『投票』列的值是否等于 100：
+
+```php
+$users = DB::table('users')->where('votes', '=', 100)->get();
+```
+
+为方便起见，如果你想验证列是否等于给定值，你可以将该值直接作为第二个参数传递给 `where` 方法：
+
+```php
+$users = DB::table('users')->where('votes', 100)->get();
+```
+
+在编写 `where` 子句时，可以使用多种其他操作符：
+
+```php
+$users = DB::table('users')
+                ->where('votes', '>=', 100)
+                ->get();
+
+$users = DB::table('users')
+                ->where('votes', '<>', 100)
+                ->get();
+
+$users = DB::table('users')
+                ->where('name', 'like', 'T%')
+                ->get();
+```
+
+你还可以向 `where` 函数传递一个条件数组：
+
+```php
+$users = DB::table('users')->where([
+    ['status', '=', '1'],
+    ['subscribed', '<>', '1'],
+])->get();
+```
+
+### Or 语句
+
+你可以将约束链接在一起，也可以向查询添加 `or` 子句。`orWhere` 方法接受与 `where` 方法相同的参数：
+
+```php
+$users = DB::table('users')
+                    ->where('votes', '>', 100)
+                    ->orWhere('name', 'John')
+                    ->get();
+```
+
+### 其它的 Where 子句
+
+#### `whereBetween / orWhereBetween`
+
+#### `whereNotBetween / orWhereNotBetween`
+
+#### `whereIn / whereNotIn / orWhereIn / orWhereNotIn`
+
+#### `whereNull / whereNotNull / orWhereNull / orWhereNotNull`
+
+#### `whereDate / whereMonth / whereDay / whereYear / whereTime`
+
+#### `whereColumn / orWhereColumn`
+
+### 参数分组
 
 ## Ordering, Grouping, Limit, & Offset
 
