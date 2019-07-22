@@ -406,17 +406,207 @@ $users = DB::table('users')
 
 #### `whereBetween / orWhereBetween`
 
+`whereBetween` 方法验证列的值位于两个值之间：
+
+```php
+$users = DB::table('users')
+                    ->whereBetween('votes', [1, 100])->get();
+```
+
 #### `whereNotBetween / orWhereNotBetween`
+
+`whereNotBetween` 方法验证列的值位于两个值之外：
+
+```php
+$users = DB::table('users')
+                    ->whereNotBetween('votes', [1, 100])
+                    ->get();
+```
 
 #### `whereIn / whereNotIn / orWhereIn / orWhereNotIn`
 
+`whereIn` 方法验证给定列的值包含在给定数组中：
+
+```php
+$users = DB::table('users')
+                    ->whereIn('id', [1, 2, 3])
+                    ->get();
+```
+
+`whereNotIn` 方法验证给定列的值 **不** 包含在给定数组中：
+
+```php
+$users = DB::table('users')
+                    ->whereNotIn('id', [1, 2, 3])
+                    ->get();
+```
+
 #### `whereNull / whereNotNull / orWhereNull / orWhereNotNull`
+
+`whereNull` 方法验证给定列的值是 `NULL`：
+
+```php
+$users = DB::table('users')
+                    ->whereNull('updated_at')
+                    ->get();
+```
+
+`whereNotNull` 方法验证列的值不是 `NULL`：
+
+```php
+$users = DB::table('users')
+                    ->whereNotNull('updated_at')
+                    ->get();
+```
 
 #### `whereDate / whereMonth / whereDay / whereYear / whereTime`
 
+`whereDate` 方法可用于将列的值与日期进行比较：
+
+```php
+$users = DB::table('users')
+                ->whereDate('created_at', '2016-12-31')
+                ->get();
+```
+
+`whereMonth` 方法可用于将列的值与一年中的特定月份进行比较：
+
+```php
+$users = DB::table('users')
+                ->whereMonth('created_at', '12')
+                ->get();
+```
+
+`whereDay` 方法可用于将列的值与每月的特定日期进行比较：
+
+```php
+$users = DB::table('users')
+                ->whereDay('created_at', '31')
+                ->get();
+```
+
+`whereYear` 方法可用于将列的值与特定年份进行比较：
+
+```php
+$users = DB::table('users')
+                ->whereYear('created_at', '2016')
+                ->get();
+```
+
+`whereTime` 方法可用于将列的值与特定时间进行比较：
+
+```php
+$users = DB::table('users')
+                ->whereTime('created_at', '=', '11:20:45')
+                ->get();
+```
+
 #### `whereColumn / orWhereColumn`
 
+`whereColumn` 方法可用于来验证两列是否相等：
+
+```php
+$users = DB::table('users')
+                ->whereColumn('first_name', 'last_name')
+                ->get();
+```
+
+你还可以向该方法传递一个比较操作符：
+
+```php
+$users = DB::table('users')
+                ->whereColumn('updated_at', '>', 'created_at')
+                ->get();
+```
+
+`whereColumn` 方法还可以传递多个条件的数组。这些条件将使用 `and` 操作符连接：
+
+```php
+$users = DB::table('users')
+                ->whereColumn([
+                    ['first_name', '=', 'last_name'],
+                    ['updated_at', '>', 'created_at']
+                ])->get();
+```
+
 ### 参数分组
+
+有时你可能需要创建更高级的 Where 子句，如：『where exists』子句或嵌套参数组。Laravel 查询生成器也可以处理这些。首先，让我们看一个在括号内分组约束的例子：
+
+```php
+DB::table('users')
+            ->where('name', '=', 'John')
+            ->where(function ($query) {
+                $query->where('votes', '>', 100)
+                      ->orWhere('title', '=', 'Admin');
+            })
+            ->get();
+```
+
+如你所见，向 `where` 方法传递 `Closure` 指示查询生成器开始一个约束组。`Closure` 将接收一个查询生成器实例，你可以使用该实例设置应该包含在圆括号组中的约束。上面的示例将生成以下 SQL：
+
+```php
+select * from users where name = 'John' and (votes > 100 or title = 'Admin')
+```
+
+{% hint style="info" %}
+
+在应用全局作用域时，你应该始终对 `orWhere` 调用分组，以避免出现不期望的行为。
+
+{% endhint %}
+
+### Where Exists 子句
+
+`whereExists` 方法允许你编写 `where exists` SQL 子句。`whereExists` 方法接受一个 `Closure` 参数，该参数将接收一个查询生成器实例，允许你定义应该放在『exists』子句内的查询：
+
+```php
+DB::table('users')
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                      ->from('orders')
+                      ->whereRaw('orders.user_id = users.id');
+            })
+            ->get();
+```
+
+上面的查询将生成以下 SQL：
+
+```sql
+select * from users
+where exists (
+    select 1 from orders where orders.user_id = users.id
+)
+```
+
+### JSON Where 子句
+
+Laravel 还支持在支持 JSON 列类型的数据库上查询 JSON 列类型。目前，这包括：MySQL 5.7、PostgreSQL、SQL Server 2016 和 SQLite 3.9.0（带有 [JSON1 扩展](https://www.sqlite.org/json1.html)）。要查询 JSON 列，请使用 `->` 操作符：
+
+```php
+$users = DB::table('users')
+                ->where('options->language', 'en')
+                ->get();
+
+$users = DB::table('users')
+                ->where('preferences->dining->meal', 'salad')
+                ->get();
+```
+
+可以使用 `whereJsonContains` 查询 JSON 数组（SQLite 不支持）：
+
+```php
+$users = DB::table('users')
+                ->whereJsonContains('options->languages', 'en')
+                ->get();
+```
+
+MySQL 和 PostgreSQL 支持具有多个值的 `jsoncontains`：
+
+```php
+$users = DB::table('users')
+                ->whereJsonContains('options->languages', ['en', 'de'])
+                ->get();
+```
 
 ## Ordering, Grouping, Limit, & Offset
 
