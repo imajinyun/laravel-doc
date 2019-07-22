@@ -211,13 +211,122 @@ $users = DB::table('users')
 
 #### `selectRaw`
 
+`selectRaw` 方法可以代替 `select(DB::raw(…))`。此方法接受可选的绑定数组作为其第二个参数：
+
+```php
+$orders = DB::table('orders')
+                ->selectRaw('price * ? as price_with_tax', [1.0825])
+                ->get();
+```
+
 #### `whereRaw / orWhereRaw`
+
+`whereRaw` 和 `orWhereRaw` 方法可用于将原始 `where` 子句注入到你的查询。这些方法接受一个可选的绑定数组作为它们的第二个参数：
+
+```php
+$orders = DB::table('orders')
+                ->whereRaw('price > IF(state = "TX", ?, 100)', [200])
+                ->get();
+```
 
 #### `havingRaw / orHavingRaw`
 
+可以使用 `havingRaw` 和 `orHavingRaw` 方法将原始字符串设置为 `having` 子句的值。这些方法接受一个可选的绑定数组作为它们的第二个参数：
+
+```php
+$orders = DB::table('orders')
+                ->select('department', DB::raw('SUM(price) as total_sales'))
+                ->groupBy('department')
+                ->havingRaw('SUM(price) > ?', [2500])
+                ->get();
+```
+
 #### `orderByRaw`
 
+`orderByRaw` 方法可用于将原始字符串设置为 `order by` 子句的值：
+
+```php
+$orders = DB::table('orders')
+                ->orderByRaw('updated_at - created_at DESC')
+                ->get();
+```
+
 ## Joins
+
+### Inner Join 子句
+
+查询生成器还可以用于编写连接语句。要执行基本的『inner join』，你可以在查询生成器实例上使用 `join` 方法。传递给 `join` 方法的第一个参数是你需要连接到的表的名称，其余参数指定连接的列约束。你甚至可以在一个查询中连接到多个表：
+
+```php
+$users = DB::table('users')
+            ->join('contacts', 'users.id', '=', 'contacts.user_id')
+            ->join('orders', 'users.id', '=', 'orders.user_id')
+            ->select('users.*', 'contacts.phone', 'orders.price')
+            ->get();
+```
+
+### Left Join / Right Join 子句
+
+如果你希望执行『left join』或者『right join』，而不是『inner join』，请使用 `leftJoin` 或 `rightJoin` 方法。这些方法具有与 `join` 方法相同的签名：
+
+```php
+$users = DB::table('users')
+            ->leftJoin('posts', 'users.id', '=', 'posts.user_id')
+            ->get();
+
+$users = DB::table('users')
+            ->rightJoin('posts', 'users.id', '=', 'posts.user_id')
+            ->get();
+```
+
+### Cross Join 子句
+
+要执行『cross join』，要使用你希望交叉连接的表名的 `crossJoin` 方法。交叉连接在第一个表和连接的表之间生成笛卡尔积：
+
+```php
+$users = DB::table('sizes')
+            ->crossJoin('colours')
+            ->get();
+```
+
+### 高级连接子句
+
+你还可以指定更高级的联接子句。首先，将一个 `Closure` 作为第二个参数传递给 `join` 方法。`Closure` 将接收一个 `JoinClause` 对象，该对象允许你在 `join` 子句上指定约束：
+
+```php
+DB::table('users')
+        ->join('contacts', function ($join) {
+            $join->on('users.id', '=', 'contacts.user_id')->orOn(...);
+        })
+        ->get();
+```
+
+如果你希望在你的连接上使用『where』样式子句，你可以在连接上使用 `where` 和 `orWhere` 方法。这些方法不是比较两列，而是将列与值进行比较：
+
+```php
+DB::table('users')
+        ->join('contacts', function ($join) {
+            $join->on('users.id', '=', 'contacts.user_id')
+                 ->where('contacts.user_id', '>', 5);
+        })
+        ->get();
+```
+
+### 子查询连接
+
+你可以使用 `joinSub`、`leftJoinSub` 和 `rightJoinSub` 方法将查询连接到一个子查询。每个方法都接收三个参数：子查询、表别名和定义相关列的闭包：
+
+```php
+$latestPosts = DB::table('posts')
+                   ->select('user_id', DB::raw('MAX(created_at) as last_post_created_at'))
+                   ->where('is_published', true)
+                   ->groupBy('user_id');
+
+$users = DB::table('users')
+        ->joinSub($latestPosts, 'latest_posts', function ($join) {
+            $join->on('users.id', '=', 'latest_posts.user_id');
+        })->get();
+```
 
 ## Unions
 
