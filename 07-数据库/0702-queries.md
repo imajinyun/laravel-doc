@@ -608,16 +608,246 @@ $users = DB::table('users')
                 ->get();
 ```
 
+你可以使用 `whereJsonLength` 查询 JSON 数组的长度：
+
+```php
+$users = DB::table('users')
+                ->whereJsonLength('options->languages', 0)
+                ->get();
+
+$users = DB::table('users')
+                ->whereJsonLength('options->languages', '>', 1)
+                ->get();
+```
+
 ## Ordering, Grouping, Limit, & Offset
+
+### orderBy
+
+`orderBy` 方法允许你按给定列对查询结果排序。`orderBy` 方法的第一个参数应该是你希望排序的列，而第二个参数控制排序的方向，可以是 `asc` 或 `desc`：
+
+```php
+$users = DB::table('users')
+                ->orderBy('name', 'desc')
+                ->get();
+```
+
+### latest / oldest
+
+`latest` 和 `oldest` 的方法允许你轻松地按日期排序结果。默认情况下，结果将由 `created_at` 列排序。或者，你可以传递你要排序的列名：
+
+```php
+$user = DB::table('users')
+                ->latest()
+                ->first();
+```
+
+### inRandomOrder
+
+`inRandomOrder` 方法可用于随机对查询结果进行排序。例如，你可以使用此方法来获取随机用户：
+
+```php
+$randomUser = DB::table('users')
+                ->inRandomOrder()
+                ->first();
+```
+
+### groupBy / having
+
+`groupBy` 和 `having` 方法可用于对查询结果进行分组。`having` 方法的签名类似于 `where` 方法的签名：
+
+```php
+$users = DB::table('users')
+                ->groupBy('account_id')
+                ->having('account_id', '>', 100)
+                ->get();
+```
+
+你可以将多个参数传递到 `groupBy` 方法将多个列进行分组：
+
+```php
+$users = DB::table('users')
+                ->groupBy('first_name', 'status')
+                ->having('account_id', '>', 100)
+                ->get();
+```
+
+有关更高级的 `having` 语句，参见 [havingRaw](https://laravel.com/docs/5.8/queries#raw-methods) 方法。
+
+### skip / take
+
+若要限制从查询返回的结果数量，或要跳过查询中给定数量的结果，你可以使用 `skip` 和 `take` 方法：
+
+```php
+$users = DB::table('users')->skip(10)->take(5)->get();
+```
+
+或者，你可以使用 `limit` 和 `offset` 方法：
+
+```php
+$users = DB::table('users')
+                ->offset(10)
+                ->limit(5)
+                ->get();
+```
 
 ## 条件子句
 
+有时，你可能希望子句仅在其他条件为真时才应用于查询。例如，如果传入请求上有给定的输入值，你可能只想应用 `where` 语句。你可以使用 `when` 方法来完成这个：
+
+```php
+$role = $request->input('role');
+
+$users = DB::table('users')
+                ->when($role, function ($query, $role) {
+                    return $query->where('role_id', $role);
+                })
+                ->get();
+```
+
+`when` 方法只在第一个参数为 `true` 时执行给定的 Closure。如果第一个参数为 `false`，Closure 将不会执行。
+
+你可以将另一个 Closure 作为第三个参数传递给 `when` 方法。如果第一个参数的值为 `false`，则执行此闭包。为了说明如何使用此特性，我们将使用它来配置一个查询的默认排序：
+
+```php
+$sortBy = null;
+
+$users = DB::table('users')
+                ->when($sortBy, function ($query, $sortBy) {
+                    return $query->orderBy($sortBy);
+                }, function ($query) {
+                    return $query->orderBy('name');
+                })
+                ->get();
+```
+
 ## Inserts
+
+查询生成器还提供了一个 `insert` 方法，用于将记录插入数据库表。`insert` 方法接受列名和值的数组：
+
+```php
+DB::table('users')->insert(
+    ['email' => 'john@example.com', 'votes' => 0]
+);
+```
+
+你甚至可以通过传递数组中的多个数组，用一个对 `insert` 的调用将多个记录插入到表中。每个数组表示要插入到表中的一行：
+
+```php
+DB::table('users')->insert([
+    ['email' => 'taylor@example.com', 'votes' => 0],
+    ['email' => 'dayle@example.com', 'votes' => 0]
+]);
+```
+
+### 自增 ID
+
+如果表有一个自动递增的 ID，那么使用 `insertGetId` 方法插入一条记录，然后检索该 ID：
+
+```php
+$id = DB::table('users')->insertGetId(
+    ['email' => 'john@example.com', 'votes' => 0]
+);
+```
+
+{% hint style="danger" %}
+
+使用 PostgreSQL 时，`insertGetId` 方法期望将自动递增列命名为 `id`。如果要从不同的『序列』中检索 ID，你可以将列名作为第二个参数传递给 `insertGetId` 方法。
+
+{% endhint %}
 
 ## Updates
 
+除了将记录插入数据库之外，查询生成器还可以使用 `update` 方法更新现有记录。`update` 方法与 `insert` 方法一样，接受一个列和值对的数组，其中包含要更新的列。你可以使用 `where` 子句约束 `update` 查询：
+
+```php
+DB::table('users')
+            ->where('id', 1)
+            ->update(['votes' => 1]);
+```
+
+### 更新或插入
+
+有时你可能希望更新数据库中的现有记录，或者如果不存在匹配记录则创建它。在这种场景下，可以使用 `updateOrInsert` 方法。`updateOrInsert` 方法接受两个参数：用于查找记录的条件数组，以及包含要更新的列的列和值对的数组。
+
+`updateOrInsert` 方法将首先尝试使用第一个参数的列和值对以定位匹配的数据库记录。如果记录存在，它将使用第二个参数中的值进行更新。如果找不到记录，则将用两个参数的合并属性插入一条新记录：
+
+```php
+DB::table('users')
+    ->updateOrInsert(
+        ['email' => 'john@example.com', 'name' => 'John'],
+        ['votes' => '2']
+    );
+```
+
+### 更新 JSON 列
+
+在更新 JSON 列时，应该使用 `->` 语法来访问 JSON 对象中的合适的键。MySQL 5.7+ 和 PostgreSQL 9.5+ 支持此操作：
+
+```php
+DB::table('users')
+            ->where('id', 1)
+            ->update(['options->enabled' => true]);
+```
+
+### 递增 & 递减
+
+查询构建器还提供了用于递增或递减给定列的值的方便方法。这是一种快捷方式，与手动编写 `update` 语句相比，提供了更具表现力和简洁的接口。
+
+这两种方法都至少接受一个参数：要修改的列。可选的传递第二个参数去控制列应该增加或减少的数量：
+
+```php
+DB::table('users')->increment('votes');
+
+DB::table('users')->increment('votes', 5);
+
+DB::table('users')->decrement('votes');
+
+DB::table('users')->decrement('votes', 5);
+```
+
+你还可以在操作期间指定要更新的其他列：
+
+```php
+DB::table('users')->increment('votes', 1, ['name' => 'John']);
+```
+
 ## Deletes
+
+查询构建器还可用于通过 `delete` 方法从表中删除记录。你可以通过在调用 `delete` 方法之前添加 `where` 子句来约束 `delete` 语句：
+
+```php
+DB::table('users')->delete();
+
+DB::table('users')->where('votes', '>', 100)->delete();
+```
+
+如果你希望截断整个表，这将删除所有行并将自动递增的 ID 重置为零，你可以使用 `truncate` 方法：
+
+```php
+DB::table('users')->truncate();
+```
 
 ## 悲观锁
 
+查询生成器还包含一些函数去帮助你在你的 `select` 语句上执行『悲观锁定』。要使用『共享锁』运行语句，可以对查询使用 `sharedLock` 方法。共享锁防止在事务提交之前修改所选的行：
+
+```php
+DB::table('users')->where('votes', '>', 100)->sharedLock()->get();
+```
+
+或者，你可以使用 `lockForUpdate` 方法。『for update』锁可以防止用另一个共享锁修改或选择行：
+
+```php
+DB::table('users')->where('votes', '>', 100)->lockForUpdate()->get();
+```
+
 ## 调试
+
+你可以在构建查询时使用 `dd` 或 `dump` 方法来转储查询绑定和 SQL。`dd` 方法将显示调试信息，然后停止执行请求。`dump` 方法将显示调试信息，但允许请求继续执行：
+
+```php
+DB::table('users')->where('votes', '>', 100)->dd();
+
+DB::table('users')->where('votes', '>', 100)->dump();
+```
