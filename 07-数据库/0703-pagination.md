@@ -183,4 +183,45 @@ Route::get('users', function () {
 {{ $paginator->links('view.name', ['foo' => 'bar']) }}
 ```
 
+但是，自定义分页视图的最简单方法是使用 `vendor:publish` 命令将它们导出到 `resources/views/vendor` 目录：
+
+```php
+php artisan vendor:publish --tag=laravel-pagination
+```
+
+此命令将视图放在 `resources/views/vendor/pagination` 目录中。此目录中的 `bootstrap-4.blade.php` 文件对应于默认的分页视图。你可以编辑此文件以修改分页 HTML。
+
+如果希望将另一个文件指定为默认分页视图，可以在 `AppServiceProvider` 中使用分页器的 `defaultView` 和 `defaultSimpleView` 方法：
+
+```php
+use Illuminate\Pagination\Paginator;
+
+public function boot()
+{
+    Paginator::defaultView('view-name');
+
+    Paginator::defaultSimpleView('view-name');
+}
+```
+
 ## 分页器实例方法
+
+每个分页器实例都通过以下方法提供额外的分页信息：
+
+| 方法                                  | 描述                                                           |
+| ------------------------------------- | -------------------------------------------------------------- |
+| `$results->count()`                   | 获取当前页面的条目数                                           |
+| `$results->currentPage()`             | 获取当前页码                                                   |
+| `$results->firstItem()`               | 获取结果中第一编号的条目结果                                   |
+| `$results->getOptions()`              | 获取分页器选项                                                 |
+| `$results->getUrlRange($start, $end)` | 创建一个带范围的分页 URL                                       |
+| `$results->hasMorePages()`            | 确定是否有足够的条目可以拆分为多页                             |
+| `$results->items()`                   | 获取当前页面的条目                                             |
+| `$results->lastItem()`                | 获取结果中最后编号的条目结果                                   |
+| `$results->lastPage()`                | 获取最后一个可用页面的页码（使用 `simplePaginate` 时不可用）   |
+| `$results->nextPageUrl()`             | 获取下一页的 URL                                               |
+| `$results->onFirstPage()`             | 确定分页器是否在第一页上                                       |
+| `$results->perPage()`                 | 每页显示的条目数                                               |
+| `$results->previousPageUrl()`         | 获取前一页的 URL                                               |
+| `$results->total()`                   | 确定数据存储中匹配条目的总数（使用 `simplePaginate` 时不可用） |
+| `$results->url($page)`                | 获取给定页码的 URL                                             |
