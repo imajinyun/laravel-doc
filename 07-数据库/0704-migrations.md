@@ -177,12 +177,12 @@ Schema::connection('foo')->create('users', function (Blueprint $table) {
 
 你可以在模式构建器上使用以下命令来定义表的选项：
 
-| 命令 | 描述 |
-| --- | --- |
-| `$table->engine = 'InnoDB';` | 指定表存储引擎（MySQL） |
-| `$table->charset = 'utf8';` | 指定表的默认字符集（MySQL） |
-| `$table->collation = 'utf8_unicode_ci';` | 指定表的默认排序规则（MySQL） |
-| `$table->temporary();` | 创建一个临时表（SQL Server 除外） |
+| 命令                                     | 描述                              |
+| ---------------------------------------- | --------------------------------- |
+| `$table->engine = 'InnoDB';`             | 指定表存储引擎（MySQL）           |
+| `$table->charset = 'utf8';`              | 指定表的默认字符集（MySQL）       |
+| `$table->collation = 'utf8_unicode_ci';` | 指定表的默认排序规则（MySQL）     |
+| `$table->temporary();`                   | 创建一个临时表（SQL Server 除外） |
 
 ### 重命名 / 删除表
 
@@ -220,65 +220,65 @@ Schema::table('users', function (Blueprint $table) {
 
 模式构建器包含各种列类型，你可以在构建你的表时指定这些列类型：
 
-| 命令 | 描述 |
-| --- | --- |
-| `$table->bigIncrements('id');` | 自动递增 UNSIGNED BIGINT（主键）等效列 |
-| `$table->bigInteger('votes');` | BIGINT 等效列 |
-| `$table->binary('data');` | BLOB 等效列 |
-| `$table->boolean('confirmed');` | BOOLEAN 等效列 |
-| `$table->char('name', 100);` | 可选长度的 CHAR 等效列 |
-| `$table->date('created_at');` | DATE 等效列 |
-| `$table->dateTime('created_at');` | DATETIME 等效列 |
-| `$table->dateTimeTz('created_at');` | DATETIME（带时区） 等效列 |
-| `$table->decimal('amount', 8, 2);` | 有精度（总位数）和刻度（十进制数字）的 DECIMAL 等效列 |
-| `$table->double('amount', 8, 2);` | 有精度（总位数）和刻度（十进制数字）的 DOUBLE 等效列 |
-| `$table->enum('level', ['easy', 'hard']);` | 枚举等效列 |
-| `$table->float('amount', 8, 2);` | 有精度（总位数）和刻度（十进制数字）的 FLOAT 等效列 |
-| `$table->geometry('positions');` | GEOMETRY 等效列 |
-| `$table->geometryCollection('positions');` | GEOMETRYCOLLECTION 等效列 |
-| `$table->increments('id');` | 自动递增 UNSIGNED INTEGER（主键）等效列 |
-| `$table->integer('votes');` | INTEGER 等效列 |
-| `$table->ipAddress('visitor');` | IP 地址等效列 |
-| `$table->json('options');` | JSON 等效列 |
-| `$table->jsonb('options');` | JSONB 等效列 |
-| `$table->lineString('positions');` | LINESTRING 等效列 |
-| `$table->longText('description');` | LONGTEXT 等效列 |
-| `$table->macAddress('device');` | MAC 地址等效列 |
-| `$table->mediumIncrements('id');` | 自动递增 UNSIGNED MEDIUMINT（主键）等效列 |
-| `$table->mediumInteger('votes');` | MEDIUMINT 等效列 |
-| `$table->mediumText('description');` | MEDIUMTEXT 等效列 |
-| `$table->morphs('taggable');` | 添加 `taggable_id` UNSIGNED BIGINT 和 `taggable_type` VARCHAR 等效列 |
-| `$table->multiLineString('positions');` | MULTILINESTRING 等效列 |
-| `$table->multiPoint('positions');` | MULTIPOINT 等效列 |
-| `$table->multiPolygon('positions');` | MULTIPOLYGON 等效列 |
-| `$table->nullableMorphs('taggable');` | 添加 `morphs()` 版本的可空列 |
-| `$table->nullableTimestamps();` | `timestamps()` 方法的别名 |
-| `$table->point('position');` | POINT 等效列 |
-| `$table->polygon('positions');` | POLYGON 等效列 |
-| `$table->rememberToken();` | 添加一个可空的 `remember_token` VARCHAR(100) 等效列 |
-| `$table->set('flavors', ['strawberry', 'vanilla']);` | SET 等效列 |
-| `$table->smallIncrements('id');` | 自动递增 UNSIGNED SMALLINT（主键）等效列 |
-| `$table->smallInteger('votes');` | SMALLINT 等效列 |
-| `$table->softDeletes();` | 为软删除添加一个可空的 `deleted_at` TIMESTAMP 等效列 |
-| `$table->softDeletesTz();` | 为软删除添加一个可空的 `deleted_at` TIMESTAMP（带时区）等效列 |
-| `$table->string('name', 100);` | 可选长度的 VARCHAR 等效列 |
-| `$table->text('description');` | TEXT 等效列 |
-| `$table->time('sunrise');` | TIME 等效列 |
-| `$table->timeTz('sunrise');` | TIME（带时区）等效列 |
-| `$table->timestamp('added_on');` | TIMESTAMP 等效列 |
-| `$table->timestampTz('added_on');` | TIMESTAMP（带时区）等效列 |
-| `$table->timestamps();` | 添加可空的 `created_at` 和 `updated_at` TIMESTAMP 等效列 |
-| `$table->timestampsTz();` | 添加可空的 `created_at` 和 `updated_at` TIMESTAMP（带时区）等效列 |
-| `$table->tinyIncrements('id');` | 自动递增 UNSIGNED TINYINT（主键）等效列 |
-| `$table->tinyInteger('votes');` | TINYINT 等效列 |
-| `$table->unsignedBigInteger('votes');` | UNSIGNED BIGINT 等效列 |
-| `$table->unsignedDecimal('amount', 8, 2);` | 有精度（总位数）和刻度（十进制数字）的 UNSIGNED DECIMAL 等效列 |
-| `$table->unsignedInteger('votes');` | UNSIGNED INTEGER 等效列 |
-| `$table->unsignedMediumInteger('votes');` | UNSIGNED MEDIUMINT 等效列 |
-| `$table->unsignedSmallInteger('votes');` | UNSIGNED SMALLINT 等效列 |
-| `$table->unsignedTinyInteger('votes');` | UNSIGNED TINYINT 等效列 |
-| `$table->uuid('id');` | UUID 等效列 |
-| `$table->year('birth_year');` | YEAR 等效列 |
+| 命令                                                 | 描述                                                                 |
+| ---------------------------------------------------- | -------------------------------------------------------------------- |
+| `$table->bigIncrements('id');`                       | 自动递增 UNSIGNED BIGINT（主键）等效列                               |
+| `$table->bigInteger('votes');`                       | BIGINT 等效列                                                        |
+| `$table->binary('data');`                            | BLOB 等效列                                                          |
+| `$table->boolean('confirmed');`                      | BOOLEAN 等效列                                                       |
+| `$table->char('name', 100);`                         | 可选长度的 CHAR 等效列                                               |
+| `$table->date('created_at');`                        | DATE 等效列                                                          |
+| `$table->dateTime('created_at');`                    | DATETIME 等效列                                                      |
+| `$table->dateTimeTz('created_at');`                  | DATETIME（带时区） 等效列                                            |
+| `$table->decimal('amount', 8, 2);`                   | 有精度（总位数）和刻度（十进制数字）的 DECIMAL 等效列                |
+| `$table->double('amount', 8, 2);`                    | 有精度（总位数）和刻度（十进制数字）的 DOUBLE 等效列                 |
+| `$table->enum('level', ['easy', 'hard']);`           | 枚举等效列                                                           |
+| `$table->float('amount', 8, 2);`                     | 有精度（总位数）和刻度（十进制数字）的 FLOAT 等效列                  |
+| `$table->geometry('positions');`                     | GEOMETRY 等效列                                                      |
+| `$table->geometryCollection('positions');`           | GEOMETRYCOLLECTION 等效列                                            |
+| `$table->increments('id');`                          | 自动递增 UNSIGNED INTEGER（主键）等效列                              |
+| `$table->integer('votes');`                          | INTEGER 等效列                                                       |
+| `$table->ipAddress('visitor');`                      | IP 地址等效列                                                        |
+| `$table->json('options');`                           | JSON 等效列                                                          |
+| `$table->jsonb('options');`                          | JSONB 等效列                                                         |
+| `$table->lineString('positions');`                   | LINESTRING 等效列                                                    |
+| `$table->longText('description');`                   | LONGTEXT 等效列                                                      |
+| `$table->macAddress('device');`                      | MAC 地址等效列                                                       |
+| `$table->mediumIncrements('id');`                    | 自动递增 UNSIGNED MEDIUMINT（主键）等效列                            |
+| `$table->mediumInteger('votes');`                    | MEDIUMINT 等效列                                                     |
+| `$table->mediumText('description');`                 | MEDIUMTEXT 等效列                                                    |
+| `$table->morphs('taggable');`                        | 添加 `taggable_id` UNSIGNED BIGINT 和 `taggable_type` VARCHAR 等效列 |
+| `$table->multiLineString('positions');`              | MULTILINESTRING 等效列                                               |
+| `$table->multiPoint('positions');`                   | MULTIPOINT 等效列                                                    |
+| `$table->multiPolygon('positions');`                 | MULTIPOLYGON 等效列                                                  |
+| `$table->nullableMorphs('taggable');`                | 添加 `morphs()` 版本的可空列                                         |
+| `$table->nullableTimestamps();`                      | `timestamps()` 方法的别名                                            |
+| `$table->point('position');`                         | POINT 等效列                                                         |
+| `$table->polygon('positions');`                      | POLYGON 等效列                                                       |
+| `$table->rememberToken();`                           | 添加一个可空的 `remember_token` VARCHAR(100) 等效列                  |
+| `$table->set('flavors', ['strawberry', 'vanilla']);` | SET 等效列                                                           |
+| `$table->smallIncrements('id');`                     | 自动递增 UNSIGNED SMALLINT（主键）等效列                             |
+| `$table->smallInteger('votes');`                     | SMALLINT 等效列                                                      |
+| `$table->softDeletes();`                             | 为软删除添加一个可空的 `deleted_at` TIMESTAMP 等效列                 |
+| `$table->softDeletesTz();`                           | 为软删除添加一个可空的 `deleted_at` TIMESTAMP（带时区）等效列        |
+| `$table->string('name', 100);`                       | 可选长度的 VARCHAR 等效列                                            |
+| `$table->text('description');`                       | TEXT 等效列                                                          |
+| `$table->time('sunrise');`                           | TIME 等效列                                                          |
+| `$table->timeTz('sunrise');`                         | TIME（带时区）等效列                                                 |
+| `$table->timestamp('added_on');`                     | TIMESTAMP 等效列                                                     |
+| `$table->timestampTz('added_on');`                   | TIMESTAMP（带时区）等效列                                            |
+| `$table->timestamps();`                              | 添加可空的 `created_at` 和 `updated_at` TIMESTAMP 等效列             |
+| `$table->timestampsTz();`                            | 添加可空的 `created_at` 和 `updated_at` TIMESTAMP（带时区）等效列    |
+| `$table->tinyIncrements('id');`                      | 自动递增 UNSIGNED TINYINT（主键）等效列                              |
+| `$table->tinyInteger('votes');`                      | TINYINT 等效列                                                       |
+| `$table->unsignedBigInteger('votes');`               | UNSIGNED BIGINT 等效列                                               |
+| `$table->unsignedDecimal('amount', 8, 2);`           | 有精度（总位数）和刻度（十进制数字）的 UNSIGNED DECIMAL 等效列       |
+| `$table->unsignedInteger('votes');`                  | UNSIGNED INTEGER 等效列                                              |
+| `$table->unsignedMediumInteger('votes');`            | UNSIGNED MEDIUMINT 等效列                                            |
+| `$table->unsignedSmallInteger('votes');`             | UNSIGNED SMALLINT 等效列                                             |
+| `$table->unsignedTinyInteger('votes');`              | UNSIGNED TINYINT 等效列                                              |
+| `$table->uuid('id');`                                | UUID 等效列                                                          |
+| `$table->year('birth_year');`                        | YEAR 等效列                                                          |
 
 ### 列修饰符
 
@@ -292,4 +292,75 @@ Schema::table('users', function (Blueprint $table) {
 
 下面是所有可用列修饰符的列表。此列表不包含 [索引修饰符](https://laravel.com/docs/5.8/migrations#creating-indexes)：
 
+| 修饰符                           | 描述                                                   |
+| -------------------------------- | ------------------------------------------------------ |
+| `->after('column')`              | 在另一个列『之后』放置列（MySQL）                      |
+| `->autoIncrement()`              | 设置 INTEGER 列为自动递增（主键）                      |
+| `->charset('utf8')`              | 指定列的字符集（MySQL）                                |
+| `->collation('utf8_unicode_ci')` | 指定列的排序规则（MySQL/PostgreSQL/SQL Server）        |
+| `->comment('my comment')`        | 添加注释到一个列（MySQL/PostgreSQL）                   |
+| `->default($value)`              | 为列指定一个『默认』值                                 |
+| `->first()`                      | 将列放置在表的『第一』列上（MySQL）                    |
+| `->nullable($value = true)`      | 允许（默认情况下）NULL 值插入到列中                    |
+| `->storedAs($expression)`        | 创建存储生成的列（MySQL）                              |
+| `->unsigned()`                   | 设置 INTEGER 列为 UNSIGNED（MySQL）                    |
+| `->useCurrent()`                 | 设置 TIMESTAMP 列以使用 CURRENT_TIMESTAMP 作为其默认值 |
+| `->virtualAs($expression)`       | 创建一个虚拟生成列（MySQL）                            |
+| `->generatedAs($expression)`     | 使用指定的序列选项创建标识列（PostgreSQL）             |
+| `->always()`                     | 定义序列值优先于标识列的输入（PostgreSQL）             |
+
+### 修改列
+
+#### 先决条件
+
+在修改列之前，确保将 `doctrine/dbal` 依赖项添加到 `composer.json` 文件中。Doctrine DBAL 库用于确定列的当前状态，并创建对列进行指定调整所需的 SQL 查询：
+
+```bash
+composer require doctrine/dbal
+```
+
+#### 更新列属性
+
+`change` 方法允许你将一些现有列类型修改为新类型或修改列的属性。例如，你可能希望增加字符串列的大小。要查看实际的 `change` 方法，让我们将 `name` 列的大小从 25 增加到 50：
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->string('name', 50)->change();
+});
+```
+
+我们还可以将列修改为可空：
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->string('name', 50)->nullable()->change();
+});
+```
+
+{% hint style="danger" %}
+
+只有以下列类型可以『更改』：bigInteger、binary、boolean、date、dateTime、dateTimeTz、decimal、integer、json、longText、mediumText、smallInteger、string、text、time、unsignedBigInteger、unsignedInteger 和 unsignedSmallInteger。
+
+{% endhint %}
+
+#### 重命名列
+
+要重命名列，你可以在模式构建器上使用 `renameColumn` 方法。在重命名列之前，确保添加 `doctrine/dbal` 依赖项到 `composer.json` 文件中：
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->renameColumn('from', 'to');
+});
+```
+
+{% hint style="danger" %}
+
+当前不支持重命名表中具有 `enum` 类型列的任何列。
+
+{% endhint %}
+
+### 删除列
+
 ## 索引
+
+### 创建索引
