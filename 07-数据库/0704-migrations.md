@@ -361,6 +361,168 @@ Schema::table('users', function (Blueprint $table) {
 
 ### 删除列
 
+若要删除列，使用模式生成器上的 `dropColumn` 方法。在从 SQLite 数据库中删除列之前，你需要添加 `doctrine/dbal` 依赖到你的 `composer.json` 文件中，并在你的终端中运行 `composer update` 命令来安装库：
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->dropColumn('votes');
+});
+```
+
+通过向 `dropColumn` 方法传递列名数组，你可以从表中删除多个列：
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->dropColumn(['votes', 'avatar', 'location']);
+});
+```
+
+{% hint style="danger" %}
+
+不支持在使​​用 SQLite 数据库时在单个迁移中删除或修改多个列。
+
+{% endhint %}
+
+**可用的命令别名**
+
+| 命令                               | 描述                                       |
+| ---------------------------------- | ------------------------------------------ |
+| `$table->dropMorphs('morphable');` | 删除 `morphable_id` 和 `morphable_type` 列 |
+| `$table->dropRememberToken();`     | 删除 `remember_token` 列                   |
+| `$table->dropSoftDeletes();`       | 删除 `deleted_at` 列                       |
+| `$table->dropSoftDeletesTz();`     | `dropSoftDeletes()` 方法的别名             |
+| `$table->dropTimestamps();`        | 删除 `created_at` 和 `updated_at` 列       |
+| `$table->dropTimestampsTz();`      | `dropTimestamps()` 方法的别名              |
+
 ## 索引
 
 ### 创建索引
+
+模式构建器支持几种类型的索引。首先，让我们看一个例子，它指定列的值应该是惟一的。要创建索引，我们可以将 `unique` 方法链接到列定义上：
+
+```php
+$table->string('email')->unique();
+```
+
+或者，你可以在定义列之后创建索引。例如：
+
+```php
+$table->unique('email');
+```
+
+你甚至可以将列数组传递给索引方法来创建复合（或组合）索引：
+
+```php
+$table->index(['account_id', 'created_at']);
+```
+
+Laravel 将自动生成一个合理的索引名称，但是你可以将第二个参数传递给方法来指定自己的名称：
+
+```php
+$table->unique('email', 'unique_email');
+```
+
+#### 可用的索引类型
+
+每个索引方法都接受一个可选的第二个参数来指定索引的名称。如果省略，名称将从表和列的名称派生。
+
+| 命令                                    | 描述                            |
+| --------------------------------------- | ------------------------------- |
+| `$table->primary('id');`                | 添加一个主键                    |
+| `$table->primary(['id', 'parent_id']);` | 添加组合键                      |
+| `$table->unique('email');`              | 添加一个唯一索引                |
+| `$table->index('state');`               | 添加一个普通索引                |
+| `$table->spatialIndex('location');`     | 添加一个空间索引（除了 SQLite） |
+
+#### 索引长度 & MySQL / MariaDB
+
+Laravel 默认使用 `utf8mb4` 字符集，包括支持在数据库中存储『表情符号』。如果运行的 MySQL 版本比 5.7.7 版本老，或者 MariaDB 版本比 10.2.2 版本老，那么你可能需要手动配置迁移生成的默认字符串长度，以便 MySQL 为它们创建索引。你可以通过在你的 `AppServiceProvider` 中调用 `Schema::defaultStringLength` 方法来配置它：
+
+```php
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * 引导任何应用程序服务。
+ *
+ * @return void
+ */
+public function boot()
+{
+    Schema::defaultStringLength(191);
+}
+```
+
+或者，你可以为你的数据库启用 `innodb_large_prefix` 选项。有关如何正确启用此选项的说明，请参阅数据库的文档。
+
+### 重命名索引
+
+要重命名索引，你可以使用 `renameIndex` 方法。此方法接受当前索引名作为其第一个参数，并将期望的名称作为第二个参数：
+
+```bash
+$table->renameIndex('from', 'to')
+```
+
+### 删除索引
+
+要删除索引，你必须指定索引的名称。默认情况下，Laravel 会自动为索引分配一个合理的名称。将表名、索引列的名称和索引类型连接起来。下面是一些例子：
+
+| 命令                                                     | 描述                                     |
+| -------------------------------------------------------- | ---------------------------------------- |
+| `$table->dropPrimary('users_id_primary');`               | 从『users』表中删除一个主键              |
+| `$table->dropUnique('users_email_unique');`              | 从『users』表中删除唯一索引              |
+| `$table->dropIndex('geo_state_index');`                  | 从『geo』表中删除基本索引                |
+| `$table->dropSpatialIndex('geo_location_spatialindex');` | 从『geo』表中删除空间索引（SQLite 除外） |
+
+如果将列数组传递给删除索引的方法，则将根据表名、列和键类型生成常规的索引名：
+
+```php
+Schema::table('geo', function (Blueprint $table) {
+    $table->dropIndex(['state']); // 删除索引「geo_state_index」
+});
+```
+
+### 外键约束
+
+Laravel 还提供了创建外键约束的支持，这些外键约束用于在数据库级别强制引用完整性。例如，让我们在 `posts` 表上定义一个 `user_id` 列，该列引用 `users` 表上的 `id` 列：
+
+```php
+Schema::table('posts', function (Blueprint $table) {
+    $table->unsignedBigInteger('user_id');
+
+    $table->foreign('user_id')->references('id')->on('users');
+});
+```
+
+你还可以为约束的『on delete』和『on update』属性指定期望的操作：
+
+```php
+$table->foreign('user_id')
+      ->references('id')->on('users')
+      ->onDelete('cascade');
+```
+
+要删除外键，你可以使用 `dropForeign` 方法。外键约束使用与索引相同的命名约定。因此，我们将把表名和约束中的列连接起来，然后用『_foreign』作为名称的后缀：
+
+```php
+$table->dropForeign('posts_user_id_foreign');
+```
+
+或者，你可以传递一个数组值，该值在删除时将自动使用常规约束名：
+
+```php
+$table->dropForeign(['user_id']);
+```
+
+你可以使用以下方法启用或禁用你的迁移中的外键约束：
+
+```php
+Schema::enableForeignKeyConstraints();
+
+Schema::disableForeignKeyConstraints();
+```
+
+{% hint style="danger" %}
+
+SQLite 默认情况下禁用外键约束。在使用 SQLite 时，尝试在你的迁移中创建外键之前，请确保在你的数据库配置中 [启用外键支持](https://laravel.com/docs/5.8/database#configuration)。
+
+{% endhint %}
