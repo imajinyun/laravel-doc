@@ -206,4 +206,90 @@ Schema::dropIfExists('users');
 
 ## 列
 
+### 创建列
+
+`Schema` 外观上的 `table` 方法可用于更新现有的表。与 `create` 方法一样，`table` 方法接受两个参数：表的名称和一个 `Closure`，该闭包接收一个 `Blueprint` 实例，你可以使用该实例向表添加列：
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->string('email');
+});
+```
+
+#### 可用的列类型
+
+模式构建器包含各种列类型，你可以在构建你的表时指定这些列类型：
+
+| 命令 | 描述 |
+| --- | --- |
+| `$table->bigIncrements('id');` | 自动递增 UNSIGNED BIGINT（主键）等效列 |
+| `$table->bigInteger('votes');` | BIGINT 等效列 |
+| `$table->binary('data');` | BLOB 等效列 |
+| `$table->boolean('confirmed');` | BOOLEAN 等效列 |
+| `$table->char('name', 100);` | 可选长度的 CHAR 等效列 |
+| `$table->date('created_at');` | DATE 等效列 |
+| `$table->dateTime('created_at');` | DATETIME 等效列 |
+| `$table->dateTimeTz('created_at');` | DATETIME（带时区） 等效列 |
+| `$table->decimal('amount', 8, 2);` | 有精度（总位数）和刻度（十进制数字）的 DECIMAL 等效列 |
+| `$table->double('amount', 8, 2);` | 有精度（总位数）和刻度（十进制数字）的 DOUBLE 等效列 |
+| `$table->enum('level', ['easy', 'hard']);` | 枚举等效列 |
+| `$table->float('amount', 8, 2);` | 有精度（总位数）和刻度（十进制数字）的 FLOAT 等效列 |
+| `$table->geometry('positions');` | GEOMETRY 等效列 |
+| `$table->geometryCollection('positions');` | GEOMETRYCOLLECTION 等效列 |
+| `$table->increments('id');` | 自动递增 UNSIGNED INTEGER（主键）等效列 |
+| `$table->integer('votes');` | INTEGER 等效列 |
+| `$table->ipAddress('visitor');` | IP 地址等效列 |
+| `$table->json('options');` | JSON 等效列 |
+| `$table->jsonb('options');` | JSONB 等效列 |
+| `$table->lineString('positions');` | LINESTRING 等效列 |
+| `$table->longText('description');` | LONGTEXT 等效列 |
+| `$table->macAddress('device');` | MAC 地址等效列 |
+| `$table->mediumIncrements('id');` | 自动递增 UNSIGNED MEDIUMINT（主键）等效列 |
+| `$table->mediumInteger('votes');` | MEDIUMINT 等效列 |
+| `$table->mediumText('description');` | MEDIUMTEXT 等效列 |
+| `$table->morphs('taggable');` | 添加 `taggable_id` UNSIGNED BIGINT 和 `taggable_type` VARCHAR 等效列 |
+| `$table->multiLineString('positions');` | MULTILINESTRING 等效列 |
+| `$table->multiPoint('positions');` | MULTIPOINT 等效列 |
+| `$table->multiPolygon('positions');` | MULTIPOLYGON 等效列 |
+| `$table->nullableMorphs('taggable');` | 添加 `morphs()` 版本的可空列 |
+| `$table->nullableTimestamps();` | `timestamps()` 方法的别名 |
+| `$table->point('position');` | POINT 等效列 |
+| `$table->polygon('positions');` | POLYGON 等效列 |
+| `$table->rememberToken();` | 添加一个可空的 `remember_token` VARCHAR(100) 等效列 |
+| `$table->set('flavors', ['strawberry', 'vanilla']);` | SET 等效列 |
+| `$table->smallIncrements('id');` | 自动递增 UNSIGNED SMALLINT（主键）等效列 |
+| `$table->smallInteger('votes');` | SMALLINT 等效列 |
+| `$table->softDeletes();` | 为软删除添加一个可空的 `deleted_at` TIMESTAMP 等效列 |
+| `$table->softDeletesTz();` | 为软删除添加一个可空的 `deleted_at` TIMESTAMP（带时区）等效列 |
+| `$table->string('name', 100);` | 可选长度的 VARCHAR 等效列 |
+| `$table->text('description');` | TEXT 等效列 |
+| `$table->time('sunrise');` | TIME 等效列 |
+| `$table->timeTz('sunrise');` | TIME（带时区）等效列 |
+| `$table->timestamp('added_on');` | TIMESTAMP 等效列 |
+| `$table->timestampTz('added_on');` | TIMESTAMP（带时区）等效列 |
+| `$table->timestamps();` | 添加可空的 `created_at` 和 `updated_at` TIMESTAMP 等效列 |
+| `$table->timestampsTz();` | 添加可空的 `created_at` 和 `updated_at` TIMESTAMP（带时区）等效列 |
+| `$table->tinyIncrements('id');` | 自动递增 UNSIGNED TINYINT（主键）等效列 |
+| `$table->tinyInteger('votes');` | TINYINT 等效列 |
+| `$table->unsignedBigInteger('votes');` | UNSIGNED BIGINT 等效列 |
+| `$table->unsignedDecimal('amount', 8, 2);` | 有精度（总位数）和刻度（十进制数字）的 UNSIGNED DECIMAL 等效列 |
+| `$table->unsignedInteger('votes');` | UNSIGNED INTEGER 等效列 |
+| `$table->unsignedMediumInteger('votes');` | UNSIGNED MEDIUMINT 等效列 |
+| `$table->unsignedSmallInteger('votes');` | UNSIGNED SMALLINT 等效列 |
+| `$table->unsignedTinyInteger('votes');` | UNSIGNED TINYINT 等效列 |
+| `$table->uuid('id');` | UUID 等效列 |
+| `$table->year('birth_year');` | YEAR 等效列 |
+
+### 列修饰符
+
+除了上面列出的列类型之外，向数据库表添加列的同时还可以使用几个列『修饰符』。例如，要使列『nullable』，可以使用 `nullable` 方法：
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->string('email')->nullable();
+});
+```
+
+下面是所有可用列修饰符的列表。此列表不包含 [索引修饰符](https://laravel.com/docs/5.8/migrations#creating-indexes)：
+
 ## 索引
