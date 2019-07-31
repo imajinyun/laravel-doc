@@ -190,3 +190,69 @@ Redis::pipeline(function ($pipe) {
 ```
 
 ## 发布 / 订阅
+
+Laravel 为 Redis `publish` 和 `subscribe` 命令提供了一个方便的接口。这些 Redis 命令允许你监听给定『通道』上的消息。你可以从另一个应用程序向通道发布消息，甚至可以使用另一种编程语言，允许在应用程序和进程之间进行轻松的通信。
+
+首先，让我们使用 `subscribe` 方法设置一个通道监听器。我们将把这个方法调用放在 [Artisan 命令](https://laravel.com/docs/5.8/artisan) 中，因为调用 `subscribe` 方法将启动一个长时间运行的进程：
+
+```php
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Redis;
+
+class RedisSubscribe extends Command
+{
+    /**
+     * 控制台命令的名称和签名。
+     *
+     * @var string
+     */
+    protected $signature = 'redis:subscribe';
+
+    /**
+     * 控制台命令描述。
+     *
+     * @var string
+     */
+    protected $description = 'Subscribe to a Redis channel';
+
+    /**
+     * 执行控制台命令。
+     *
+     * @return mixed
+     */
+    public function handle()
+    {
+        Redis::subscribe(['test-channel'], function ($message) {
+            echo $message;
+        });
+    }
+}
+```
+
+现在我们可以使用 `publish` 方法发布消息到通道：
+
+```php
+Route::get('publish', function () {
+    // 路由逻辑...
+
+    Redis::publish('test-channel', json_encode(['foo' => 'bar']));
+});
+```
+
+**通配符订阅**
+
+使用 `psubscribe` 方法，你可以订阅通配符通道，这对于捕获所有通道上的所有消息可能很有用。`$channel` 名称将作为第二个参数传递到提供回调的 `Closure`：
+
+```php
+Redis::psubscribe(['*'], function ($message, $channel) {
+    echo $message;
+});
+
+Redis::psubscribe(['users.*'], function ($message, $channel) {
+    echo $message;
+});
+```
