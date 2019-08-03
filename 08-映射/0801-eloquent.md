@@ -501,11 +501,130 @@ protected $guarded = [];
 
 #### `firstOrCreate` / `firstOrNew`
 
+你可以使用另外两种方法通过批量分配属性来创建模型：`firstOrCreate` 和 `firstOrNew`。`firstOrCreate` 方法将尝试使用给定的列 / 值对定位数据库记录。如果在数据库中找不到该模型，则将插入一条记录，其中包含第一个参数的属性以及可选的第二个参数中的属性。
+
+与 `firstOrCreate` 类似，`firstOrNew` 方法将尝试在数据库中定位与给定属性匹配的记录。但是，如果没有找到模型，将返回一个新的模型实例。注意，`firstOrNew` 返回的模型还没有持久化到数据库中。你将需要手动调用 `save` 来保存它：
+
+```php
+// 按名称检索航班，如果不存在则创建航班...
+$flight = App\Flight::firstOrCreate(['name' => 'Flight 10']);
+
+// 按名称检索航班，或使用名称，延迟和到达时间属性创建航班...
+$flight = App\Flight::firstOrCreate(
+    ['name' => 'Flight 10'],
+    ['delayed' => 1, 'arrival_time' => '11:30']
+);
+
+// 按名称检索，或实例化...
+$flight = App\Flight::firstOrNew(['name' => 'Flight 10']);
+
+// 按名称检索，或使用名称、延迟和到达时间属性实例化...
+$flight = App\Flight::firstOrNew(
+    ['name' => 'Flight 10'],
+    ['delayed' => 1, 'arrival_time' => '11:30']
+);
+```
+
 #### `updateOrCreate`
+
+你还可能遇到你想去更新现有模型或创建新模型（如果不存在）的情况。Laravel 提供了一个 `updateOrCreate` 方法，可以一步完成此任务。与 `firstOrCreate` 方法一样，`updateOrCreate` 持久化模型，因此不需要调用 `save()`：
+
+```php
+// 如果有从 Oakland 到 San Diego 的航班，把价格定在 99 美元。
+// 如果没有匹配的模型，创建一个。
+$flight = App\Flight::updateOrCreate(
+    ['departure' => 'Oakland', 'destination' => 'San Diego'],
+    ['price' => 99, 'discounted' => 1]
+);
+```
 
 ## 删除模型
 
+要删除模型，在模型实例上调用 `delete` 方法：
+
+```php
+$flight = App\Flight::find(1);
+
+$flight->delete();
+```
+
 ## 查询范围
+
+**按键删除现有模型**
+
+在上面的例子中，我们在调用 `delete` 方法之前从数据库中检索模型。但是，如果你知道模型的主键，你可以删除模型，而不用调用 `destroy` 方法来检索它。除了一个主键作为参数外，`destroy` 方法还将接受多个主键、一个主键数组或一个主键 [集合](https://laravel.com/docs/5.8/collections)：
+
+```php
+App\Flight::destroy(1);
+
+App\Flight::destroy(1, 2, 3);
+
+App\Flight::destroy([1, 2, 3]);
+
+App\Flight::destroy(collect([1, 2, 3]));
+```
+
+**通过查询删除模型**
+
+你还可以在一组模型上运行 `delete` 语句。在本例中，我们将删除所有标记为非活动的航班。与批量更新一样，批量删除不会为被删除的模型触发任何模型事件：
+
+```php
+$deletedRows = App\Flight::where('active', 0)->delete();
+```
+
+{% hint style="danger" %}
+
+当通过 Eloquent 执行一个批量删除语句时，`deleting` 和 `deleted` 的模型事件不会为被删除的模型触发。这是因为在执行删除语句时从来不会实际检索模型。
+
+{% endhint %}
+
+### 软删除
+
+除了从数据库中实际删除记录之外，Eloquent 还可以『软删除』模型。当模型被软删除时，它们实际上并没有从你的数据库中删除。相反，在模型上设置一个 `deleted_at` 属性并将其插入数据库。如果一个模型有一个非空的 `deleted_at` 值，则该模型已被软删除。要启用模型的软删除，使用模型上的 `Illuminate\Database\Eloquent\SoftDeletes` 特性：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Flight extends Model
+{
+    use SoftDeletes;
+}
+```
+
+{% hint style="info" %}
+
+`SoftDeletes` 特性会自动将 `deleted_at` 属性强制转换为 `DateTime` / `Carbon` 实例。
+
+{% endhint %}
+
+你应该将 `deleted_at` 列添加到你的数据库表中。Laravel [模式构建器](https://laravel.com/docs/5.8/migrations) 包含一个助手方法来创建这个列：
+
+```php
+Schema::table('flights', function (Blueprint $table) {
+    $table->softDeletes();
+});
+```
+
+现在，当你调用模型上的 `delete` 方法时，`deleted_at` 列将被设置为当前日期和时间。而且，当查询使用软删除的模型时，软删除的模型将自动从所有查询结果中排除。
+
+要确定给定的模型实例是否已被软删除，使用 `trashed` 方法：
+
+```php
+if ($flight->trashed()) {
+    //
+}
+```
+
+### 查询软删除的模型
+
+#### 包括软删除模型
+
+#### 只检索软删除的模型
 
 ## 比较模型
 
