@@ -686,8 +686,365 @@ $flight->history()->forceDelete();
 
 全局范围允许你为给定模型的所有查询添加约束。Laravel 自己的 [软删除](https://laravel.com/docs/5.8/eloquent#soft-deleting) 功能利用全局范围只从数据库中提取『未删除』模型。编写你自己的全局范围可以提供一种方便、简单的方法来确保给定模型的每个查询都接受特定的约束。
 
+#### 编写全局范围
+
+编写全局范围很简单。定义一个实现 `Illuminate\Database\Eloquent\Scope` 接口的类。这个接口要求你实现一个方法：`apply`。`apply` 方法可以根据需要向查询添加 `where` 约束：
+
+```php
+<?php
+
+namespace App\Scopes;
+
+use Illuminate\Database\Eloquent\Scope;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+
+class AgeScope implements Scope
+{
+    /**
+     * 将范围应用于给定的 Eloquent 查询构建器。
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $builder
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return void
+     */
+    public function apply(Builder $builder, Model $model)
+    {
+        $builder->where('age', '>', 200);
+    }
+}
+```
+
+{% hint style="info" %}
+
+如果你的全局范围是在查询的查询子句中添加列，你应使用 `addSelect` 方法而不是 `select`。这将防止无意中替换查询的现有查询子句。
+
+{% endhint %}
+
+#### 应用全局范围
+
+要将全局范围分配给模型，你应该覆盖给定模型的 `boot` 方法并使用 `addGlobalScope` 方法：
+
+```php
+<?php
+
+namespace App;
+
+use App\Scopes\AgeScope;
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * 模型的『引导』方法。
+     *
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::addGlobalScope(new AgeScope);
+    }
+}
+```
+
+在添加范围之后，`User::all()` 的查询将生成以下 SQL：
+
+```sql
+select * from `users` where `age` > 200
+```
+
+#### 匿名全局范围
+
+Eloquent 还允许你使用闭包定义全局范围，这对于不保证单独类的简单范围特别有用：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+
+class User extends Model
+{
+    /**
+     * 模型的『引导』方法。
+     *
+     * @return void
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::addGlobalScope('age', function (Builder $builder) {
+            $builder->where('age', '>', 200);
+        });
+    }
+}
+```
+
+#### 移除全局范围
+
+如果你希望为给定查询删除全局范围，可以使用 `withoutGlobalScope` 方法。该方法接受全局范围的类名作为其惟一参数：
+
+```php
+User::withoutGlobalScope(AgeScope::class)->get();
+```
+
+或者，如果使用闭包定义全局范围：
+
+```php
+User::withoutGlobalScope('age')->get();
+```
+
+如果你想删除几个甚至所有全局作用域，你可以使用 `withoutGlobalScope` 方法：
+
+```php
+// 移除所有的全局范围...
+User::withoutGlobalScopes()->get();
+
+// 移除一些全局范围...
+User::withoutGlobalScopes([
+    FirstScope::class, SecondScope::class
+])->get();
+```
+
 ### 局部范围
+
+局部作用域允许你定义公共约束集，你可以在你的整个应用程序中轻松重用这些约束集。例如，你可能需要经常检索所有被认为是『热门』的所有用户。要定义范围，在 Eloquent 模型的方法前面加上范围前缀。
+
+作用域应该总是返回一个查询生成器实例：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * Scope a query to only include popular users.
+     * 范围查询仅包括热门的用户。
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePopular($query)
+    {
+        return $query->where('votes', '>', 100);
+    }
+
+    /**
+     * 范围查询仅包括激活的用户。
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('active', 1);
+    }
+}
+```
+
+#### 利用局部范围
+
+一旦定义了范围，你可以在查询模型时调用范围方法。但是，在调用方法时不应该包含 `scope` 前缀。例如，你甚至可以将调用链接到各种范围：
+
+```php
+$users = App\User::popular()->active()->orderBy('created_at')->get();
+```
+
+通过 `or` 查询操作符组合多个 Eloquent 模型范围可能需要使用闭包回调：
+
+```php
+$users = App\User::popular()->orWhere(function (Builder $query) {
+    $query->active();
+})->get();
+```
+
+然而，由于这可能很麻烦，Laravel 提供了一个『更高阶』的 `orWhere` 方法，允许你流畅地将这些范围链接在一起，而无需使用闭包：
+
+```php
+$users = App\User::popular()->orWhere->active()->get();
+```
+
+#### 动态范围
+
+有时，你可能希望定义一个接受参数的范围。首先，将你的附加参数添加到你的范围中。范围参数应该定义在 `$query` 参数之后：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * 范围查询仅包括给定类型的用户。
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  mixed  $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('type', $type);
+    }
+}
+```
+
+现在，你可以在调用范围时传递参数：
+
+```php
+$users = App\User::ofType('admin')->get();
+```
 
 ## 比较模型
 
+有时你可能需要确定两个模型是否『相同』。`is` 方法可用于快速验证两个模型具有相同的主键、表和数据库连接：
+
+```php
+if ($post->is($anotherPost)) {
+    //
+}
+```
+
 ## 事件
+
+Eloquent 模型可以触发多个事件，允许你在模型的生命周期中钩上以下几点：`retrieved`、`creating`、`created`、`updating`、`updated`、`saving`、`saved`、`deleting`、`deleted`、`restoring`、`restored`。事件允许你在每次在数据库中保存或更新特定模型类时轻松执行代码。每个事件通过其构造函数接收模型的实例。
+
+从数据库中检索现有模型时，将触发 `retrieved` 事件。当首次保存新模型时，将触发 `creating` 和 `created` 事件。如果数据库中已存在模型并且调用了 `save` 方法，则将触发 `updating` / `updated` 事件。但是，在这两种情况下，`saving` / `saved` 的事件将触发。
+
+{% hint style="dagner" %}
+
+通过 Eloquent 发布批量更新时，不会为更新的模型触发 `saved` 和 `updated` 模型事件。这是因为在发布批量更新时，实际上从未检索过模型。
+
+{% endhint %}
+
+首先，在你的 Eloquent 模型上定义 `$dispatchesEvents` 属性，将 Eloquent 模型生命周期的各个点映射到你自己的 [事件类](https://laravel.com/docs/5.8/events)：
+
+```php
+<?php
+
+namespace App;
+
+use App\Events\UserSaved;
+use App\Events\UserDeleted;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class User extends Authenticatable
+{
+    use Notifiable;
+
+    /**
+     * 模型的事件映射。
+     *
+     * @var array
+     */
+    protected $dispatchesEvents = [
+        'saved' => UserSaved::class,
+        'deleted' => UserDeleted::class,
+    ];
+}
+```
+
+定义并映射你的 Eloquent 事件之后，可以使用 [事件监听器](https://laravel.com/docs/5.8/events#defining-listeners) 来处理事件。
+
+### 观察者
+
+#### 定义观察者
+
+如果你正在监听给定模型上的许多事件，你可以使用观察者将你的所有监听器分组到一个类中。观察者类的方法名反映了你希望监听的 Eloquent 事件。这些方法中的每一个都接受模型作为它们唯一的参数。`make:observer` Artisan 命令是创建新的观察者类的最简单方法：
+
+```bash
+php artisan make:observer UserObserver --model=User
+```
+
+此命令将新观察者放在 `App/Observers` 目录中。如果此目录不存在，Artisan 将为你创建该目录。你的新观察者将如下所示：
+
+```php
+<?php
+
+namespace App\Observers;
+
+use App\User;
+
+class UserObserver
+{
+    /**
+     * 处理用户『created』事件。
+     *
+     * @param  \App\User  $user
+     * @return void
+     */
+    public function created(User $user)
+    {
+        //
+    }
+
+    /**
+     * 处理用户『updated』事件。
+     *
+     * @param  \App\User  $user
+     * @return void
+     */
+    public function updated(User $user)
+    {
+        //
+    }
+
+    /**
+     * 处理用户『deleted』事件。
+     *
+     * @param  \App\User  $user
+     * @return void
+     */
+    public function deleted(User $user)
+    {
+        //
+    }
+}
+```
+
+要注册观察者，在你希望观察的模型上使用 `observe` 方法。你可以在你的某个服务提供者 `boot` 方法中注册观察者。在本例中，我们将在 `AppServiceProvider` 中注册观察者：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use App\User;
+use App\Observers\UserObserver;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 注册任何应用程序服务。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        User::observe(UserObserver::class);
+    }
+}
+```
