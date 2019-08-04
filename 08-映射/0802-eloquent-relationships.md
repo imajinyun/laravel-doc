@@ -134,6 +134,87 @@ class Post extends Model
 }
 ```
 
+记住，Eloquent 将自动确定 `Comment` 模型上的正确外键列。按照惯例，Eloquent 将采用拥有模型的『蛇形』名称，并以 `_id` 为后缀。因此，对于此示例，Eloquent 将假定 `Comment` 模型上的外键是 `post_id`。
+
+一旦定义了关系，我们就可以通过访问 `comments` 属性来访问评论集合。记住，由于 Eloquent 提供了『动态属性』，我们可以像访问模型中的属性一样访问关系方法：
+
+```php
+$comments = App\Post::find(1)->comments;
+
+foreach ($comments as $comment) {
+    //
+}
+```
+
+由于所有关系也充当查询构建器，因此你可以通过调用 `comments` 方法并继续将条件链接到查询来进一步添加对检索的评论的更多约束：
+
+```php
+$comment = App\Post::find(1)->comments()->where('title', 'foo')->first();
+```
+
+与 `hasOne` 方法一样，你也可以通过将其他参数传递给 `hasMany` 方法来覆盖外键和本地键：
+
+```php
+return $this->hasMany('App\Comment', 'foreign_key');
+
+return $this->hasMany('App\Comment', 'foreign_key', 'local_key');
+```
+
+### 一对多（逆向）
+
+现在我们可以访问所有帖子的评论，让我们定义一个关系，允许评论访问其父帖子。要定义 `hasMany` 关系的逆关系，在子模型上定义一个调用 `belongsTo` 方法的关系函数：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Comment extends Model
+{
+    /**
+     * 获取拥有评论的帖子。
+     */
+    public function post()
+    {
+        return $this->belongsTo('App\Post');
+    }
+}
+```
+
+一旦定义了关系，我们就可以通过访问 `post`『动态属性』来检索 `Comment` 的 `Post` 模型：
+
+```php
+$comment = App\Comment::find(1);
+
+echo $comment->post->title;
+```
+
+在上面的示例中，Eloquent 将尝试将 `Comment` 模型中的 `post_id` 与 `Post` 模型上的 `id` 匹配。Eloquent 通过检查关系方法的名称并带一个 `_` 的方法后缀再加上主键列的名称来确定默认外键名称。但是，如果 `Comment` 模型上的外键不是 `post_id`，你可以将自定义键名作为第二个参数传递给 `belongsTo` 方法：
+
+```php
+/**
+ * 获取拥有评论的帖子。
+ */
+public function post()
+{
+    return $this->belongsTo('App\Post', 'foreign_key');
+}
+```
+
+如果你的父模型不使用 `id` 作为其主键，或者你希望将子模型连接到不同的列，你可以将第三个参数传递给 `belongsTo` 方法，以指定你的父表的自定义键：
+
+```php
+/**
+ * 获取拥有评论的帖子。
+ */
+public function post()
+{
+    return $this->belongsTo('App\Post', 'foreign_key', 'other_key');
+}
+```
+
 ### 多对多
 
 ### 有一个通过
