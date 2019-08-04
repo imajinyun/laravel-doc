@@ -217,6 +217,51 @@ public function post()
 
 ### 多对多
 
+多对多关系比 `hasOne` 和 `hasMany` 关系略微复杂。这种关系的一个示例是具有许多角色的用户，其中角色也由其他用户共享。例如，许多用户可能具有『管理员』的角色。要定义此关系，需要三个数据库表：`users`、`roles` 和 `role_user`。`role_user` 表派生自相关模型名称的字母顺序，并包含 `user_id` 和 `role_id` 列。
+
+通过编写返回 `belongsToMany` 方法结果的方法来定义多对多关系。例如，让我们在 `User` 模型上定义 `roles` 方法：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * 属于用户的角色。
+     */
+    public function roles()
+    {
+        return $this->belongsToMany('App\Role');
+    }
+}
+```
+
+一旦定义了关系，你就可以使用 `roles` 动态属性访问你的用户的角色：
+
+```php
+$user = App\User::find(1);
+
+foreach ($user->roles as $role) {
+    //
+}
+```
+
+与所有其他关系类型一样，你可以调用 `roles` 方法继续将查询约束链接到关系上：
+
+```php
+$roles = App\User::find(1)->roles()->orderBy('name')->get();
+```
+
+如前所述，为确定关系连接表的表名，Eloquent 将按字母顺序连接两个相关的模型名称。但是，你可以自由地覆盖此约定。你可以通过将第二个参数传递给 `belongsToMany` 方法来执行此操作：
+
+```php
+return $this->belongsToMany('App\Role', 'role_user');
+```
+
 ### 有一个通过
 
 ### 有多个通过
