@@ -548,8 +548,6 @@ $flight = App\Flight::find(1);
 $flight->delete();
 ```
 
-## 查询范围
-
 **按键删除现有模型**
 
 在上面的例子中，我们在调用 `delete` 方法之前从数据库中检索模型。但是，如果你知道模型的主键，你可以删除模型，而不用调用 `destroy` 方法来检索它。除了一个主键作为参数外，`destroy` 方法还将接受多个主键、一个主键数组或一个主键 [集合](https://laravel.com/docs/5.8/collections)：
@@ -624,7 +622,71 @@ if ($flight->trashed()) {
 
 #### 包括软删除模型
 
+如上所述，软删除模型将自动从查询结果中被排除。但是，你可以使用查询上的 `withTrashed` 方法强制软删除模型出现在结果集中：
+
+```php
+$flights = App\Flight::withTrashed()
+                ->where('account_id', 1)
+                ->get();
+```
+
+`withTrashed` 方法也可以用于 [关系](https://laravel.com/docs/5.8/eloquent-relationships) 查询：
+
+```php
+$flight->history()->withTrashed()->get();
+```
+
 #### 只检索软删除的模型
+
+`onlyTrashed` 方法只检索软删除的模型：
+
+```php
+$flights = App\Flight::onlyTrashed()
+                ->where('airline_id', 1)
+                ->get();
+```
+
+#### 恢复软删除的模型
+
+有时你可能希望『取消删除』软删除的模型。要将软删除的模型还原为活动状态，在模型实例上使用 `restore` 方法：
+
+```php
+$flight->restore();
+```
+
+你还可以在查询中使用 `restore` 方法来快速恢复多个模型。同样，与其他『批量』操作一样，这不会为恢复的模型触发任何模型事件：
+
+```php
+App\Flight::withTrashed()
+        ->where('airline_id', 1)
+        ->restore();
+```
+
+与 `withTrashed` 方法一样，`restore` 方法也可以用于 [关系](https://laravel.com/docs/5.8/eloquent-relationships)：
+
+```php
+$flight->history()->restore();
+```
+
+#### 永久删除模型
+
+有时你可能需要从你的数据库中真正删除一个模型。要从数据库中永久删除软删除的模型，使用 `forceDelete` 方法：
+
+```php
+// 强制删除单个模型实例...
+$flight->forceDelete();
+
+// 强制删除所有相关模型...
+$flight->history()->forceDelete();
+```
+
+## 查询范围
+
+### 全局范围
+
+全局范围允许你为给定模型的所有查询添加约束。Laravel 自己的 [软删除](https://laravel.com/docs/5.8/eloquent#soft-deleting) 功能利用全局范围只从数据库中提取『未删除』模型。编写你自己的全局范围可以提供一种方便、简单的方法来确保给定模型的每个查询都接受特定的约束。
+
+### 局部范围
 
 ## 比较模型
 
