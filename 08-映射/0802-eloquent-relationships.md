@@ -602,7 +602,7 @@ use Illuminate\Database\Eloquent\Model;
 class Image extends Model
 {
     /**
-     * 获取拥有的图片模型。
+     * 获取拥有的可成像图片的模型。
      */
     public function imageable()
     {
@@ -635,7 +635,118 @@ class User extends Model
 
 #### 检索关系
 
+一旦定义了你的数据库表和模型，你就可以通过你的模型访问关系。例如，要检索帖子的图像，我们可以使用 `image` 动态属性：
+
+```php
+$post = App\Post::find(1);
+
+$image = $post->image;
+```
+
+你还可以通过访问执行对 `morphTo` 调用的方法的名称，从多态模型中检索父类。在我们的例子中，这是 `Image` 模型上的 `imageable` 方法。因此，我们将作为动态属性访问那个方法：
+
+```php
+$image = App\Image::find(1);
+
+$imageable = $image->imageable;
+```
+
+`Image` 模型上的 `imageable` 关系将返回 `Post` 或 `User` 实例，具体取决于拥有图像的模型类型。
+
 ### 一对多（多态）
+
+一对多多态关系类似于简单的一对多关系；然而，目标模型可以属于单个关联上的多个模型类型。例如，假设应用程序的用户可以对帖子和视频进行『评论』。使用多态关系，你可以为这两种场景使用一个 `comments` 表。首先，让我们检查构建此关系所需的表结构：
+
+#### 表结构
+
+```bash
+posts
+    id - integer
+    title - string
+    body - text
+
+videos
+    id - integer
+    title - string
+    url - string
+
+comments
+    id - integer
+    body - text
+    commentable_id - integer
+    commentable_type - string
+```
+
+#### 模型结构
+
+接下来，让我们检查构建此关系所需的模型定义：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Comment extends Model
+{
+    /**
+     * 获得拥有可评论的模型。
+     */
+    public function commentable()
+    {
+        return $this->morphTo();
+    }
+}
+
+class Post extends Model
+{
+    /**
+     * 获取所有帖子的评论。
+     */
+    public function comments()
+    {
+        return $this->morphMany('App\Comment', 'commentable');
+    }
+}
+
+class Video extends Model
+{
+    /**
+     * 获取所有视频的评论。
+     */
+    public function comments()
+    {
+        return $this->morphMany('App\Comment', 'commentable');
+    }
+}
+```
+
+#### 检索关系
+
+一旦定义了数据库表和模型，你就可以通过你的模型访问关系。例如，要访问一篇文章的所有评论，我们可以使用 `comments` 动态属性：
+
+```php
+$post = App\Post::find(1);
+
+foreach ($post->comments as $comment) {
+    //
+}
+```
+
+你还可以通过访问执行对 `morphTo` 调用的方法的名称，从多态模型中检索多态关系的所有者。在我们的例子中，这是 `Comment` 模型上的 `commentable` 方法。因此，我们将作为动态属性访问那个方法：
+
+```php
+$comment = App\Comment::find(1);
+
+$commentable = $comment->commentable;
+```
+
+`Comment` 模型上的 `commentable` 关系将返回 `Post` 或 `Video` 实例，具体取决于哪种类型的模型拥有该注释。
+
+### 多对多（多态）
+
+### 自定义多态类型
 
 ## 查询关系
 
@@ -643,4 +754,4 @@ class User extends Model
 
 ## 插入 & 更新相关的模型
 
-## 触摸父时间戳
+## 触及父时间戳
