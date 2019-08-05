@@ -262,6 +262,133 @@ $roles = App\User::find(1)->roles()->orderBy('name')->get();
 return $this->belongsToMany('App\Role', 'role_user');
 ```
 
+除了自定义连接表的名称之外，你还可以通过将其他参数传递给 `belongsToMany` 方法来自定义表上键的列名。第三个参数是你定义关系的模型的外键名称，而第四个参数是你要连接的模型的外键名称：
+
+```php
+return $this->belongsToMany('App\Role', 'role_user', 'user_id', 'role_id');
+```
+
+#### 定义关系的逆向
+
+要定义多对多关系的逆关系，可以在你的相关模型上再次调用 `belongsToMany`。要继续我们的用户角色示例，让我们在 `Role` 模型上定义 `users` 方法：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Role extends Model
+{
+    /**
+     * 属于该角色的用户。
+     */
+    public function users()
+    {
+        return $this->belongsToMany('App\User');
+    }
+}
+```
+
+如您所见，除了引用 `App\User` 模型之外，该关系的定义与其 `User` 对象完全相同。由于我们正在重用 `belongsToMany` 方法，因此在定义多对多关系的逆关系时，所有常用的表和键自定义选项都可用。
+
+#### 检索中间表列
+
+正如你已经了解的那样，处理多对多关系需要存在中间表。Eloquent 提供了一些与此表交互的非常有用的方法。例如，假设我们的 `User` 对象有许多与其相关的 `Role` 对象。访问此关系后，我们可以使用模型上的 `pivot` 属性访问中间表：
+
+```php
+$user = App\User::find(1);
+
+foreach ($user->roles as $role) {
+    echo $role->pivot->created_at;
+}
+```
+
+注意，我们检索的每个 `Role` 模型都自动分配了一个 `pivot` 属性。该属性包含一个表示中间表的模型，可以像其他任何 Eloquent 模型一样使用。
+
+默认情况下，只有模型键才会出现在 `pivot` 对象上。如果你的中转表包含额外的属性，你必须在定义关系时指定它们：
+
+```php
+return $this->belongsToMany('App\Role')->withPivot('column1', 'column2');
+```
+
+如果希望中转表自动维护 `created_at` 和 `updated_at` 时间戳，在关系定义上使用 `withTimestamp` 方法：
+
+```php
+return $this->belongsToMany('App\Role')->withTimestamps();
+```
+
+#### 自定义 `pivot` 属性名称
+
+如前所述，可以使用 `pivot` 属性在模型上访问中间表中的属性。但是，你可以自由定制此属性的名称，以更好地反映其在应用程序中的意图。
+
+例如，如果你的应用程序包含可能订阅播客的用户，那么用户和播客之间可能存在多对多关系。如果是这种情况，你可能希望将中间表访问器重命名为 `subscription` 而不是 `pivot`。这可以在定义关系时使用 `as` 方法来完成：
+
+```php
+return $this->belongsToMany('App\Podcast')
+                ->as('subscription')
+                ->withTimestamps();
+```
+
+一旦完成此操作，你可以使用自定义名称访问中间表数据：
+
+```php
+$users = User::with('podcasts')->get();
+
+foreach ($users->flatMap->podcasts as $podcast) {
+    echo $podcast->subscription->created_at;
+}
+```
+
+#### 通过中间表列过滤关系
+
+在定义关系时，你还可以使用 `wherePivot` 和 `wherePivotIn` 方法来过滤通过 `belongsToMany` 返回的结果：
+
+```php
+return $this->belongsToMany('App\Role')->wherePivot('approved', 1);
+
+return $this->belongsToMany('App\Role')->wherePivotIn('priority', [1, 2]);
+```
+
+### 定义自定义中间表模型
+
+如果你想自定义模型来表示你的关系的中间表，你可以在定义关系时调用 `using` 方法。自定义多对多中转模型应继承 `Illuminate\Database\Eloquent\Relations\Pivot` 类，而自定义多态多对多中转模型应继承 `Illuminate\Database\Eloquent\Relations\MorphPivot` 类。例如，我们可以定义一个使用自定义 `RoleUser` 中转模型的 `Role`：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Role extends Model
+{
+    /**
+     * 属于该角色的用户。
+     */
+    public function users()
+    {
+        return $this->belongsToMany('App\User')->using('App\RoleUser');
+    }
+}
+```
+
+在定义 `RoleUser` 模型时，我们将继承 `Pivot` 类：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Relations\Pivot;
+
+class RoleUser extends Pivot
+{
+    //
+}
+```
+
 ### 有一个通过
 
 ### 有多个通过
