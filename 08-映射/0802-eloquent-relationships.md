@@ -389,11 +389,253 @@ class RoleUser extends Pivot
 }
 ```
 
+你可以将 `using` 和 `withPivot` 结合使用，以便从中间表中检索列。例如，你可以通过将列名称传递给 `withPivot` 方法从 `RoleUser` 中转表中检索 `created_by` 和 `updated_by` 列：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Role extends Model
+{
+    /**
+     * 属于该角色的用户。
+     */
+    public function users()
+    {
+        return $this->belongsToMany('App\User')
+                        ->using('App\RoleUser')
+                        ->withPivot([
+                            'created_by',
+                            'updated_by'
+                        ]);
+    }
+}
+```
+
+{% hint style="danger" %}
+
+**注意**：中转模型可能不使用 `SoftDeletes` 特性。如果你需要软删除中转记录，考虑将你的中转模型转换为实际的 Eloquent 模型。
+
+{% endhint %}
+
+#### 自定义中转模型和递增 ID
+
+如果你已经定义使用自定义中转模型的多对多关系，并且该中转模型具有自动递增的主键，你应确保自定义中转模型类定义一个设置为 `true` 的 `incrementing` 属性。
+
+```php
+/**
+ * 指示 ID 是否自动递增。
+ *
+ * @var bool
+ */
+public $incrementing = true;
+```
+
 ### 有一个通过
+
+『单向』关系通过单个中间关系链接模型。例如，如果每个供应商有一个用户，并且每个用户与一个用户历史记录相关联，那么供应商模型可以通过用户访问用户的历史。让我们看看定义这种关系所需的数据库表：
+
+```php
+users
+    id - integer
+    supplier_id - integer
+
+suppliers
+    id - integer
+
+history
+    id - integer
+    user_id - integer
+```
+
+虽然 `history` 表不包含 `supplier_id` 列，但 `hasOneThrough` 关系可以提供对供应商模型的用户历史记录的访问权限。现在我们已经检查了关系的表结构，让我们在 `Supplier` 模型上定义它：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Supplier extends Model
+{
+    /**
+     * 获取用户的历史记录。
+     */
+    public function userHistory()
+    {
+        return $this->hasOneThrough('App\History', 'App\User');
+    }
+}
+```
+
+传递给 `hasOneThrough` 方法的第一个参数是我们希望访问的最终模型的名称，而第二个参数是中间模型的名称。
+
+执行关系查询时将使用典型的 Eloquent 外键约定。如果要自定义关系的键，可以将它们作为 `hasOneThrough` 方法的第三个和第四个参数传递。第三个参数是中间模型上的外键名称。第四个参数是最终模型上的外键名称。第五个参数是本地键，而第六个参数是中间模型的本地键：
+
+```php
+class Supplier extends Model
+{
+    /**
+     * 获取用户的历史记录。
+     */
+    public function userHistory()
+    {
+        return $this->hasOneThrough(
+            'App\History',
+            'App\User',
+            'supplier_id', // 用户表的外键...
+            'user_id', // 历史表的外键...
+            'id', // 供应商表的本地键...
+            'id' // 用户表的本地键...
+        );
+    }
+}
+```
 
 ### 有多个通过
 
+『有多个通过』关系为通过中间关系访问远程关系提供了方便的快捷方式。例如，一个 `Country` 模型可能通过一个中间 `User` 模型有许多 `Post` 模型。在本例中，你可以轻松地收集给定国家的所有博客文章。让我们看看定义这种关系所需的表：
+
+```bash
+countries
+    id - integer
+    name - string
+
+users
+    id - integer
+    country_id - integer
+    name - string
+
+posts
+    id - integer
+    user_id - integer
+    title - string
+```
+
+虽然 `posts` 不包含 `country_id` 列，但 `hasManyThrough` 关系通过 `$country->posts` 提供对一个国家的帖子的访问。要执行此查询，Eloquent 会检查中间用户表上的 `country_id`。找到匹配的用户 ID 后，它们用于查询 `posts` 表。
+
+现在我们已经检查了关系的表结构，让我们在 `Country` 模型上定义它：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Country extends Model
+{
+    /**
+     * 获取该国家的所有帖子。
+     */
+    public function posts()
+    {
+        return $this->hasManyThrough('App\Post', 'App\User');
+    }
+}
+```
+
+传递给 `hasManyThrough` 方法的第一个参数是我们希望访问的最终模型的名称，而第二个参数是中间模型的名称。
+
+执行关系查询时将使用典型的 Eloquent 外键约定。如果要自定义关系的键，可以将它们作为 `hasManyThrough` 方法的第三个和第四个参数传递。第三个参数是中间模型上的外键名称。第四个参数是最终模型上的外键名称。第五个参数是本地键，而第六个参数是中间模型的本地键：
+
+```php
+class Country extends Model
+{
+    public function posts()
+    {
+        return $this->hasManyThrough(
+            'App\Post',
+            'App\User',
+            'country_id', // 用户表上的外键...
+            'user_id', // 帖子表上的外键...
+            'id', // 国家表上的本地键...
+            'id' // 用户表上的本地键...
+        );
+    }
+}
+```
+
 ## 多态关系
+
+多态关系允许目标模型使用单个关联属于多种类型的模型。
+
+### 一对一（多态）
+
+#### 表结构
+
+一对一的多态关系类似于简单的一对一关系；但是，目标模型可以属于单个关联上的多种类型的模型。例如，博客 `Post` 和 `User` 可以共享与 `Image` 模型的多态关系。使用一对一的多态关系允许让你拥有一个用于博客帖子和用户帐户的唯一图像列表。首先，让我们检查一下表结构：
+
+```php
+posts
+    id - integer
+    name - string
+
+users
+    id - integer
+    name - string
+
+images
+    id - integer
+    url - string
+    imageable_id - integer
+    imageable_type - string
+```
+
+注意 `images` 表上的 `imageable_id` 和 `imageable_type` 列。`imageable_id` 列将包含帖子或用户的 ID 值，而 `imageable_type` 列将包含父模型的类名。Eloquent 使用 `imageable_type` 列来确定在访问 `imageable` 关系时要返回父模型的哪个『类型』。
+
+#### 模型结构
+
+接下来，让我们检查构建此关系所需的模型定义：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Image extends Model
+{
+    /**
+     * 获取拥有的图片模型。
+     */
+    public function imageable()
+    {
+        return $this->morphTo();
+    }
+}
+
+class Post extends Model
+{
+    /**
+     * 获取帖子的图片。
+     */
+    public function image()
+    {
+        return $this->morphOne('App\Image', 'imageable');
+    }
+}
+
+class User extends Model
+{
+    /**
+     * 获取用户的图片。
+     */
+    public function image()
+    {
+        return $this->morphOne('App\Image', 'imageable');
+    }
+}
+```
+
+#### 检索关系
+
+### 一对多（多态）
 
 ## 查询关系
 
