@@ -746,6 +746,85 @@ $commentable = $comment->commentable;
 
 ### 多对多（多态）
 
+一对多的多态关系类似于简单的一对多关系；但是，目标模型可以属于单个关联上的多种类型的模型。例如，假设你的应用程序的用户可以对帖子和视频进行『评论』。使用多态关系，你可以对这两种方案使用单个 `comments`。首先，让我们检查构建这种关系所需的表结构：
+
+#### 表结构
+
+```php
+posts
+    id - integer
+    title - string
+    body - text
+
+videos
+    id - integer
+    title - string
+    url - string
+
+comments
+    id - integer
+    body - text
+    commentable_id - integer
+    commentable_type - string
+```
+
+#### 模型结构
+
+接下来，让我们检查构建此关系所需的模型定义：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Comment extends Model
+{
+    /**
+     * 获得拥有可评论的模型。
+     */
+    public function commentable()
+    {
+        return $this->morphTo();
+    }
+}
+
+class Post extends Model
+{
+    /**
+     * 获取所有帖子的评论。
+     */
+    public function comments()
+    {
+        return $this->morphMany('App\Comment', 'commentable');
+    }
+}
+
+class Video extends Model
+{
+    /**
+     * 获取所有视频的评论。
+     */
+    public function comments()
+    {
+        return $this->morphMany('App\Comment', 'commentable');
+    }
+}
+```
+
+#### 检索关系
+
+一旦定义了数据库表和模型，你就可以通过你的模型访问关系。例如，要访问一篇文章的所有评论，我们可以使用 `comments` 动态属性：
+
+```php
+$post = App\Post::find(1);
+
+foreach ($post->comments as $comment) {
+    //
+}
+```
+
 ### 自定义多态类型
 
 ## 查询关系
