@@ -746,31 +746,32 @@ $commentable = $comment->commentable;
 
 ### 多对多（多态）
 
-一对多的多态关系类似于简单的一对多关系；但是，目标模型可以属于单个关联上的多种类型的模型。例如，假设你的应用程序的用户可以对帖子和视频进行『评论』。使用多态关系，你可以对这两种方案使用单个 `comments`。首先，让我们检查构建这种关系所需的表结构：
+多对多的多态关系比 `morphOne` 和 `morphMany` 关系稍微复杂一些。例如，博客 `Post` 和 `Video` 模型可以与 `Tag` 模型共享多态关系。使用多对多多态关系，允许你有一个在博客文章和视频中共享的唯一标记列表。首先，让我们检查一下表结构：
 
 #### 表结构
 
 ```php
 posts
     id - integer
-    title - string
-    body - text
+    name - string
 
 videos
     id - integer
-    title - string
-    url - string
+    name - string
 
-comments
+tags
     id - integer
-    body - text
-    commentable_id - integer
-    commentable_type - string
+    name - string
+
+taggables
+    tag_id - integer
+    taggable_id - integer
+    taggable_type - string
 ```
 
 #### 模型结构
 
-接下来，让我们检查构建此关系所需的模型定义：
+接下来，我们准备定义模型上的关系。`Post` 和 `Video` 模型都有一个 `tags` 方法，可以调用基本 Eloquent 类的 `morphToMany` 方法：
 
 ```php
 <?php
@@ -779,55 +780,126 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Comment extends Model
-{
-    /**
-     * 获得拥有可评论的模型。
-     */
-    public function commentable()
-    {
-        return $this->morphTo();
-    }
-}
-
 class Post extends Model
 {
     /**
-     * 获取所有帖子的评论。
+     * 获取帖子的所有标签。
      */
-    public function comments()
+    public function tags()
     {
-        return $this->morphMany('App\Comment', 'commentable');
+        return $this->morphToMany('App\Tag', 'taggable');
     }
 }
+```
 
-class Video extends Model
+#### 定义关系的逆关系
+
+接下来，在 `Tag` 模型上，你应该为每个相关模型定义一个方法。 因此，对于此示例，我们将定义 `posts` 方法和 `videos` 方法：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Tag extends Model
 {
     /**
-     * 获取所有视频的评论。
+     * 获取分配了此标记的所有帖子。
      */
-    public function comments()
+    public function posts()
     {
-        return $this->morphMany('App\Comment', 'commentable');
+        return $this->morphedByMany('App\Post', 'taggable');
+    }
+
+    /**
+     * 获取分配了此标记的所有视频。
+     */
+    public function videos()
+    {
+        return $this->morphedByMany('App\Video', 'taggable');
     }
 }
 ```
 
 #### 检索关系
 
-一旦定义了数据库表和模型，你就可以通过你的模型访问关系。例如，要访问一篇文章的所有评论，我们可以使用 `comments` 动态属性：
+一旦定义了数据库表和模型，你就可以通过你的模型访问关系。例如，要访问一个帖子的所有标记，可以使用 `tags` 动态属性：
 
 ```php
 $post = App\Post::find(1);
 
-foreach ($post->comments as $comment) {
+foreach ($post->tags as $tag) {
+    //
+}
+```
+
+***
+
+你还可以通过访问执行对 `morphedByMany` 调用的方法的名称，从多态模型中检索多态关系的所有者。在我们的例子中，这是 `Tag` 模型上的 `posts` 或 `videos` 方法。因此，你将作为动态属性访问这些方法：
+
+```php
+$tag = App\Tag::find(1);
+
+foreach ($tag->videos as $video) {
     //
 }
 ```
 
 ### 自定义多态类型
 
+默认情况下，Laravel 将使用完全限定的类名来存储相关模型的类型。例如，给定上面的一对多示例，其中 `Comment` 可以属于 `Post` 或 `Video`，默认的 `commentable_type` 将分别是 `App\Post` 或 `App\Video`。但是，你可能希望将你的数据库从你的应用程序的内部结构中解耦。在这种情况下，你可以定义『变形映射』来指示 Eloquent 为每个模型使用自定义名称而不是类名：
+
+```php
+use Illuminate\Database\Eloquent\Relations\Relation;
+
+Relation::morphMap([
+    'posts' => 'App\Post',
+    'videos' => 'App\Video',
+]);
+```
+
+你可以在 `AppServiceProvider` 的 `boot` 方法中注册 `morphMap`，或者根据你的需要创建单独的服务提供者。
+
+{% hint style="danger" %}
+
+向现有应用程序添加『变形映射』时，在你的数据库中仍包含完全限定类的每个可变形 `* _type` 列值都需要转换为其『映射』名称。
+
+{% endhint %}
+
 ## 查询关系
+
+由于所有类型的 Eloquent 关系都是通过方法定义的，因此你可以调用这些方法来获取关系的实例，而无需实际执行关系查询。此外，所有类型的 Eloquent 关系也可用作 [查询构建器](https://laravel.com/docs/5.8/queries)，允许你在最终针对你的数据库执行 SQL 之前继续将约束链接到关系查询上。
+
+例如，想象一个博客系统，其中一个 `User` 模型有许多相关的 `Post` 模型：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * 获取用户的所有帖子。
+     */
+    public function posts()
+    {
+        return $this->hasMany('App\Post');
+    }
+}
+```
+
+你可以查询 `posts` 关系并为关系像这样添加其他约束：
+
+```php
+$user = App\User::find(1);
+
+$user->posts()->where('active', 1)->get();
+```
 
 ## 预先加载
 
