@@ -901,6 +901,58 @@ $user = App\User::find(1);
 $user->posts()->where('active', 1)->get();
 ```
 
+***
+
+你可以在关系上使用任何 [查询构建器](https://laravel.com/docs/5.8/queries) 方法，因此请务必浏览查询构建器文档以了解可用的所有方法。
+
+**关系之后的链接 `orWhere` 子句**
+
+正如上面的示例所示，在查询关系时，可以自由地向关系添加额外的约束。但是，在将 `orWhere` 子句链接到关系上时要小心，因为 `orWhere` 子句将关系约束在逻辑分组的同一级别上：
+
+```php
+$user->posts()
+        ->where('active', 1)
+        ->orWhere('votes', '>=', 100)
+        ->get();
+
+// select * from posts
+// where user_id = ? and active = 1 or votes >= 100
+```
+
+在大多数情况下，你可能打算使用 [约束组](https://laravel.com/docs/5.8/queries#parameter-grouping) 对括号中的条件检查进行逻辑分组：
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+$user->posts()
+        ->where(function (Builder $query) {
+            return $query->where('active', 1)
+                         ->orWhere('votes', '>=', 100);
+        })
+        ->get();
+
+// select * from posts
+// where user_id = ? and (active = 1 or votes >= 100)
+```
+
+***
+
+### 关系方法 Vs 动态属性
+
+如果您不需要为 Eloquent 关系查询添加其他约束，你可以像访问属性一样访问该关系。例如，继续使用我们的 `User` 和 `Post` 示例模型，我们可以像这样访问一个用户的所有帖子：
+
+```php
+$user = App\User::find(1);
+
+foreach ($user->posts as $post) {
+    //
+}
+```
+
+动态属性是『延迟加载』，这意味着它们只会在你实际访问它们时加载它们的关系数据。因此，开发人员经常使用 [预先加载](https://laravel.com/docs/5.8/eloquent-relationships#eager-loading) 来预加载他们知道在加载模型后将被访问的关系。预先加载可显著地减少必须执行以加载模型关系的 SQL 查询。
+
+### 查询关系的存在
+
 ## 预先加载
 
 ## 插入 & 更新相关的模型
