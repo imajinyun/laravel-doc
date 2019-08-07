@@ -951,9 +951,287 @@ foreach ($user->posts as $post) {
 
 动态属性是『延迟加载』，这意味着它们只会在你实际访问它们时加载它们的关系数据。因此，开发人员经常使用 [预先加载](https://laravel.com/docs/5.8/eloquent-relationships#eager-loading) 来预加载他们知道在加载模型后将被访问的关系。预先加载可显著地减少必须执行以加载模型关系的 SQL 查询。
 
-### 查询关系的存在
+### 查询关系存在
+
+在访问模型的记录时，你可能希望基于关系的存在来限制你的结果。例如，假设你想检索所有至少有一条评论的博客文章。为此，你可以将关系的名称传递给 `has` 和 `orHas` 方法：
+
+```php
+// 检索至少有一条评论的所有帖子...
+$posts = App\Post::has('comments')->get();
+```
+
+你还可以指定运算符和计数以进一步自定义查询：
+
+```php
+// 检索包含三个或更多评论的所有帖子...
+$posts = App\Post::has('comments', '>=', 3)->get();
+```
+
+嵌套的 `has` 语句也可以使用『点』表示法构造。例如，你可以检索至少有一条评论和投票的所有帖子：
+
+```php
+// 检索至少有一条带有投票评论的所有帖子...
+$posts = App\Post::has('comments.votes')->get();
+```
+
+如果你需要更强大的功能，你可以使用 `whereHas` 和 `orWhereHas` 方法去放你的『where』条件到你的 `has` 查询中。这些方法允许你向关系约束添加自定义约束，例如检查评论的内容：
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+// 检索包含至少一条评论的帖子，其中包含像 foo％ 这样的字词...
+$posts = App\Post::whereHas('comments', function (Builder $query) {
+    $query->where('content', 'like', 'foo%');
+})->get();
+
+// 检索包含至少十条评论的帖子，其中包含像 foo％ 这样的字词...
+$posts = App\Post::whereHas('comments', function (Builder $query) {
+    $query->where('content', 'like', 'foo%');
+}, '>=', 10)->get();
+```
+
+### 查询关系缺失
+
+访问模型的记录时，你可能希望根据缺失的关系来限制你的结果。例如，假设你要检索所有 **没有** 任何评论的博客帖子。为此，你可以将关系的名称传递给 `doesntHave` 和 `orDoesntHave` 方法：
+
+```php
+$posts = App\Post::doesntHave('comments')->get();
+```
+
+如果你需要更强大的功能，你可以使用 `whereDoesntHave` 和 `orWhereDoesntHave` 方法将『where』条件放在你的 `doesntHave` 查询上。这些方法允许你向关系约束添加自定义约束，例如检查评论的内容：
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+$posts = App\Post::whereDoesntHave('comments', function (Builder $query) {
+    $query->where('content', 'like', 'foo%');
+})->get();
+```
+
+你可以使用『点』表示法来执行针对嵌套关系的查询。例如，以下查询将检索所有包含未被禁止的作者的评论的帖子：
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+$posts = App\Post::whereDoesntHave('comments.author', function (Builder $query) {
+    $query->where('banned', 1);
+})->get();
+```
+
+### 查询多态关系
+
+要查询 `MorphTo` 关系的存在，你可以使用 `whereHasMorph` 方法及其相应的方法：
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+// 检索标题像 foo％ 的与帖子或视频相关的评论...
+$comments = App\Comment::whereHasMorph(
+    'commentable',
+    ['App\Post', 'App\Video'],
+    function (Builder $query) {
+        $query->where('title', 'like', 'foo%');
+    }
+)->get();
+
+// 检索标题不像 foo% 的与帖子关联的评论...
+$comments = App\Comment::whereDoesntHaveMorph(
+    'commentable',
+    'App\Post',
+    function (Builder $query) {
+        $query->where('title', 'like', 'foo%');
+    }
+)->get();
+```
+
+你可以使用 `$type` 参数根据相关模型添加不同的约束：
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+$comments = App\Comment::whereHasMorph(
+    'commentable',
+    ['App\Post', 'App\Video'],
+    function (Builder $query, $type) {
+        $query->where('title', 'like', 'foo%');
+
+        if ($type === 'App\Post') {
+            $query->orWhere('content', 'like', 'foo%');
+        }
+    }
+)->get();
+```
+
+你可以提供 `*` 作为通配符，让 Laravel 从数据库中检索所有可能的多态类型，而不是传递可能的多态模型数组。Laravel 将执行额外的查询为执行此操作：
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+$comments = App\Comment::whereHasMorph('commentable', '*', function (Builder $query) {
+    $query->where('title', 'like', 'foo%');
+})->get();
+```
+
+### 统计相关模型
+
+如果你想计算关系中的结果数而不实际加载它们，你可以使用 `withCount` 方法，该方法会在你的结果模型上放置 `{relation} _count` 列。例如：
+
+```php
+$posts = App\Post::withCount('comments')->get();
+
+foreach ($posts as $post) {
+    echo $post->comments_count;
+}
+```
+
+你可以为多个关系添加『计数』以及为查询添加约束：
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+$posts = App\Post::withCount(['votes', 'comments' => function (Builder $query) {
+    $query->where('content', 'like', 'foo%');
+}])->get();
+
+echo $posts[0]->votes_count;
+echo $posts[0]->comments_count;
+```
+
+你也可以为关系计数结果添加别名，允许对同一关系进行多次计数：
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+$posts = App\Post::withCount([
+    'comments',
+    'comments as pending_comments_count' => function (Builder $query) {
+        $query->where('approved', false);
+    }
+])->get();
+
+echo $posts[0]->comments_count;
+
+echo $posts[0]->pending_comments_count;
+```
+
+如果你将 `withCount` 与 `select` 语句结合使用，确保你在 `select` 方法之后调用 `withCount`：
+
+```php
+$posts = App\Post::select(['title', 'body'])->withCount('comments')->get();
+
+echo $posts[0]->title;
+echo $posts[0]->body;
+echo $posts[0]->comments_count;
+```
 
 ## 预先加载
+
+当访问 Eloquent 关系作为属性时，关系数据是『延迟加载』。这意味着在你首次访问该属性之前，实际上不会加载关系数据。但是，Eloquent 可以在你查询父模型时『预告加载』关系。预先加载缓解了 N + 1 查询问题。要说明 N + 1 查询问题，考虑与 `Author` 相关的 `Book` 模型：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Book extends Model
+{
+    /**
+     * 获取写这本书的作者。
+     */
+    public function author()
+    {
+        return $this->belongsTo('App\Author');
+    }
+}
+```
+
+现在，让我们检索所有书籍及其作者：
+
+```php
+$books = App\Book::all();
+
+foreach ($books as $book) {
+    echo $book->author->name;
+}
+```
+
+这个循环将执行一个查询来检索表上的所有书籍，然后对每本书执行另一个查询来检索作者。因此，如果我们有 25 本书，这个循环将运行 26 个查询：1 个查询原始图书，另外 25 个查询检索每本书的作者。
+
+值得庆幸的是，我们可以使用预先加载将此操作减少到只有 2 个查询。查询时，你可以使用 `with` 方法指定应该预先加载哪些关系：
+
+```php
+$books = App\Book::with('author')->get();
+
+foreach ($books as $book) {
+    echo $book->author->name;
+}
+```
+
+对于此操作，将只执行两个查询：
+
+```sql
+select * from books
+
+select * from authors where id in (1, 2, 3, 4, 5, ...)
+```
+
+### 预先加载多个关系
+
+有时你可能需要在单个操作中预先加载几个不同的关系。为此，只需将其他参数传递给 `with` 方法：
+
+```php
+$books = App\Book::with(['author', 'publisher'])->get();
+```
+
+### 嵌套预先加载
+
+要预先加载嵌套关系，可以使用『点』语法。例如，让我们在一个 Eloquent 声明中预先载入该书的所有作者和所有作者的个人联系：
+
+```php
+$books = App\Book::with('author.contacts')->get();
+```
+
+### 嵌套的预先加载 `morphTo` 关系
+
+如果希望预先加载 `morphTo` 关系，以及该关系可能返回的各种实体上的嵌套关系，你可以将 `with` 方法与 `morphTo` 关系的 `morphWith` 方法结合使用。为了帮助说明这个方法，让我们考虑下面的模型：
+
+```php
+<?php
+
+use Illuminate\Database\Eloquent\Model;
+
+class ActivityFeed extends Model
+{
+    /**
+     * 获取活动提要记录的父记录。
+     */
+    public function parentable()
+    {
+        return $this->morphTo();
+    }
+}
+```
+
+在这个例子中，我们假设 `Event`、`Photo` 和 `Post` 模型可以创建 `ActivityFeed` 模型。此外，我们假设 `Event` 模型属于 `Calendar` 模型，`Photo` 模型与 `Tag` 模型相关联，而 `Post` 模型属于 `Author` 模型。
+
+使用这些模型定义和关系，我们可以检索 `ActivityFeed` 模型实例并预先加载所有 `parentable` 模型及其各自的嵌套关系：
+
+```php
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+
+$activities = ActivityFeed::query()
+    ->with(['parentable' => function (MorphTo $morphTo) {
+        $morphTo->morphWith([
+            Event::class => ['calendar'],
+            Photo::class => ['tags'],
+            Post::class => ['author'],
+        ]);
+    }])->get();
+```
+
+### 预先加载特定的列
 
 ## 插入 & 更新相关的模型
 
