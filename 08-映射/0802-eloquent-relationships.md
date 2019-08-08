@@ -1177,7 +1177,7 @@ select * from books
 select * from authors where id in (1, 2, 3, 4, 5, ...)
 ```
 
-### 预先加载多个关系
+**预先加载多个关系**
 
 有时你可能需要在单个操作中预先加载几个不同的关系。为此，只需将其他参数传递给 `with` 方法：
 
@@ -1185,7 +1185,9 @@ select * from authors where id in (1, 2, 3, 4, 5, ...)
 $books = App\Book::with(['author', 'publisher'])->get();
 ```
 
-### 嵌套预先加载
+***
+
+**嵌套预先加载**
 
 要预先加载嵌套关系，可以使用『点』语法。例如，让我们在一个 Eloquent 声明中预先载入该书的所有作者和所有作者的个人联系：
 
@@ -1193,7 +1195,9 @@ $books = App\Book::with(['author', 'publisher'])->get();
 $books = App\Book::with('author.contacts')->get();
 ```
 
-### 嵌套的预先加载 `morphTo` 关系
+***
+
+**嵌套的预先加载 `morphTo` 关系**
 
 如果希望预先加载 `morphTo` 关系，以及该关系可能返回的各种实体上的嵌套关系，你可以将 `with` 方法与 `morphTo` 关系的 `morphWith` 方法结合使用。为了帮助说明这个方法，让我们考虑下面的模型：
 
@@ -1231,7 +1235,123 @@ $activities = ActivityFeed::query()
     }])->get();
 ```
 
-### 预先加载特定的列
+***
+
+**预先加载特定的列**
+
+你可能并不总是需要检索关系中的每一列。因此，Eloquent 允许你指定要检索的关系的哪些列：
+
+```php
+$books = App\Book::with('author:id,name')->get();
+```
+
+{% hint style="danger" %}
+
+使用此功能时，你应始终在你希望要检索的列的列表中包含 `id` 列和任何相关的外键列。
+
+{% endhint %}
+
+***
+
+**默认情况下预先加载**
+
+有时你可能希望在检索模型时始终加载某些关系。要完成此任务，你可以在模型上定义 `$with` 属性：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Book extends Model
+{
+    /**
+     * 应始终加载的关系。
+     *
+     * @var array
+     */
+    protected $with = ['author'];
+
+    /**
+     * 获取写这本书的作者。
+     */
+    public function author()
+    {
+        return $this->belongsTo('App\Author');
+    }
+}
+```
+
+如果要从单个查询的 `$with` 属性中删除条目，可以使用 `without` 方法：
+
+```php
+$books = App\Book::without('author')->get();
+```
+
+***
+
+### 约束预先加载
+
+有时你可能希望预先加载关系，但也为预先加载查询指定其他查询条件。这儿有一个例子：
+
+```php
+$users = App\User::with(['posts' => function ($query) {
+    $query->where('title', 'like', '%first%');
+}])->get();
+```
+
+在这个例子中，Eloquent 只会预先加载帖子的 `title` 列包含 `first` 单词的帖子。你可以调用其他 [查询构建器](https://laravel.com/docs/5.8/queries) 方法来进一步自定义预先加载操作：
+
+```php
+$users = App\User::with(['posts' => function ($query) {
+    $query->orderBy('created_at', 'desc');
+}])->get();
+```
+
+{% hint style="danger" %}
+
+在约束预先加载时，可能不使用 `limit` 和 `take` 查询构建器方法。
+
+{% endhint %}
+
+### 懒预先加载
+
+有时你可能需要在已经检索的父模型之后预先加载关系。例如，如果你需要动态决定是否加载相关模型，这可能很有用：
+
+```php
+$books = App\Book::all();
+
+if ($someCondition) {
+    $books->load('author', 'publisher');
+}
+```
+
+如果你需要在预先加载的查询上设置其他查询约束，你可以传递一个由你希望加载的关系键的数组。该数组的值应该是接收查询实例的 `Closure` 实例：
+
+```php
+$books->load(['author' => function ($query) {
+    $query->orderBy('published_date', 'asc');
+}]);
+```
+
+要仅在尚未加载关系时加载关系，使用 `loadMissing` 方法：
+
+```php
+public function format(Book $book)
+{
+    $book->loadMissing('author');
+
+    return [
+        'name' => $book->name,
+        'author' => $book->author->name
+    ];
+}
+```
+
+***
+
+**嵌套的懒预先加载 & `morphTo`**
 
 ## 插入 & 更新相关的模型
 
