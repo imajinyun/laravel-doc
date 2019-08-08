@@ -1353,6 +1353,326 @@ public function format(Book $book)
 
 **嵌套的懒预先加载 & `morphTo`**
 
+如果你希望加载 `morphTo` 关系，以及该关系可能返回的各种实体上的嵌套关系，你可以使用 `loadMorph` 方法。
+
+此方法接受 `morphTo` 关系的名称作为其第一个参数，模型 / 关系对的数组作为其第二个参数。为了帮助说明这种方法，让我们考虑以下模型:
+
+```php
+<?php
+
+use Illuminate\Database\Eloquent\Model;
+
+class ActivityFeed extends Model
+{
+    /**
+     * 获取活动摘要记录的父记录。
+     */
+    public function parentable()
+    {
+        return $this->morphTo();
+    }
+}
+```
+
+在这个例子中，我们假设 `Event`、`Photo` 和 `Post` 模型可以创建 `ActivityFeed` 模型。此外，我们假设 `Event` 模型属于 `Calendar` 模型，`Photo` 模型与 `Tag` 模型相关联，并且 `Post` 模型属于 `Author` 模型。
+
+使用这些模型定义和关系，我们可以检索 `ActivityFeed` 模型实例并预先加载所有 `parentable` 模型及其各自的嵌套关系：
+
+```php
+$activities = ActivityFeed::with('parentable')
+    ->get()
+    ->loadMorph('parentable', [
+        Event::class => ['calendar'],
+        Photo::class => ['tags'],
+        Post::class => ['author'],
+    ]);
+```
+
 ## 插入 & 更新相关的模型
 
+### 保存方法
+
+Eloquent 提供了为关系添加新模型的便捷方法。例如，你可能需要为 `Post` 模型插入新的 `Comment`。你可以直接从关系的 `save` 方法插入 `Comment`，而不是在 `Comment` 上手动设置 `post_id` 属性：
+
+```php
+$comment = new App\Comment(['message' => 'A new comment.']);
+
+$post = App\Post::find(1);
+
+$post->comments()->save($comment);
+```
+
+注意，我们没有将 `comments` 关系作为动态属性进行访问。相反，我们调用了 `comments` 方法来获取关系的实例。`save` 方法将自动将适当的 `post_id` 值添加到新的 `Comment` 模型中。
+
+如果你需要保存多个相关模型，可以使用 `saveMany` 方法：
+
+```php
+$post = App\Post::find(1);
+
+$post->comments()->saveMany([
+    new App\Comment(['message' => 'A new comment.']),
+    new App\Comment(['message' => 'Another comment.']),
+]);
+```
+
+***
+
+**递归保存模型 & 关系**
+
+如果你要 `save` 你的模型及其所有关联关系，你可以使用 `push` 方法：
+
+```php
+$post = App\Post::find(1);
+
+$post->comments[0]->message = 'Message';
+$post->comments[0]->author->name = 'Author Name';
+
+$post->push();
+```
+
+***
+
+### 创建方法
+
+除了 `save` 和 `saveMany` 方法之外，你还可以使用 `create` 方法，该方法接受属性数组，创建模型并将其插入数据库。同样，`save` 和 `create` 之间的区别在于 `save` 接受一个完整的 Eloquent 模型实例，而 `create` 接受一个普通的 PHP `array`：
+
+```php
+$post = App\Post::find(1);
+
+$comment = $post->comments()->create([
+    'message' => 'A new comment.',
+]);
+```
+
+{% hint style="info" %}
+
+在使用 `create` 方法之前，确保查看有关属性 [批量分配](https://laravel.com/docs/5.8/eloquent#mass-assignment) 的文档。
+
+{% endhint %}
+
+你可以使用 `createMany` 方法创建多个相关模型：
+
+```php
+$post = App\Post::find(1);
+
+$post->comments()->createMany([
+    [
+        'message' => 'A new comment.',
+    ],
+    [
+        'message' => 'Another new comment.',
+    ],
+]);
+```
+
+你还可以使用 `findOrNew`、`firstOrNew`、`firstOrCreate` 和 `updateOrCreate` 方法来 [创建和更新关系模型](https://laravel.com/docs/5.8/eloquent#other-creation-methods)。
+
+### 属于关系
+
+更新 `belongsTo` 关系时，你可以使用 `associate` 方法。此方法将在子模型上设置外键：
+
+```php
+$account = App\Account::find(10);
+
+$user->account()->associate($account);
+
+$user->save();
+```
+
+当删除 `belongsTo` 关系时，你可以使用 `dissociate` 方法。这个方法将关系的外键设置为 `null`：
+
+```php
+$user->account()->dissociate();
+
+$user->save();
+```
+
+***
+
+**默认的模型**
+
+`belongsTo`、`hasOne`、`hasOneThrough` 和 `morphOne` 关系允许你定义一个默认模型，如果给定的关系为 `null`，该模型将返回。这种模式通常称为 [空对象模式](https://en.wikipedia.org/wiki/Null_Object_pattern)，可以帮助你在代码中删除条件检查。在下面的示例中，如果没有 `user` 附加到博客，`user` 关系将返回一个空的 `App\User` 模型：
+
+```php
+/**
+ * 获取博客的作者。
+ */
+public function user()
+{
+    return $this->belongsTo('App\User')->withDefault();
+}
+```
+
+要使用属性填充默认模型，你可以将数组或 Closure 传递给 `withDefault` 方法：
+
+```php
+/**
+ * 获取博客的作者。
+ */
+public function user()
+{
+    return $this->belongsTo('App\User')->withDefault([
+        'name' => 'Guest Author',
+    ]);
+}
+
+/**
+ * 获取博客的作者。
+ */
+public function user()
+{
+    return $this->belongsTo('App\User')->withDefault(function ($user, $post) {
+        $user->name = 'Guest Author';
+    });
+}
+```
+
+***
+
+### 多对多关系
+
+**附加 / 分离**
+
+Eloquent 还提供了一些额外的辅助方法，使相关模型的使用更加方便。例如，假设用户可以拥有多个角色，而角色可以拥有许多用户。要通过在连接模型的中间表中插入记录来将角色附加到用户，使用 `attach` 方法：
+
+```php
+$user = App\User::find(1);
+
+$user->roles()->attach($roleId);
+```
+
+***
+
+当将关系附加到模型时，你还可以传递要插入中间表的附加数据数组：
+
+```php
+$user->roles()->attach($roleId, ['expires' => $expires]);
+```
+
+***
+
+有时可能需要从用户中删除角色。要删除多对多关系记录，使用 `detach` 方法。`detach` 方法将删除中间表中的适当的记录；但是，两种模型都将保留在数据库中：
+
+```php
+//从用户中分离出单个角色...
+$user->roles()->detach($roleId);
+
+// 从用户中分离所有角色...
+$user->roles()->detach();
+```
+
+***
+
+为方便起见，`attach` 和 `detach` 也接受 ID 数组作为输入：
+
+```php
+$user = App\User::find(1);
+
+$user->roles()->detach([1, 2, 3]);
+
+$user->roles()->attach([
+    1 => ['expires' => $expires],
+    2 => ['expires' => $expires]
+]);
+```
+
+***
+
+**同步关联**
+
+你还可以使用 `sync` 方法构建多对多关联。`sync` 方法接受要放在中间表上的 ID 数组。将从中间表中删除不在给定数组中的任何 ID。因此，在此操作完成后，只有给定数组中的 ID 将存在于中间表中：
+
+```php
+$user->roles()->sync([1, 2, 3]);
+```
+
+***
+
+你还可以使用 ID 传递其他中间表的值：
+
+```php
+$user->roles()->sync([1 => ['expires' => true], 2, 3]);
+```
+
+***
+
+如果你不想分离现有 ID，可以使用 `syncWithoutDetaching` 方法：
+
+```php
+$user->roles()->syncWithoutDetaching([1, 2, 3]);
+```
+
+***
+
+**切换关联**
+
+多对多关系还提供 `toggle` 方法，该方法『切换』给定 ID 的附件状态。如果当前附加了给定的 ID，则它将被分离。同样，如果它当前已分离，则将被附加：
+
+```php
+$user->roles()->toggle([1, 2, 3]);
+```
+
+***
+
+**在中转表上保存其他数据**
+
+使用多对多关系时，`save` 方法接受一组额外的中间表属性作为其第二个参数：
+
+```php
+App\User::find(1)->roles()->save($role, ['expires' => $expires]);
+```
+
+***
+
+**更新中转表上的记录**
+
+如果你需要更新在你的中转表中的现有行，你可以使用 `updateExistingPivot` 方法。此方法接受中转记录外键和要更新的属性数组：
+
+```php
+$user = App\User::find(1);
+
+$user->roles()->updateExistingPivot($roleId, $attributes);
+```
+
 ## 触及父时间戳
+
+当模型 `belongsTo` 或者 `belongsToMany` 另一个模型时，例如：属于 `Post` 的 `Comment`，有时在更新子模型时更新父级的时间戳是有用的。例如，更新 `Comment` 模型时，你可能希望自动『触及』拥有 `Post` 的 `updated_at` 时间戳。Eloquent 让事情变得简单。只需添加一个 `touches` 属性，其中包含子模型的关系名称：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Comment extends Model
+{
+    /**
+     * All of the relationships to be touched.
+     * 要触及的所有关系。
+     *
+     * @var array
+     */
+    protected $touches = ['post'];
+
+    /**
+     * 获取评论所属的帖子。
+     */
+    public function post()
+    {
+        return $this->belongsTo('App\Post');
+    }
+}
+```
+
+***
+
+现在，当你更新 `Comment` 时，拥有的 `Post` 也将更新其 `updated_at` 列，从而更方便地知道何时使 `Post` 模型的缓存无效：
+
+```php
+$comment = App\Comment::find(1);
+
+$comment->text = 'Edit to this comment!';
+
+$comment->save();
+```
