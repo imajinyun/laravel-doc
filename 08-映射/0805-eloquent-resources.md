@@ -122,3 +122,433 @@ class UserCollection extends ResourceCollection
     }
 }
 ```
+
+***
+
+定义了你的资源集合后，它可以从路由或控制器返回：
+
+```php
+use App\User;
+use App\Http\Resources\UserCollection;
+
+Route::get('/users', function () {
+    return new UserCollection(User::all());
+});
+```
+
+***
+
+**保留集合键**
+
+从路由返回资源集合时，Laravel 会重置集合的键，以便它们按照简单的数字顺序排列。但是，你可以向你的资源类添加 `preserveKeys` 属性，指示是否应保留集合键：
+
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class User extends JsonResource
+{
+    /**
+     * 指示是否应保留资源的集合键。
+     *
+     * @var bool
+     */
+    public $preserveKeys = true;
+}
+```
+
+***
+
+当 `preserveKeys` 属性设置为 `true` 时，集合键将被保留：
+
+```php
+use App\User;
+use App\Http\Resources\User as UserResource;
+
+Route::get('/user', function () {
+    return UserResource::collection(User::all()->keyBy->id);
+});
+```
+
+***
+
+**自定义基础资源类**
+
+通常，资源集合的 `$this->collection` 属性会自动填充，其结果是将集合的每个条目映射到其单一资源类。假设单一资源类是集合的类名，后面没有 `Collection` 字符串。
+
+例如，`UserCollection` 将尝试将给定的用户实例映射到 `User` 资源。要自定义此行为，你可以覆盖你的资源集合的 `$collect` 属性：
+
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\ResourceCollection;
+
+class UserCollection extends ResourceCollection
+{
+    /**
+     * 此资源收集的资源。
+     *
+     * @var string
+     */
+    public $collects = 'App\Http\Resources\Member';
+}
+```
+
+***
+
+## 编写资源
+
+{% hint style="info" %}
+
+如果你还没有阅读 [概念概述](https://laravel.com/docs/5.8/eloquent-resources#concept-overview)，强烈建议你在继续阅读本文档之前去阅读。
+
+{% endhint %}
+
+本质上，资源是简单的。它们只需要将给定的模型转换为一个数组。因此，每个资源都包含一个 `toArray` 方法，该方法将模型的属性转换为可返回给你的用户的 API 友好数组：
+
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class User extends JsonResource
+{
+    /**
+     * 资源转换为数组。
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function toArray($request)
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
+    }
+}
+```
+
+***
+
+一旦定义了资源，你就可以直接从路由或控制器返回：
+
+```php
+use App\User;
+use App\Http\Resources\User as UserResource;
+
+Route::get('/user', function () {
+    return new UserResource(User::find(1));
+});
+```
+
+***
+
+**关系**
+
+如果你希望在你的响应中包含相关资源，你可以将它们添加通过你的 `toArray` 方法返回的数组中。在本例中，我们将使用 `Post` 资源的 `collection` 方法将用户的博客文章添加到资源响应中：
+
+```php
+/**
+ * 资源转换为数组。
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return array
+ */
+public function toArray($request)
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'email' => $this->email,
+        'posts' => PostResource::collection($this->posts),
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+```
+
+***
+
+{% hint style="info" %}
+
+如果你希望仅在已经加载关系时包含关系，查看有关 [条件关系](https://laravel.com/docs/5.8/eloquent-resources#conditional-relationships) 的文档。
+
+{% endhint %}
+
+**资源集合**
+
+资源将单个模型转换为数组，而资源集合将模型集合转换为数组。并非绝对有必要为你的每个模型类型定义资源集合类，因为所有资源都提供了一个 `collection` 方法来在运行时生成『临时』资源集合：
+
+```php
+use App\User;
+use App\Http\Resources\User as UserResource;
+
+Route::get('/user', function () {
+    return UserResource::collection(User::all());
+});
+```
+
+***
+
+但是，如果需要自定义随集合返回的元数据，则需要定义资源集合：
+
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\ResourceCollection;
+
+class UserCollection extends ResourceCollection
+{
+    /**
+     * 资源集合转换为数组。
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function toArray($request)
+    {
+        return [
+            'data' => $this->collection,
+            'links' => [
+                'self' => 'link-value',
+            ],
+        ];
+    }
+}
+```
+
+***
+
+与单一资源一样，资源集合可以直接从路由或控制器返回：
+
+```php
+use App\User;
+use App\Http\Resources\UserCollection;
+
+Route::get('/users', function () {
+    return new UserCollection(User::all());
+});
+```
+
+***
+
+### 数据包装
+
+默认情况下，当资源响应转换为 JSON 时，你的最外层的资源被包装在一个 `data` 键中。因此，例如，典型的资源收集响应看起来如下所示：
+
+```json
+{
+    "data": [
+        {
+            "id": 1,
+            "name": "Eladio Schroeder Sr.",
+            "email": "therese28@example.com",
+        },
+        {
+            "id": 2,
+            "name": "Liliana Mayert",
+            "email": "evandervort@example.com",
+        }
+    ]
+}
+```
+
+***
+
+如果你要禁用最外层资源的包装，你可以在基本资源类上使用 `withoutWrapping` 方法。通常，你应该从 `AppServiceProvider` 或在你的应用程序的每个请求上加载的其他 [服务提供者](https://laravel.com/docs/5.8/providers) 中调用此方法：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Http\Resources\Json\Resource;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 在容器中注册绑定。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Resource::withoutWrapping();
+    }
+}
+```
+
+***
+
+{% hint style="danger" %}
+
+`withoutWrapping` 方法仅影响最外层响应，并且不会删除你手动添加到你自己的资源集合中的 `data` 键。
+
+{% endhint %}
+
+### 包装嵌套资源
+
+你可以完全自由地确定你的资源的关系如何被包装。如果你希望将所有资源集合包装在 `data` 键中，而不管它们如何嵌套，你应为每个资源定义资源集合类，并在 `data` 键中返回该集合。
+
+你可能担心这是否会导致你的最外层资源被包装在两个数据键中。别担心，Laravel 永远不会让你的资源意外地被双重包装，因此你不必担心正在转换的资源集合的嵌套级别：
+
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\ResourceCollection;
+
+class CommentsCollection extends ResourceCollection
+{
+    /**
+     * 资源集合转换为数组。
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function toArray($request)
+    {
+        return ['data' => $this->collection];
+    }
+}
+```
+
+***
+
+### 数据包装并分页
+
+在资源响应中返回分页集合时，即使已调用 `withoutWrapping` 方法，Laravel 也会将你的资源数据包装在 `data` 键中。这是因为分页响应始终包含 `meta` 和 `links` 键以及有关分页器状态的信息：
+
+```json
+{
+    "data": [
+        {
+            "id": 1,
+            "name": "Eladio Schroeder Sr.",
+            "email": "therese28@example.com",
+        },
+        {
+            "id": 2,
+            "name": "Liliana Mayert",
+            "email": "evandervort@example.com",
+        }
+    ],
+    "links":{
+        "first": "http://example.com/pagination?page=1",
+        "last": "http://example.com/pagination?page=1",
+        "prev": null,
+        "next": null
+    },
+    "meta":{
+        "current_page": 1,
+        "from": 1,
+        "last_page": 1,
+        "path": "http://example.com/pagination",
+        "per_page": 15,
+        "to": 10,
+        "total": 10
+    }
+}
+```
+
+***
+
+### 分页
+
+你可以始终将分页器实例传递给资源的 `collection` 方法或自定义资源集合：
+
+```php
+use App\User;
+use App\Http\Resources\UserCollection;
+
+Route::get('/users', function () {
+    return new UserCollection(User::paginate());
+});
+```
+
+***
+
+分页响应总是包含 `meta` 和 `links` 键，该键是关于分页器状态的信息：
+
+```php
+{
+    "data": [
+        {
+            "id": 1,
+            "name": "Eladio Schroeder Sr.",
+            "email": "therese28@example.com",
+        },
+        {
+            "id": 2,
+            "name": "Liliana Mayert",
+            "email": "evandervort@example.com",
+        }
+    ],
+    "links":{
+        "first": "http://example.com/pagination?page=1",
+        "last": "http://example.com/pagination?page=1",
+        "prev": null,
+        "next": null
+    },
+    "meta":{
+        "current_page": 1,
+        "from": 1,
+        "last_page": 1,
+        "path": "http://example.com/pagination",
+        "per_page": 15,
+        "to": 10,
+        "total": 10
+    }
+}
+```
+
+### 条件属性
+
+有时，如果满足给定条件，你可能希望仅在资源响应中包含属性。例如，如果当前用户是『管理员』，你可能希望仅包含值。Laravel 提供了各种辅助方法来帮助你解决这种情况。`when` 方法可用于有条件地将属性添加到一个资源响应：
+
+```php
+/**
+ * 资源转换为数组。
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return array
+ */
+public function toArray($request)
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'email' => $this->email,
+        'secret' => $this->when(Auth::user()->isAdmin(), 'secret-value'),
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+```
+
+***
