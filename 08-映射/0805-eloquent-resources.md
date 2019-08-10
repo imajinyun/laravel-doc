@@ -607,3 +607,187 @@ public function toArray($request)
 ### 条件关系
 
 除了有条件地加载属性之外，你还可以根据模型上是否已加载关系，有条件地在资源响应中包含关系。这允许你的控制器决定应该在模型上加载哪些关系，并且你的资源只有在实际加载时才能轻松包含它们。
+
+最终，这可以更轻松地避免在你的资源中的『N+1』查询问题。`whenLoaded` 方法可用于有条件地加载关系。为了避免不必要地加载关系，此方法接受关系的名称而不是关系本身：
+
+```php
+/**
+ * 资源转换为数组。
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return array
+ */
+public function toArray($request)
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'email' => $this->email,
+        'posts' => PostResource::collection($this->whenLoaded('posts')),
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+```
+
+***
+
+在本例中，如果没有加载关系，则在将 `posts` 键发送到客户机之前，将从资源响应中完全删除它。
+
+**条件中转信息**
+
+除了条件在你的资源响应中包含关系信息之外，你还可以使用 `whenPivotLoaded` 方法有条件地包含来自多对多关系的中转表的数据。`whenPivotLoaded` 方法接受中转表的名称作为其第一个参数。第二个参数应该是一个闭包，它定义了如果模型上的中转信息可用时返回的值：
+
+```php
+/**
+ * 资源转换为数组。
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return array
+ */
+public function toArray($request)
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'expires_at' => $this->whenPivotLoaded('role_user', function () {
+            return $this->pivot->expires_at;
+        }),
+    ];
+}
+```
+
+***
+
+如果你的中间表使用的是 `pivot` 以外的访问器，你可以使用 `whenPivotLoadedAs` 方法：
+
+```php
+/**
+ * 资源转换为数组。
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return array
+ */
+public function toArray($request)
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'expires_at' => $this->whenPivotLoadedAs('subscription', 'role_user', function () {
+            return $this->subscription->expires_at;
+        }),
+    ];
+}
+```
+
+### 添加元数据
+
+一些 JSON API 标准要求向资源和资源集合响应添加元数据。这通常包括一些像资源或相关资源的 `links`，或关于资源本身的元数据。如果你需要返回关于资源的其他元数据，将其包含在你的 `toArray` 方法中。例如，在转换资源集合时你可能包含 `link` 信息：
+
+```php
+/**
+ * 资源转换为数组。
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return array
+ */
+public function toArray($request)
+{
+    return [
+        'data' => $this->collection,
+        'links' => [
+            'self' => 'link-value',
+        ],
+    ];
+}
+```
+
+***
+
+从你的资源返回其他元数据时，你永远不必担心意外覆盖 `links` 或 `meta` 键，当返回分页的响应时它们将通过 Laravel 自动添加。你定义的任何其他 `links` 将与分页器提供的链接合并。
+
+**顶级元数据**
+
+有时，如果资源是返回的最外层资源，你可能希望仅将某些元数据包含在资源响应中。通常，这包括关于整个响应的元信息。要定义此元数据，在资源类中添加 `with` 方法。仅当资源是渲染的最外层资源时，此方法才应返回要包含在资源响应中的元数据数组：
+
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\ResourceCollection;
+
+class UserCollection extends ResourceCollection
+{
+    /**
+     * 将资源集合转换为数组。
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function toArray($request)
+    {
+        return parent::toArray($request);
+    }
+
+    /**
+     * 获取应该与资源数组一起返回的附加数据。
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function with($request)
+    {
+        return [
+            'meta' => [
+                'key' => 'value',
+            ],
+        ];
+    }
+}
+```
+
+***
+
+**构造资源时添加元数据**
+
+你还可以在你的路由或控制器中构造资源实例时添加顶级数据。在所有资源上可用的 `additional` 方法接受应添加到资源响应的数据数组：
+
+```php
+return (new UserCollection(User::all()->load('roles')))
+                ->additional(['meta' => [
+                    'key' => 'value',
+                ]]);
+```
+
+***
+
+## 资源响应
+
+正如你已经读过的那样，资源可以直接从路由和控制器返回：
+
+```php
+use App\User;
+use App\Http\Resources\User as UserResource;
+
+Route::get('/user', function () {
+    return new UserResource(User::find(1));
+});
+```
+
+***
+
+然而，有时你可能需要在发送到客户机之前定制传出 HTTP 响应。有两种方法可以做到这一点。首先，你可以将 `response` 方法链接到资源上。此方法将返回一个 `Illuminate\Http\Response` 实例，允许你完全控制响应的头部：
+
+```php
+use App\User;
+use App\Http\Resources\User as UserResource;
+
+Route::get('/user', function () {
+    return (new UserResource(User::find(1)))
+                ->response()
+                ->header('X-Value', 'True');
+});
+```
+
+***
