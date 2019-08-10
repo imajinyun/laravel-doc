@@ -527,6 +527,8 @@ Route::get('/users', function () {
 }
 ```
 
+***
+
 ### 条件属性
 
 有时，如果满足给定条件，你可能希望仅在资源响应中包含属性。例如，如果当前用户是『管理员』，你可能希望仅包含值。Laravel 提供了各种辅助方法来帮助你解决这种情况。`when` 方法可用于有条件地将属性添加到一个资源响应：
@@ -552,3 +554,56 @@ public function toArray($request)
 ```
 
 ***
+
+在此示例中，如果经过认证的用户的 `isAdmin` 方法返回 `true`，则仅在最终资源响应中返回 `secret`。如果该方法返回 `false`，则在将资源响应发送回客户端之前，将完全从资源响应中删除该 `secret`。`when` 方法允许你在构建数组时富于表达力地定义你的资源，而无需求助于条件语句。
+
+`when` 方法还接受闭包作为其第二个参数，允许你仅在给定条件为 `true` 时计算结果值：
+
+```php
+'secret' => $this->when(Auth::user()->isAdmin(), function () {
+    return 'secret-value';
+}),
+```
+
+***
+
+**合并条件属性**
+
+有时，你可能有几个属性，这些属性应该只包含在基于相同条件的资源响应中。在这种情况下，只有在给定条件为 `true` 时，你才可以使用 `mergeWhen` 方法在响应中包含属性：
+
+```php
+/**
+ * 资源转换为数组。
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return array
+ */
+public function toArray($request)
+{
+    return [
+        'id' => $this->id,
+        'name' => $this->name,
+        'email' => $this->email,
+        $this->mergeWhen(Auth::user()->isAdmin(), [
+            'first-secret' => 'value',
+            'second-secret' => 'value',
+        ]),
+        'created_at' => $this->created_at,
+        'updated_at' => $this->updated_at,
+    ];
+}
+```
+
+***
+
+同样，如果给定的条件为 `false`，这些属性将在资源响应发送到客户机之前从资源响应中完全删除。
+
+{% hint style="danger" %}
+
+`mergeWhen` 方法不应在混合字符串和数字键的数组中使用。此外，它不应该使用在没有排好序的数字键的数组中。
+
+{% endhint %}
+
+### 条件关系
+
+除了有条件地加载属性之外，你还可以根据模型上是否已加载关系，有条件地在资源响应中包含关系。这允许你的控制器决定应该在模型上加载哪些关系，并且你的资源只有在实际加载时才能轻松包含它们。
