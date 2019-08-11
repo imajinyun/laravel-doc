@@ -78,7 +78,119 @@ Route::get('users', function () {
 
 ## 从 JSON 中隐藏属性
 
+有时你可能希望限制你的模型数组或 JSON 表示中包含的属性（如：密码）。为此，向你的模型添加 `$hidden` 属性：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * 应该为数组隐藏的属性。
+     *
+     * @var array
+     */
+    protected $hidden = ['password'];
+}
+```
+
+***
+
+{% hint style="danger" %}
+
+隐藏关系时，使用关系的方法名称。
+
+{% endhint %}
+
+或者，你可以使用 `visible` 属性来定义应包含在你的模型的数组和 JSON 表示中的白名单属性。将模型转换为数组或 JSON 时，将隐藏所有其他属性：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * 应该在数组中显示的属性。
+     *
+     * @var array
+     */
+    protected $visible = ['first_name', 'last_name'];
+}
+```
+
+***
+
+**临时修改属性显示**
+
+如果你希望在给定的模型实例上显示一些典型的隐藏属性，可以使用 `makeVisible` 方法。`makeVisible` 方法返回方便方法链接的模型实例：
+
+```php
+return $user->makeVisible('attribute')->toArray();
+```
+
+***
+
+同样，如果你希望在给定的模型实例上隐藏一些典型的显示属性，你可以使用 `makeHidden` 方法。
+
+```php
+return $user->makeHidden('attribute')->toArray();
+```
+
 ## 追加值到 JSON
+
+有时，在将模型转换为数组或 JSON 时，你可能希望添加的属性在你的数据库中没有对应的列。为此，首先为值定义一个 [访问器](https://laravel.com/docs/5.8/eloquent-mutators)：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * Get the administrator flag for the user.
+     * 获取用户的管理员标志。
+     *
+     * @return bool
+     */
+    public function getIsAdminAttribute()
+    {
+        return $this->attributes['admin'] == 'yes';
+    }
+}
+```
+
+***
+
+创建访问器后，将属性名称添加到模型的 `appends` 属性中。注意，属性名称通常在『蛇形命名』中引用，即使访问器是使用『驼峰命名』定义的：
+
+```php
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model
+{
+    /**
+     * 要追加到模型的数组形式的访问器。
+     *
+     * @var array
+     */
+    protected $appends = ['is_admin'];
+}
+```
 
 ## 日期序列化
 
