@@ -67,4 +67,6 @@
   * [API 资源](./08-映射/0805-eloquent-resources.md)
   * [序列化](./08-映射/0806-eloquent-serialization.md)
 * [测试](09-测试/README.md)
+  * [起步](./09-测试/0901-testing.md)
+  * [HTTP 测试](./09-测试/0902-http-tests.md)
 * [官方开发包](10-官方开发包/README.md)
