@@ -184,7 +184,7 @@ use Illuminate\Database\Eloquent\Model;
 class User extends Model
 {
     /**
-     * 要追加到模型的数组形式的访问器。
+     * 将访问器追加到模型的数组形式中。
      *
      * @var array
      */
@@ -192,8 +192,73 @@ class User extends Model
 }
 ```
 
+***
+
+一旦将属性添加到 `appends` 列表，它将包含在模型的数组和 JSON 表示中。`appends` 数组中的属性还将遵循模型上配置的 `visible` 和 `hidden` 设置。
+
+**在运行时追加**
+
+你可以使用 `append` 方法指示单个模型实例去追加属性。或者，你可以使用 `setAppends` 方法去覆盖给定模型实例的整个追加属性数组：
+
+```php
+return $user->append('is_admin')->toArray();
+
+return $user->setAppends(['is_admin'])->toArray();
+```
+
+***
+
 ## 日期序列化
 
 **自定义每个属性的日期格式**
 
+你可以通过在 [转换声明](https://laravel.com/docs/5.8/eloquent-mutators#attribute-casting) 中指定日期格式来自定义各个 Eloquent 日期属性的序列化格式：
+
+```php
+protected $casts = [
+    'birthday' => 'date:Y-m-d',
+    'joined_at' => 'datetime:Y-m-d H:00',
+];
+```
+
+***
+
 **通过 Carbon 全局定制**
+
+Laravel 扩展了 [Carbon](https://github.com/briannesbitt/Carbon) 日期库，以便为 Carbon 的 JSON 序列化格式提供方便的自定义。要自定义整个你的应用程序中所有 Carbon 日期的序列化，使用 `Carbon::serializeUsing` 方法。`serializeUsing` 方法接受一个 Closure，它返回 JSON 序列化日期的字符串表示：
+
+```php
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\Carbon;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * 在容器中注册绑定。
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * 引导任何应用程序服务。
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        Carbon::serializeUsing(function ($carbon) {
+            return $carbon->format('U');
+        });
+    }
+}
+```
+
+***
