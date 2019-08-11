@@ -791,3 +791,43 @@ Route::get('/user', function () {
 ```
 
 ***
+
+或者，你可以在资源本身中定义一个 `withResponse` 方法。当资源作为响应中最外层资源返回时，将调用此方法：
+
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class User extends JsonResource
+{
+    /**
+     * 将资源转换为数组。
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function toArray($request)
+    {
+        return [
+            'id' => $this->id,
+        ];
+    }
+
+    /**
+     * 为资源自定义传出响应。
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Response  $response
+     * @return void
+     */
+    public function withResponse($request, $response)
+    {
+        $response->header('X-Value', 'True');
+    }
+}
+```
+
+***
