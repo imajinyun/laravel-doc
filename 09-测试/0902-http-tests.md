@@ -278,7 +278,278 @@ UploadedFile::fake()->create('document.pdf', $sizeInKilobytes);
 
 Laravel 为你的 [PHPUnit](https://phpunit.de) 测试提供了各种自定义断言方法。可以从 `json`、`get`、`post`、`put` 和 `delete` 测试方法返回的响应中访问这些断言：
 
-|                                                                                      |                                                                                  |
-| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| [assertCookie](https://laravel.com/docs/5.8/http-tests#assert-cookie)                | [assertPlainCookie](https://laravel.com/docs/5.8/http-tests#assert-plain-cookie) |
-| [assertCookieExpired](https://laravel.com/docs/5.8/http-tests#assert-cookie-expired) | [assertRedirect](https://laravel.com/docs/5.8/http-tests#assert-redirect)        |
+|                                                                                                                    |                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| [assertCookie](https://laravel.com/docs/5.8/http-tests#assert-cookie)                                              | [assertPlainCookie](https://laravel.com/docs/5.8/http-tests#assert-plain-cookie)                           |
+| [assertCookieExpired](https://laravel.com/docs/5.8/http-tests#assert-cookie-expired)                               | [assertRedirect](https://laravel.com/docs/5.8/http-tests#assert-redirect)                                  |
+| [assertCookieNotExpired](https://laravel.com/docs/5.8/http-tests#assert-cookie-not-expired)                        | [assertSee](https://laravel.com/docs/5.8/http-tests#assert-see)                                            |
+| [assertCookieMissing](https://laravel.com/docs/5.8/http-tests#assert-cookie-missing)                               | [assertSeeInOrder](https://laravel.com/docs/5.8/http-tests#assert-see-in-order)                            |
+| [assertDontSee](https://laravel.com/docs/5.8/http-tests#assert-dont-see)                                           | [assertSeeText](https://laravel.com/docs/5.8/http-tests#assert-see-text)                                   |
+| [assertDontSeeText](https://laravel.com/docs/5.8/http-tests#assert-dont-see-text)                                  | [assertSeeTextInOrder](https://laravel.com/docs/5.8/http-tests#assert-see-text-in-order)                   |
+| [assertExactJson](https://laravel.com/docs/5.8/http-tests#assert-exact-json)                                       | [assertSessionHas](https://laravel.com/docs/5.8/http-tests#assert-session-has)                             |
+| [assertForbidden](https://laravel.com/docs/5.8/http-tests#assert-forbidden)                                        | [assertSessionHasInput](https://laravel.com/docs/5.8/http-tests#assert-session-has-input)                  |
+| [assertHeader](https://laravel.com/docs/5.8/http-tests#assert-header)                                              | [assertSessionHasAll](https://laravel.com/docs/5.8/http-tests#assert-session-has-all)                      |
+| [assertHeaderMissing](https://laravel.com/docs/5.8/http-tests#assert-header-missing)                               | [assertSessionHasErrors](https://laravel.com/docs/5.8/http-tests#assert-session-has-errors)                |
+| [assertJson](https://laravel.com/docs/5.8/http-tests#assert-json)                                                  | [assertSessionHasErrorsIn](https://laravel.com/docs/5.8/http-tests#assert-session-has-errors-in)           |
+| [assertJsonCount](https://laravel.com/docs/5.8/http-tests#assert-json-count)                                       | [assertSessionHasNoErrors](https://laravel.com/docs/5.8/http-tests#assert-session-has-no-errors)           |
+| [assertJsonFragment](https://laravel.com/docs/5.8/http-tests#assert-json-fragment)                                 | [assertSessionDoesntHaveErrors](https://laravel.com/docs/5.8/http-tests#assert-session-doesnt-have-errors) |
+| [assertJsonMissing](https://laravel.com/docs/5.8/http-tests#assert-json-missing)                                   | [assertSessionMissing](https://laravel.com/docs/5.8/http-tests#assert-session-missing)                     |
+| [assertJsonMissingExact](https://laravel.com/docs/5.8/http-tests#assert-json-missing-exact)                        | [assertStatus](https://laravel.com/docs/5.8/http-tests#assert-status)                                      |
+| [assertJsonMissingValidationErrors](https://laravel.com/docs/5.8/http-tests#assert-json-missing-validation-errors) | [assertSuccessful](https://laravel.com/docs/5.8/http-tests#assert-successful)                              |
+| [assertJsonStructure](https://laravel.com/docs/5.8/http-tests#assert-json-structure)                               | [assertUnauthorized](https://laravel.com/docs/5.8/http-tests#assert-unauthorized)                          |
+| [assertJsonValidationErrors](https://laravel.com/docs/5.8/http-tests#assert-json-validation-errors)                | [assertViewHas](https://laravel.com/docs/5.8/http-tests#assert-view-has)                                   |
+| [assertLocation](https://laravel.com/docs/5.8/http-tests#assert-location)                                          | [assertViewHasAll](https://laravel.com/docs/5.8/http-tests#assert-view-has-all)                            |
+| [assertNotFound](https://laravel.com/docs/5.8/http-tests#assert-not-found)                                         | [assertViewIs](https://laravel.com/docs/5.8/http-tests#assert-view-is)                                     |
+| [assertOk](https://laravel.com/docs/5.8/http-tests#assert-ok)                                                      | [assertViewMissing](https://laravel.com/docs/5.8/http-tests#assert-view-missing)                           |
+
+**assertCookie**
+
+断言响应包含给定的 cookie：
+
+```php
+$response->assertCookie($cookieName, $value = null);
+```
+
+***
+
+**assertCookieExpired**
+
+断言响应包含给定的 cookie 并且它已过期：
+
+```php
+$response->assertCookieExpired($cookieName);
+```
+
+***
+
+**assertCookieNotExpired**
+
+断言响应包含给定的 cookie 并且它没有过期：
+
+```php
+$response->assertCookieNotExpired($cookieName);
+```
+
+***
+
+**assertCookieMissing**
+
+断言响应不包含给定的 cookie：
+
+```php
+$response->assertCookieMissing($cookieName);
+```
+
+***
+
+**assertDontSee**
+
+断言给定字符串不包含在响应中：
+
+```php
+$response->assertDontSee($value);
+```
+
+***
+
+**assertDontSeeText**
+
+断言给定字符串不包含在响应文本中：
+
+```php
+$response->assertDontSeeText($value);
+```
+
+***
+
+**assertExactJson**
+
+断言响应包含给定 JSON 数据的完全匹配：
+
+```php
+$response->assertExactJson(array $data);
+```
+
+***
+
+**assertForbidden**
+
+断言响应具有禁止的状态代码：
+
+```php
+$response->assertForbidden();
+```
+
+***
+
+**assertHeader**
+
+断言响应中存在给定标头：
+
+```php
+$response->assertHeader($headerName, $value = null);
+```
+
+***
+
+**assertHeaderMissing**
+
+断言响应中不存在给定标头：
+
+```php
+$response->assertHeaderMissing($headerName);
+```
+
+***
+
+**assertJson**
+
+断言响应包含给定的 JSON 数据：
+
+```php
+$response->assertJson(array $data);
+```
+
+***
+
+**assertJsonCount**
+
+断言响应 JSON 有一个数组，其中包含给定键的预期项数：
+
+```php
+$response->assertJsonCount($count, $key = null);
+```
+
+***
+
+**assertJsonFragment**
+
+断言响应包含给定的 JSON 片段：
+
+```php
+$response->assertJsonFragment(array $data);
+```
+
+***
+
+**assertJsonMissing**
+
+断言响应不包含给定的 JSON 片段：
+
+```php
+$response->assertJsonMissing(array $data);
+```
+
+***
+
+**assertJsonMissingExact**
+
+断言响应不包含确切的 JSON 片段：
+
+```php
+$response->assertJsonMissingExact(array $data);
+```
+
+***
+
+**assertJsonMissingValidationErrors**
+
+断言响应没有给定键的 JSON 验证错误：
+
+```php
+$response->assertJsonMissingValidationErrors($keys);
+```
+
+***
+
+**assertJsonStructure**
+
+断言响应具有给定的 JSON 结构：
+
+```php
+$response->assertJsonStructure(array $structure);
+```
+
+***
+
+**assertJsonValidationErrors**
+
+断言响应具有给定的 JSON 验证错误：
+
+```php
+$response->assertJsonValidationErrors(array $data);
+```
+
+***
+
+**assertLocation**
+
+断言响应在 `Location` 头中具有给定的 URI 值：
+
+```php
+$response->assertLocation($uri);
+```
+
+***
+
+**assertNotFound**
+
+断言响应有一个未找到的状态代码：
+
+```php
+$response->assertNotFound();
+```
+
+***
+
+**assertOk**
+
+断言响应具有200状态代码：
+
+```php
+$response->assertOk();
+```
+
+***
+
+**assertPlainCookie**
+
+断言响应包含给定的 cookie（未加密）：
+
+```php
+$response->assertPlainCookie($cookieName, $value = null);
+```
+
+***
+
+**assertRedirect**
+
+断言响应是一个重定向到给定的 URI：
+
+```php
+$response->assertRedirect($uri);
+```
+
+***
+
+**assertSee**
+
+断言给定字符串包含在响应中：
+
+```php
+$response->assertSee($value);
+```
+
+***
+
+### 认证断言
+
+Laravel 还为你的 [PHPUnit](https://phpunit.de) 测试提供了各种与认证相关的断言:
+
+| 方法 | 描述 |
+| --- | --- |
+| `$this->assertAuthenticated($guard = null);` | 断言用户已被认证 |
+| `$this->assertGuest($guard = null);` | 断言用户未被认证 |
+| `$this->assertAuthenticatedAs($user, $guard = null);` | 断言给定的用户已被认证 |
+| `$this->assertCredentials(array $credentials, $guard = null);` | 断言给定的凭据有效 |
+| `$this->assertInvalidCredentials(array $credentials, $guard = null);` | 断言给定的凭据无效 |
