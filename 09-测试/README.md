@@ -2,3 +2,4 @@
 
 * [测试起步](./0901-testing.md)
 * [HTTP 测试](./0902-http-tests.md)
+* [Console 测试](./0903-console-tests.md)

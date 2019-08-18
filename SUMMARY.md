@@ -69,4 +69,5 @@
 * [测试](09-测试/README.md)
   * [起步](./09-测试/0901-testing.md)
   * [HTTP 测试](./09-测试/0902-http-tests.md)
+  * [Console 测试](./09-测试/0903-console-tests.md)
 * [官方开发包](10-官方开发包/README.md)
