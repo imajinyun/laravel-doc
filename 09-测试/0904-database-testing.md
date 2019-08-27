@@ -163,6 +163,60 @@ $factory->afterCreatingState(App\User::class, 'delinquent', function ($user, $fa
 
 ### 创建模型
 
+一旦定义了你的工厂，就可以在测试或播种文件中使用全局 `factory` 函数来生成模型实例。所以，让我们看一些创建模型的例子。首先，我们将使用 `make` 方法创建模型，但不将它们保存到数据库中：
+
+```php
+public function testDatabase()
+{
+    $user = factory(App\User::class)->make();
+
+    // 在测试中使用模型...
+}
+```
+
+***
+
+你还可以创建许多模型的 Collection 或者创建给定类型的模型：
+
+```php
+// 创建成一个 App\User 实例...
+$users = factory(App\User::class, 3)->make();
+```
+
+**应用状态**
+
+你还可以将任何你的 [状态](https://laravel.com/docs/5.8/database-testing#factory-states) 应用于模型。如果你希望将多个状态转换应用于模型，你应该指定要应用的每个状态的名称：
+
+```php
+$users = factory(App\User::class, 5)->states('delinquent')->make();
+
+$users = factory(App\User::class, 5)->states('premium', 'delinquent')->make();
+```
+
+***
+
+**覆盖属性**
+
+如果你希望覆盖你的模型的一些默认值，可以将值数组传递给 `make` 方法。只有指定的值将被替换，而其余的值仍然被设置为通过工厂指定的默认值：
+
+```php
+$user = factory(App\User::class)->make([
+    'name' => 'Abigail',
+]);
+```
+
+***
+
+{% hint style="info" %}
+
+当使用工厂创建模型时，会自动禁用 [批量分配保护](https://laravel.com/docs/5.8/eloquent#mass-assignment)。
+
+{% endhint %}
+
+### 持久模型
+
+### 关系
+
 ## 使用播种
 
 ## 可用的断言
