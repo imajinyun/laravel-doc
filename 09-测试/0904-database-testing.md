@@ -215,8 +215,134 @@ $user = factory(App\User::class)->make([
 
 ### 持久模型
 
+`create` 方法不仅创建模型实例，而且使用 Eloquent 的 `save` 方法将它们保存到数据库中：
+
+```php
+public function testDatabase()
+{
+    // 创建单个 App\User 实例...
+    $user = factory(App\User::class)->create();
+
+    // 创建三个 App\User 实例...
+    $users = factory(App\User::class, 3)->create();
+
+    // 在测试中使用模型...
+}
+```
+
+***
+
+你可以通过将数组传递给 `create` 方法来覆盖模型上的属性：
+
+```php
+$user = factory(App\User::class)->create([
+    'name' => 'Abigail',
+]);
+```
+
 ### 关系
+
+在本例中，我们将附加一个关系到一些创建的模型。当使用 `create` 方法创建多个模型时，将返回一个 Eloquent 的 [集合实例](https://laravel.com/docs/5.8/eloquent-collections)，允许你使用通过集合提供的任何方便函数，比如 `each`：
+
+```php
+$users = factory(App\User::class, 3)
+           ->create()
+           ->each(function ($user) {
+                $user->posts()->save(factory(App\Post::class)->make());
+            });
+```
+
+***
+
+你可以使用 `createMany` 方法来创建多个相关模型：
+
+```php
+$user->posts()->createMany(
+    factory(App\Post::class, 3)->make()->toArray()
+);
+```
+
+***
+
+**关系 & 属性闭包**
+
+你还可以使用在你的工厂定义中的闭包属性将关系附加到模型。例如，如果你想在创建 `Post` 时创建一个新的 `User` 实例，你可以如下操作：
+
+```php
+$factory->define(App\Post::class, function ($faker) {
+    return [
+        'title' => $faker->title,
+        'content' => $faker->paragraph,
+        'user_id' => function () {
+            return factory(App\User::class)->create()->id;
+        }
+    ];
+});
+```
+
+***
+
+这些闭包还接收定义它们的工厂的评估属性数组：
+
+```php
+$factory->define(App\Post::class, function ($faker) {
+    return [
+        'title' => $faker->title,
+        'content' => $faker->paragraph,
+        'user_id' => function () {
+            return factory(App\User::class)->create()->id;
+        },
+        'user_type' => function (array $post) {
+            return App\User::find($post['user_id'])->type;
+        }
+    ];
+});
+```
+
+***
 
 ## 使用播种
 
+如果你希望在测试期间使用 [数据库播种器](https://laravel.com/docs/5.8/seeding) 填充你的数据库，可以使用 `seed` 方法。默认情况下，`seed` 方法将返回 `DatabaseSeeder`，它应该执行你的所有其他播种器。或者，将指定的播种器类名传递给 `seed` 方法：
+
+```php
+<?php
+
+namespace Tests\Feature;
+
+use Tests\TestCase;
+use OrderStatusesTableSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
+
+class ExampleTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /**
+     * 测试创建的一个新订单。
+     *
+     * @return void
+     */
+    public function testCreatingANewOrder()
+    {
+        // 运行 DatabaseSeeder...
+        $this->seed();
+
+        // 运行单个播种器...
+        $this->seed(OrderStatusesTableSeeder::class);
+
+        // ...
+    }
+}
+```
+
 ## 可用的断言
+
+Laravel为PHPUnit测试提供了几个数据库断言
+
+| 方法                                                 | 描述                             |
+| ---------------------------------------------------- | -------------------------------- |
+| `$this->assertDatabaseHas($table, array $data);`     | 断言数据库中的表包含给定的数据   |
+| `$this->assertDatabaseMissing($table, array $data);` | 断言数据库中的表不包含给定的数据 |
+| `$this->assertSoftDeleted($table, array $data);`     | 断言给定的记录已被软删除         |
