@@ -57,7 +57,7 @@ class UserController extends Controller
 }
 ```
 
-在这个示例中，`UserController` 需要从一个数据源中去检索用户。因此，我们将 **注入** 一个能够检索的用户的服务。在这个上下文中，我们的 `UserRepository` 最有可能使用 [Eloquent](https://laravel.com/docs/5.8/eloquent) 从数据库检索用户信息。但是，由于注入了存储库，我们能够轻松将其与另一个实现交换出来。我们在测试我们的应用程序时还能够轻松『模拟』，或者创建 `UserRepository` 的虚拟实现。
+在这个示例中，`UserController` 需要从一个数据源中去检索用户。因此，我们将 **注入** 一个能够检索的用户的服务。在这个上下文中，我们的 `UserRepository` 最有可能使用 [Eloquent](https://laravel.com/docs/5.8/eloquent) 从数据库检索用户信息。但是，由于注入了存储库，我们能够轻松将其与另一个实现交换出来。我们在测试我们的应用程序时还能够轻松『模仿』，或者创建 `UserRepository` 的虚拟实现。
 
 深入理解 Laravel 服务容器对于构建强大的大型应用程序以及为 Laravel 核心本身做贡献是至关重要的。
 
